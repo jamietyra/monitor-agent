@@ -1,0 +1,34 @@
+{
+  "name": "monitor-agent",
+  "version": "1.0.0",
+  "description": "Real-time activity dashboard for Claude Code — watch tool calls, file changes, and browser actions as they happen",
+  "type": "module",
+  "main": "server.mjs",
+  "bin": {
+    "monitor-agent": "server.mjs"
+  },
+  "scripts": {
+    "start": "node server.mjs"
+  },
+  "keywords": [
+    "claude-code",
+    "dashboard",
+    "monitoring",
+    "activity",
+    "real-time",
+    "developer-tools"
+  ],
+  "author": "jamietyra",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jamietyra/monitor-agent.git"
+  },
+  "homepage": "https://github.com/jamietyra/monitor-agent",
+  "bugs": {
+    "url": "https://github.com/jamietyra/monitor-agent/issues"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
