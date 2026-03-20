@@ -181,7 +181,7 @@ function processEntry(entry, state) {
           ? 'Playwright:' + block.name.split('__').pop()
           : isAgent ? 'Agent' : block.name;
 
-        events.push({
+        const ev = {
           type: 'tool_start',
           name: displayName,
           target,
@@ -190,7 +190,18 @@ function processEntry(entry, state) {
           isPlaywright,
           filePath: (block.name === 'Read' || block.name === 'Edit' || block.name === 'Write')
             ? (block.input?.file_path || block.input?.path) : null,
-        });
+        };
+
+        // Edit 도구: diff 데이터 추가
+        if (block.name === 'Edit' && block.input) {
+          ev.diff = {
+            oldString: block.input.old_string || '',
+            newString: block.input.new_string || '',
+            replaceAll: block.input.replace_all || false,
+          };
+        }
+
+        events.push(ev);
       }
     }
 
@@ -345,6 +356,10 @@ function watchTranscript(transcriptPath, state, projectName) {
     if (newEvents.length === 0) return;
 
     for (const ev of newEvents) {
+      // 최근 이벤트 목록 갱신 (새로고침 시 최신 상태 유지)
+      allRecentEvents.push(ev);
+      if (allRecentEvents.length > 50) allRecentEvents.shift();
+
       broadcast('activity', ev);
 
       if (ev.type === 'tool_start' && ev.filePath) {
@@ -352,6 +367,16 @@ function watchTranscript(transcriptPath, state, projectName) {
         if (fileData && fileData.content) {
           broadcast('file_content', fileData);
         }
+      }
+
+      // Edit diff 전송
+      if (ev.type === 'tool_start' && ev.diff) {
+        broadcast('file_diff', {
+          filePath: ev.filePath,
+          fileName: ev.target,
+          diff: ev.diff,
+          time: ev.time,
+        });
       }
 
       if (ev.type === 'screenshot_taken') {
@@ -410,24 +435,38 @@ const state = {
   sessionStart: null,
 };
 
+// 감시 중인 transcript 경로 추적
+const watchedTranscripts = new Set();
+
+function startWatchingTranscript(t) {
+  if (watchedTranscripts.has(t.transcriptPath)) return;
+  watchedTranscripts.add(t.transcriptPath);
+  const { recentEvents } = watchTranscript(t.transcriptPath, state, t.project);
+  allRecentEvents.push(...recentEvents);
+  allRecentEvents.sort((a, b) => new Date(a.time) - new Date(b.time));
+  if (allRecentEvents.length > 50) allRecentEvents = allRecentEvents.slice(-50);
+  console.log(`  + New session: ${t.project} (${path.basename(t.transcriptPath).slice(0, 8)}...)`);
+}
+
+// 새 세션 자동 감지 (10초마다 스캔)
+setInterval(() => {
+  const current = discoverAllTranscripts();
+  for (const t of current) {
+    startWatchingTranscript(t);
+  }
+}, 10000);
+
 // 모든 IT 하위 프로젝트 transcript 감시
 const allTranscripts = discoverAllTranscripts();
 let allRecentEvents = [];
 
 if (allTranscripts.length === 0) {
-  console.error('Claude Code transcript를 찾을 수 없습니다.');
-  console.error('Claude Code를 먼저 실행한 후 다시 시도해주세요.');
-  process.exit(1);
+  console.log('  아직 Claude Code 세션이 없습니다. 새 세션을 자동 감지합니다...');
+} else {
+  for (const t of allTranscripts) {
+    startWatchingTranscript(t);
+  }
 }
-
-for (const t of allTranscripts) {
-  const { recentEvents } = watchTranscript(t.transcriptPath, state, t.project);
-  allRecentEvents.push(...recentEvents);
-}
-
-// 시간순 정렬 후 최근 50개만
-allRecentEvents.sort((a, b) => new Date(a.time) - new Date(b.time));
-allRecentEvents = allRecentEvents.slice(-50);
 
 const server = http.createServer((req, res) => {
   const url = new URL(req.url, `http://localhost:${PORT}`);
