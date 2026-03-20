@@ -1,28 +1,20 @@
 # monitor-agent
 
-Real-time activity dashboard for [Claude Code](https://claude.ai/code). Watch tool calls, file changes, and browser actions as they happen.
+Real-time activity dashboard for [Claude Code](https://claude.ai/code). Watch tool calls, file changes, and Playwright browser actions as they happen.
 
-![monitor-agent dashboard](https://raw.githubusercontent.com/jamietyra/monitor-agent/main/preview.png)
+<p align="center">
+  <img src="preview.svg" alt="monitor-agent dashboard preview" width="100%">
+</p>
 
 ## Features
 
-- **Activity Feed** — See every tool call (Read, Write, Edit, Bash, Grep, Agent...) in real-time
-- **Code Viewer** — Automatically displays file contents with syntax highlighting when Claude reads or edits files
-- **Browser View** — Shows Playwright screenshots when Claude interacts with a browser
-- **Multi-project** — Monitors all sub-projects under your working directory
-- **Zero dependencies** — Pure Node.js, no `npm install` needed
+- **Activity Feed** — See every tool call (Read, Write, Edit, Bash, Grep, Agent...) in real-time with color-coded status
+- **Code Viewer** — Automatically displays file contents with syntax highlighting when Claude reads or edits files. Click any file entry to view its code.
+- **Browser View** — When Claude uses the [Playwright MCP plugin](https://github.com/anthropics/claude-code/tree/main/packages/playwright) to control a browser, screenshots are displayed in the dashboard
+- **Multi-project** — Monitors all sub-projects under your working directory simultaneously
+- **Zero dependencies** — Pure Node.js built-in modules only, no `npm install` needed
 
 ## Quick Start
-
-```bash
-# Run from your project directory
-npx monitor-agent
-
-# Then open in your browser
-# http://localhost:3456
-```
-
-Or clone and run directly:
 
 ```bash
 git clone https://github.com/jamietyra/monitor-agent.git
@@ -30,30 +22,39 @@ cd monitor-agent
 node server.mjs
 ```
 
+Then open **http://localhost:3456** in your browser.
+
+You can also use VS Code's built-in Simple Browser:
+`Ctrl+Shift+P` → `Simple Browser: Show` → `http://localhost:3456`
+
 ## Usage
 
 1. Start Claude Code in your project directory
-2. Run `npx monitor-agent` in a separate terminal (or open VS Code's Simple Browser → `http://localhost:3456`)
-3. The dashboard automatically detects your active Claude Code session
-4. Watch the Activity Feed update in real-time as Claude works
+2. In a separate terminal, run `node server.mjs` from the monitor-agent folder
+3. Open `http://localhost:3456` in your browser
+4. The dashboard automatically detects your active Claude Code session and updates in real-time
 
-### Options
+### Monitor a specific directory
 
 ```bash
-# Monitor a specific directory
-npx monitor-agent /path/to/your/project
-
-# Custom port (default: 3456)
-PORT=8080 npx monitor-agent
+node server.mjs /path/to/your/project
 ```
+
+By default, monitor-agent uses the current working directory to find Claude Code sessions.
 
 ## How It Works
 
-Claude Code writes all activity to transcript JSONL files in `~/.claude/projects/`. monitor-agent watches these files and streams parsed events to your browser via Server-Sent Events (SSE).
+Claude Code writes all activity to transcript JSONL files in `~/.claude/projects/`. monitor-agent watches these files via polling (1s interval) and streams parsed events to your browser via Server-Sent Events (SSE).
 
 ```
 Claude Code → transcript.jsonl → monitor-agent → SSE → Browser Dashboard
 ```
+
+### Browser View
+
+The Browser View panel appears when Claude uses the **Playwright MCP plugin** (`/plugin install playwright`). When Claude navigates pages, clicks elements, or takes screenshots via Playwright, those actions appear in the Activity Feed and screenshots are displayed in the dashboard.
+
+> Note: This does NOT capture your personal Chrome browser. It only shows the browser that Claude controls through Playwright.
 
 ## Dashboard Layout
 
@@ -66,7 +67,7 @@ Claude Code → transcript.jsonl → monitor-agent → SSE → Browser Dashboard
 │  Feed        │  (syntax highlighted file contents)   │
 │              │                                       │
 │  ▶ Read ..   ├───────────────────────────────────────┤
-│  ✓ Edit ..   │  Browser View                        │
+│  ✓ Edit ..   │  Browser View                         │
 │  ▶ Bash ..   │  (Playwright screenshots)             │
 │              │                                       │
 ├──────────────┴───────────────────────────────────────┤
@@ -78,6 +79,7 @@ Claude Code → transcript.jsonl → monitor-agent → SSE → Browser Dashboard
 
 - Node.js >= 18
 - An active Claude Code session
+- (Optional) Playwright MCP plugin for Browser View
 
 ## License
 
