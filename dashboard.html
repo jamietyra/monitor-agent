@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>monitor-agent</title>
+  <link href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #1e1e1e;
+      --bg-panel: #252526;
+      --bg-hover: #2a2d2e;
+      --text: #d4d4d4;
+      --text-dim: #858585;
+      --accent: #569cd6;
+      --green: #6a9955;
+      --yellow: #dcdcaa;
+      --red: #f44747;
+      --cyan: #4ec9b0;
+      --magenta: #c586c0;
+      --border: #3c3c3c;
+    }
+
+    body {
+      font-family: 'Cascadia Code', 'Fira Code', 'JetBrains Mono', 'Consolas', monospace;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ─── Header ─── */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 20px;
+      background: var(--bg-panel);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    header h1 {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--accent);
+    }
+
+    .stats {
+      display: flex;
+      gap: 16px;
+      font-size: 13px;
+    }
+
+    .stat-running { color: var(--yellow); }
+    .stat-done { color: var(--green); }
+    .stat-error { color: var(--red); }
+    .stat-time { color: var(--text-dim); }
+
+    /* ─── Main Layout ─── */
+    main {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* ─── Activity Feed (Left) ─── */
+    .activity-panel {
+      width: 550px;
+      min-width: 400px;
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+
+    .activity-panel h2 {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-dim);
+      padding: 6px 10px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .activity-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 2px 0;
+    }
+
+    .activity-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 2px 10px;
+      font-size: 11px;
+      cursor: pointer;
+      transition: background 0.1s;
+      line-height: 1.4;
+    }
+
+    .activity-item:hover { background: var(--bg-hover); }
+    .activity-item.active { background: var(--bg-hover); border-left: 2px solid var(--accent); }
+
+    .activity-icon { width: 12px; text-align: center; flex-shrink: 0; font-size: 10px; }
+    .icon-start { color: var(--yellow); }
+    .icon-done { color: var(--green); }
+    .icon-error { color: var(--red); }
+
+    .activity-time { color: var(--text-dim); font-size: 10px; flex-shrink: 0; }
+    .activity-project { color: var(--magenta); font-size: 9px; flex-shrink: 0; background: #333; padding: 0 4px; border-radius: 3px; }
+    .activity-name { color: var(--cyan); font-weight: 500; width: 75px; flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; }
+    .activity-target { color: var(--text-dim); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10px; }
+    .activity-duration { color: var(--magenta); font-size: 10px; flex-shrink: 0; }
+
+    /* ─── Content Panel (Right) ─── */
+    .content-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ─── Code Viewer ─── */
+    .code-viewer {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .code-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 14px;
+      background: var(--bg-panel);
+      border-bottom: 1px solid var(--border);
+      font-size: 12px;
+      flex-shrink: 0;
+    }
+
+    .code-filename { color: var(--accent); font-weight: 500; }
+    .code-info { color: var(--text-dim); }
+
+    .code-content {
+      flex: 1;
+      overflow: auto;
+      background: #1e1e1e;
+    }
+
+    .code-content pre {
+      margin: 0;
+      padding: 12px;
+      font-size: 13px;
+      line-height: 1.5;
+      tab-size: 2;
+    }
+
+    .code-content code {
+      font-family: inherit;
+    }
+
+    .code-placeholder {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: var(--text-dim);
+      font-size: 14px;
+    }
+
+    /* ─── Browser Viewer ─── */
+    .browser-viewer {
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+      max-height: 40%;
+      display: none;
+      flex-direction: column;
+    }
+
+    .browser-viewer.visible { display: flex; }
+
+    .browser-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 14px;
+      background: var(--bg-panel);
+      border-bottom: 1px solid var(--border);
+      font-size: 12px;
+      flex-shrink: 0;
+    }
+
+    .browser-header span { color: var(--magenta); font-weight: 500; }
+
+    .browser-content {
+      overflow: auto;
+      padding: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #111;
+    }
+
+    .browser-content img {
+      max-width: 100%;
+      max-height: 300px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+    }
+
+    /* ─── Footer ─── */
+    footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 20px;
+      background: var(--bg-panel);
+      border-top: 1px solid var(--border);
+      font-size: 11px;
+      color: var(--text-dim);
+      flex-shrink: 0;
+    }
+
+    .connection-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 6px;
+    }
+
+    .connected { background: var(--green); }
+    .disconnected { background: var(--red); }
+
+    /* ─── Scrollbar ─── */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>monitor-agent</h1>
+  <div class="stats">
+    <span class="stat-running" id="stat-running">실행중: 0</span>
+    <span class="stat-done" id="stat-done">완료: 0</span>
+    <span class="stat-error" id="stat-error">에러: 0</span>
+    <span class="stat-time" id="stat-time">경과: --:--</span>
+  </div>
+</header>
+
+<main>
+  <div class="activity-panel">
+    <h2>Activity Feed</h2>
+    <div class="activity-list" id="activity-list"></div>
+  </div>
+
+  <div class="content-panel">
+    <div class="code-viewer">
+      <div class="code-header">
+        <span class="code-filename" id="code-filename">파일을 선택하세요</span>
+        <span class="code-info" id="code-info"></span>
+      </div>
+      <div class="code-content" id="code-content">
+        <div class="code-placeholder">
+          Claude가 파일을 읽거나 수정하면 여기에 코드가 표시됩니다
+        </div>
+      </div>
+    </div>
+
+    <div class="browser-viewer" id="browser-viewer">
+      <div class="browser-header">
+        <span>Browser View</span>
+        <span class="code-info" id="screenshot-time"></span>
+      </div>
+      <div class="browser-content" id="browser-content">
+        <span style="color: var(--text-dim)">스크린샷 대기 중...</span>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div>
+    <span class="connection-dot disconnected" id="connection-dot"></span>
+    <span id="connection-status">연결 중...</span>
+  </div>
+  <span id="session-info"></span>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-javascript.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-typescript.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-jsx.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-tsx.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-python.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-csharp.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-json.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-css.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-bash.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-yaml.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-markdown.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-sql.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-go.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-rust.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/plugins/line-numbers/prism-line-numbers.min.js"></script>
+
+<script>
+(function() {
+  // ─── DOM 요소 ─────────────────────────────────────
+  const activityList = document.getElementById('activity-list');
+  const codeFilename = document.getElementById('code-filename');
+  const codeInfo = document.getElementById('code-info');
+  const codeContent = document.getElementById('code-content');
+  const browserViewer = document.getElementById('browser-viewer');
+  const browserContent = document.getElementById('browser-content');
+  const screenshotTime = document.getElementById('screenshot-time');
+  const connectionDot = document.getElementById('connection-dot');
+  const connectionStatus = document.getElementById('connection-status');
+  const sessionInfo = document.getElementById('session-info');
+
+  let sessionStart = null;
+  let elapsedTimer = null;
+
+  // ─── 시간 포맷 ────────────────────────────────────
+  function formatTime(isoStr) {
+    const d = new Date(isoStr);
+    return d.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+  }
+
+  function formatDuration(seconds) {
+    if (seconds < 1) return Math.round(seconds * 1000) + 'ms';
+    if (seconds < 60) return seconds.toFixed(1) + 's';
+    const m = Math.floor(seconds / 60);
+    const s = Math.round(seconds % 60);
+    return m + 'm ' + s + 's';
+  }
+
+  function formatElapsed(ms) {
+    const s = Math.floor(ms / 1000);
+    const m = Math.floor(s / 60);
+    const h = Math.floor(m / 60);
+    if (h > 0) return h + 'h ' + (m % 60) + 'm';
+    return m + 'm ' + (s % 60) + 's';
+  }
+
+  // ─── Activity Feed ────────────────────────────────
+  function addActivityItem(ev) {
+    const item = document.createElement('div');
+    item.className = 'activity-item';
+    if (ev.filePath) {
+      item.dataset.filePath = ev.filePath;
+      item.style.cursor = 'pointer';
+      item.onclick = function() {
+        displayCode._clickedEl = this;
+        requestFileContent(ev.filePath);
+      };
+    }
+
+    let icon, iconClass;
+    if (ev.type === 'tool_start') { icon = '\u25b6'; iconClass = 'icon-start'; }
+    else if (ev.type === 'tool_done') { icon = '\u2713'; iconClass = 'icon-done'; }
+    else if (ev.type === 'tool_error') { icon = '\u2717'; iconClass = 'icon-error'; }
+    else return;
+
+    const timeStr = ev.time ? formatTime(ev.time) : '';
+    const duration = ev.duration != null ? formatDuration(ev.duration) : '';
+    const target = ev.target || '';
+    const shortName = ev.name.length > 12 ? ev.name.slice(0, 12) : ev.name;
+
+    const projectTag = ev.project && ev.project !== 'IT' ? '<span class="activity-project">' + escapeHtml(ev.project) + '</span>' : '';
+
+    item.innerHTML = [
+      '<span class="activity-time">' + timeStr + '</span>',
+      '<span class="activity-icon ' + iconClass + '">' + icon + '</span>',
+      projectTag,
+      '<span class="activity-name">' + escapeHtml(shortName) + '</span>',
+      '<span class="activity-target">' + escapeHtml(target) + '</span>',
+      duration ? '<span class="activity-duration">' + duration + '</span>' : '',
+    ].join('');
+
+    activityList.appendChild(item);
+
+    // 자동 스크롤 (하단에 있을 때만)
+    const isNearBottom = activityList.scrollHeight - activityList.scrollTop - activityList.clientHeight < 80;
+    if (isNearBottom) {
+      activityList.scrollTop = activityList.scrollHeight;
+    }
+  }
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  // ─── Code Viewer ──────────────────────────────────
+  function displayCode(fileData) {
+    codeFilename.textContent = fileData.fileName;
+    let info = fileData.totalLines + '줄';
+    if (fileData.truncated) info += ' (1500줄까지 표시)';
+    codeInfo.textContent = info;
+
+    const pre = document.createElement('pre');
+    const code = document.createElement('code');
+    code.className = 'language-' + (fileData.language || 'plaintext');
+    code.textContent = fileData.content;
+    pre.appendChild(code);
+
+    codeContent.innerHTML = '';
+    codeContent.appendChild(pre);
+
+    // 500줄 이하만 하이라이트 (성능)
+    if (fileData.totalLines <= 500) {
+      Prism.highlightElement(code);
+    }
+
+    // 클릭된 항목만 강조 (clickedElement가 있을 때만)
+    document.querySelectorAll('.activity-item.active').forEach(el => el.classList.remove('active'));
+    if (displayCode._clickedEl) {
+      displayCode._clickedEl.classList.add('active');
+      displayCode._clickedEl = null;
+    }
+  }
+
+  const fileCache = new Map();
+
+  function requestFileContent(filePath) {
+    // 캐시에 있으면 즉시 표시
+    const cached = fileCache.get(filePath);
+    if (cached) { displayCode(cached); return; }
+
+    // 없으면 서버에 요청
+    fetch('/api/file?path=' + encodeURIComponent(filePath))
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data && data.content) {
+          fileCache.set(filePath, data);
+          displayCode(data);
+        }
+      })
+      .catch(() => {});
+  }
+
+  // ─── Browser Viewer ───────────────────────────────
+  function displayScreenshot(data) {
+    browserViewer.classList.add('visible');
+    screenshotTime.textContent = data.time ? formatTime(data.time) : '';
+    browserContent.innerHTML = '<img src="/screenshots/' + encodeURIComponent(data.fileName) + '?t=' + Date.now() + '" alt="Browser screenshot">';
+  }
+
+  // ─── Stats ────────────────────────────────────────
+  function updateStats(stats) {
+    document.getElementById('stat-running').textContent = '실행중: ' + (stats.running || 0);
+    document.getElementById('stat-done').textContent = '완료: ' + (stats.completed || 0);
+    document.getElementById('stat-error').textContent = '에러: ' + (stats.errors || 0);
+
+    if (stats.sessionStart && !sessionStart) {
+      sessionStart = new Date(stats.sessionStart);
+      if (!elapsedTimer) {
+        elapsedTimer = setInterval(() => {
+          const elapsed = Date.now() - sessionStart.getTime();
+          document.getElementById('stat-time').textContent = '경과: ' + formatElapsed(elapsed);
+        }, 1000);
+      }
+    }
+  }
+
+  // ─── SSE 연결 ─────────────────────────────────────
+  function connect() {
+    const es = new EventSource('/events');
+
+    es.onopen = () => {
+      connectionDot.className = 'connection-dot connected';
+      connectionStatus.textContent = '연결됨';
+    };
+
+    es.onerror = () => {
+      connectionDot.className = 'connection-dot disconnected';
+      connectionStatus.textContent = '재연결 중...';
+    };
+
+    // 초기 데이터
+    es.addEventListener('init', (e) => {
+      const data = JSON.parse(e.data);
+      sessionInfo.textContent = data.projects ? 'Projects: ' + data.projects.join(', ') : '';
+
+      // 최근 이벤트 표시
+      if (data.recentEvents) {
+        for (const ev of data.recentEvents) {
+          addActivityItem(ev);
+        }
+      }
+
+      if (data.stats) updateStats(data.stats);
+      activityList.scrollTop = activityList.scrollHeight;
+    });
+
+    // 실시간 활동
+    es.addEventListener('activity', (e) => {
+      const ev = JSON.parse(e.data);
+      addActivityItem(ev);
+    });
+
+    // 파일 콘텐츠
+    es.addEventListener('file_content', (e) => {
+      const fileData = JSON.parse(e.data);
+      fileCache.set(fileData.filePath, fileData);
+      displayCode(fileData);
+    });
+
+    // 스크린샷
+    es.addEventListener('screenshot', (e) => {
+      const data = JSON.parse(e.data);
+      displayScreenshot(data);
+    });
+
+    // 통계
+    es.addEventListener('stats', (e) => {
+      const stats = JSON.parse(e.data);
+      updateStats(stats);
+    });
+
+    return es;
+  }
+
+  connect();
+})();
+</script>
+
+</body>
+</html>
