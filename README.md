@@ -1,6 +1,6 @@
 # monitor-agent
 
-Real-time activity dashboard for [Claude Code](https://claude.ai/code). Watch tool calls and file changes as they happen.
+Real-time activity dashboard for [Claude Code](https://claude.ai/code). Watch tool calls, file changes, and code diffs as they happen.
 
 <p align="center">
   <img src="preview.svg" alt="monitor-agent dashboard preview" width="100%">
@@ -10,7 +10,9 @@ Real-time activity dashboard for [Claude Code](https://claude.ai/code). Watch to
 
 - **Activity Feed** — See every tool call (Read, Write, Edit, Bash, Grep, Agent...) in real-time with color-coded status
 - **Code Viewer** — Automatically displays file contents with syntax highlighting when Claude reads or edits files. Click any file entry to view its code.
+- **Diff Viewer** — When Claude edits a file, shows exactly what changed (red = removed, green = added)
 - **Multi-project** — Monitors all sub-projects under your working directory simultaneously
+- **Auto Session Detection** — Automatically detects new Claude Code sessions without restarting the server
 - **Zero dependencies** — Pure Node.js built-in modules only, no `npm install` needed
 
 ## Quick Start
@@ -49,6 +51,8 @@ Claude Code writes all activity to transcript JSONL files in `~/.claude/projects
 Claude Code → transcript.jsonl → monitor-agent → SSE → Browser Dashboard
 ```
 
+New sessions are automatically detected every 10 seconds, so you don't need to restart the server when starting a new Claude Code session.
+
 ## Dashboard Layout
 
 ```
@@ -59,9 +63,10 @@ Claude Code → transcript.jsonl → monitor-agent → SSE → Browser Dashboard
 │  Activity    │  Code Viewer                          │
 │  Feed        │  (syntax highlighted file contents)   │
 │              │                                       │
-│  ▶ Read ..   │                                       │
-│  ✓ Edit ..   │                                       │
-│  ▶ Bash ..   │                                       │
+│  ▶ Read ..   ├───────────────────────────────────────┤
+│  ✓ Edit ..   │  Diff Viewer                          │
+│  ▶ Bash ..   │  - old code (red)                     │
+│              │  + new code (green)                    │
 │              │                                       │
 ├──────────────┴───────────────────────────────────────┤
 │  Projects: my-app, sub-project                       │
