@@ -1,6 +1,8 @@
 # monitor-agent
 
-Real-time activity dashboard for [Claude Code](https://claude.ai/code). Watch tool calls, file changes, and code diffs as they happen.
+Real-time activity dashboard for [Claude Code](https://claude.ai/code). Watch prompts, tool calls, file changes, and code diffs as they happen.
+
+[한국어](README.ko.md)
 
 <p align="center">
   <img src="preview.svg" alt="monitor-agent dashboard preview" width="100%">
@@ -8,12 +10,17 @@ Real-time activity dashboard for [Claude Code](https://claude.ai/code). Watch to
 
 ## Features
 
-- **Activity Feed** — See every tool call (Read, Write, Edit, Bash, Grep, Agent...) in real-time with color-coded status
-- **Code Viewer** — Automatically displays file contents with syntax highlighting when Claude reads or edits files. Click any file entry to view its code.
-- **Diff Viewer** — When Claude edits a file, shows exactly what changed (red = removed, green = added)
-- **Multi-project** — Monitors all sub-projects under your working directory simultaneously
-- **Auto Session Detection** — Automatically detects new Claude Code sessions without restarting the server
-- **Zero dependencies** — Pure Node.js built-in modules only, no `npm install` needed
+- **Prompt-grouped Activity Feed** — Tool calls are grouped under the user prompt that triggered them, with collapsible groups
+- **Session Filter Buttons** — Auto-detected, color-coded pill buttons to filter by project (e.g. IT, TYDEV, TYINT)
+- **Search / Filter Bar** — Search across prompts, filenames, and commands
+- **Code Viewer** — Displays file contents with syntax highlighting when Claude reads or edits files
+- **Diff Viewer** — Click any past Edit item to review exactly what changed (red = removed, green = added)
+- **Assistant Text Responses** — Shown inline with a green dot indicator
+- **Panel Resize** — Drag the handle between panels to adjust layout
+- **Multi-session Support** — Loads all transcripts from the last 7 days across sub-projects
+- **25,555 Event Retention** — Keeps a rolling window of recent events in memory
+- **Auto Session Detection** — Detects new Claude Code sessions every 10 seconds without restart
+- **Zero Dependencies** — Pure Node.js built-in modules only, no `npm install` needed
 
 ## Quick Start
 
@@ -25,17 +32,13 @@ node server.mjs
 
 Then open **http://localhost:3456** in your browser.
 
-You can also use VS Code's built-in Simple Browser:
+### VS Code Tip
+
+Use VS Code's built-in Simple Browser for a side-by-side view:
+
 `Ctrl+Shift+P` → `Simple Browser: Show` → `http://localhost:3456`
 
-## Usage
-
-1. Start Claude Code in your project directory
-2. In a separate terminal, run `node server.mjs` from the monitor-agent folder
-3. Open `http://localhost:3456` in your browser
-4. The dashboard automatically detects your active Claude Code session and updates in real-time
-
-### Monitor a specific directory
+### Monitor a Specific Directory
 
 ```bash
 node server.mjs /path/to/your/project
@@ -48,7 +51,7 @@ By default, monitor-agent uses the current working directory to find Claude Code
 Claude Code writes all activity to transcript JSONL files in `~/.claude/projects/`. monitor-agent watches these files via polling (1s interval) and streams parsed events to your browser via Server-Sent Events (SSE).
 
 ```
-Claude Code → transcript.jsonl → monitor-agent → SSE → Browser Dashboard
+Claude Code → transcript.jsonl → monitor-agent (server.mjs) → SSE → Browser Dashboard
 ```
 
 New sessions are automatically detected every 10 seconds, so you don't need to restart the server when starting a new Claude Code session.
@@ -56,21 +59,30 @@ New sessions are automatically detected every 10 seconds, so you don't need to r
 ## Dashboard Layout
 
 ```
-┌──────────────────────────────────────────────────────┐
-│  monitor-agent              Running: 2  Done: 15     │
-├──────────────┬───────────────────────────────────────┤
-│              │                                       │
-│  Activity    │  Code Viewer                          │
-│  Feed        │  (syntax highlighted file contents)   │
-│              │                                       │
-│  ▶ Read ..   ├───────────────────────────────────────┤
-│  ✓ Edit ..   │  Diff Viewer                          │
-│  ▶ Bash ..   │  - old code (red)                     │
-│              │  + new code (green)                    │
-│              │                                       │
-├──────────────┴───────────────────────────────────────┤
-│  Projects: my-app, sub-project                       │
-└──────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────┐
+│  monitor-agent         실행중: 2  완료: 2472  에러: 188  │
+├──────────────────────────────────────────────────────────┤
+│  활동 피드                                               │
+│  [검색 (프롬프트, 파일명, 명령어...)]                    │
+│  [IT] [TYDEV] [TYINT]                                    │
+│                                                          │
+│  ▼ IT 17:13:57 사이즈 전체적으로 지금보다 10%...     [5] │
+│    17:19:25 ✓ Read dashboard.html  95ms                  │
+│    ● 완료. 활동 피드 목록 전체 10% 커짐.                 │
+│  ▶ IT 17:09:19 오른쪽 하단에 Projects 부분도...      [3] │
+│  ▶ TYINT 16:45:22 주문 통합 API 수정해줘...         [12] │
+│                                                          │
+├─ ─ ─ ─ ─ ─ ─ ─ ─ ─ drag to resize ─ ─ ─ ─ ─ ─ ─ ─ ─ ─┤
+│  Code Viewer: dashboard.html                    1007 줄  │
+│  (syntax highlighted file contents)                      │
+│                                                          │
+├──────────────────────────────────────────────────────────┤
+│  Diff: Edit dashboard.html                     17:20:14  │
+│  - old code (red)                                        │
+│  + new code (green)                                      │
+├──────────────────────────────────────────────────────────┤
+│  ● 연결됨                              이벤트: 2,662개  │
+└──────────────────────────────────────────────────────────┘
 ```
 
 ## Requirements
