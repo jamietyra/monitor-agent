@@ -11,14 +11,14 @@ Real-time activity dashboard for [Claude Code](https://claude.ai/code). Watch pr
 ## Features
 
 - **Prompt-grouped Activity Feed** — Tool calls are grouped under the user prompt that triggered them, with collapsible groups
-- **Session Filter Buttons** — Auto-detected, color-coded pill buttons to filter by project (e.g. IT, TYDEV, TYINT)
+- **Session Filter Buttons** — Auto-detected, color-coded pill buttons to filter by project (e.g. main, web-app, api-server)
 - **Search / Filter Bar** — Search across prompts, filenames, and commands
 - **Code Viewer** — Displays file contents with syntax highlighting when Claude reads or edits files
 - **Diff Viewer** — Click any past Edit item to review exactly what changed (red = removed, green = added)
 - **Assistant Text Responses** — Shown inline with a green dot indicator
 - **Panel Resize** — Drag the handle between panels to adjust layout
 - **Multi-session Support** — Loads all transcripts from the last 7 days across sub-projects
-- **25,555 Event Retention** — Keeps a rolling window of recent events in memory
+- **Long-term Event Retention** — Keeps a large rolling window of recent events in memory
 - **Auto Session Detection** — Detects new Claude Code sessions every 10 seconds without restart
 - **Zero Dependencies** — Pure Node.js built-in modules only, no `npm install` needed
 
@@ -64,13 +64,13 @@ New sessions are automatically detected every 10 seconds, so you don't need to r
 ├──────────────────────────────────────────────────────────┤
 │  활동 피드                                               │
 │  [검색 (프롬프트, 파일명, 명령어...)]                    │
-│  [IT] [TYDEV] [TYINT]                                    │
+│  [MAIN] [WEB-APP] [API-SERVER]                           │
 │                                                          │
-│  ▼ IT 17:13:57 사이즈 전체적으로 지금보다 10%...     [5] │
-│    17:19:25 ✓ Read dashboard.html  95ms                  │
-│    ● 완료. 활동 피드 목록 전체 10% 커짐.                 │
-│  ▶ IT 17:09:19 오른쪽 하단에 Projects 부분도...      [3] │
-│  ▶ TYINT 16:45:22 주문 통합 API 수정해줘...         [12] │
+│  ▼ MAIN 10:30 Increase font size by 10%             [5] │
+│    10:30:25 ✓ Read dashboard.html  95ms                  │
+│    ● Done. All list items scaled up 10%.                 │
+│  ▶ MAIN 10:15 Remove footer section                 [3] │
+│  ▶ API-SERVER 09:45 Fix order API endpoint          [12] │
 │                                                          │
 ├─ ─ ─ ─ ─ ─ ─ ─ ─ ─ drag to resize ─ ─ ─ ─ ─ ─ ─ ─ ─ ─┤
 │  Code Viewer: dashboard.html                    1007 줄  │
