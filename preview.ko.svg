@@ -1,238 +1,191 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 700" font-family="'Cascadia Code','Fira Code','JetBrains Mono','Consolas',monospace">
-  <defs><style></style></defs>
-  <!-- Background -->
-  <rect width="1200" height="700" fill="#1e1e1e" rx="8"/>
-  <g>
+  <defs>
+    <style>
+      .bg { fill: #1e1e1e; }
+      .panel { fill: #252526; }
+      .chrome-bg { fill: #202124; }
+      .chrome-addr { fill: #35363a; }
+      .border { stroke: #3c3c3c; stroke-width: 1; fill: none; }
+    </style>
+  </defs>
 
-  <!-- ══════════ Browser Chrome ══════════ -->
-  <rect width="1200" height="25" fill="#202124"/>
-  <rect x="0" y="17" width="1200" height="8" fill="#202124"/>
-  <!-- Active tab -->
-  <rect x="8" y="4" width="160" height="21" rx="6" fill="#1e1e1e"/>
-  <text x="30" y="18" font-size="10" fill="#d4d4d4">monitor-agent</text>
-  <text x="152" y="18" font-size="10" fill="#858585">×</text>
-  <text x="180" y="18" font-size="12" fill="#858585">+</text>
+  <!-- Background -->
+  <rect width="1200" height="700" class="bg" rx="8"/>
+
+  <!-- Chrome tab bar -->
+  <rect width="1200" height="36" class="chrome-bg" rx="8"/>
+  <rect y="28" width="1200" height="8" class="chrome-bg"/>
+  <rect x="80" y="8" width="200" height="28" rx="8" fill="#35363a"/>
+  <circle cx="96" cy="22" r="6" fill="#569cd6"/>
+  <text x="112" y="26" fill="#d4d4d4" font-size="11">monitor-agent</text>
+  <text x="264" y="26" fill="#858585" font-size="11">x</text>
+  <circle cx="1140" cy="18" r="6" fill="#858585" opacity="0.4"/>
+  <circle cx="1160" cy="18" r="6" fill="#858585" opacity="0.4"/>
+  <circle cx="1180" cy="18" r="6" fill="#858585" opacity="0.4"/>
 
   <!-- Address bar -->
-  <rect x="0" y="25" width="1200" height="23" fill="#35363a"/>
-  <rect x="200" y="29" width="500" height="15" rx="7" fill="#292b2e"/>
-  <text x="450" y="40" text-anchor="middle" font-size="10" fill="#d4d4d4">localhost:3456</text>
+  <rect y="36" width="1200" height="30" class="chrome-bg"/>
+  <rect x="80" y="42" width="1040" height="18" class="chrome-addr" rx="9"/>
+  <text x="100" y="55" fill="#858585" font-size="10">localhost:3000</text>
 
-  <!-- ══════════ Header Bar ══════════ -->
-  <rect x="0" y="48" width="1200" height="30" fill="#252526"/>
-  <line x1="0" y1="78" x2="1200" y2="78" stroke="#3c3c3c"/>
-  <text x="16" y="68" font-size="14" font-weight="600" fill="#569cd6">monitor-agent</text>
-  <!-- Stats -->
-  <text x="720" y="68" font-size="11" fill="#858585">실행중:</text>
-  <text x="775" y="68" font-size="11" fill="#dcdcaa"> 2</text>
-  <text x="810" y="68" font-size="11" fill="#858585">완료:</text>
-  <text x="850" y="68" font-size="11" fill="#6a9955"> 847</text>
-  <text x="900" y="68" font-size="11" fill="#858585">에러:</text>
-  <text x="942" y="68" font-size="11" fill="#f44747"> 3</text>
-  <text x="990" y="68" font-size="11" fill="#858585">경과:</text>
-  <text x="1035" y="68" font-size="11" fill="#858585"> 2h 15m</text>
+  <!-- Header bar -->
+  <rect y="66" width="1200" height="34" class="panel"/>
+  <rect y="100" width="1200" height="1" fill="#3c3c3c"/>
+  <text x="16" y="88" fill="#569cd6" font-size="14" font-weight="bold">monitor-agent</text>
+  <text x="720" y="88" fill="#858585" font-size="11">실행중:</text>
+  <text x="780" y="88" fill="#4ec9b0" font-size="11" font-weight="bold">2</text>
+  <text x="815" y="88" fill="#858585" font-size="11">완료:</text>
+  <text x="858" y="88" fill="#d4d4d4" font-size="11" font-weight="bold">847</text>
+  <text x="906" y="88" fill="#858585" font-size="11">에러:</text>
+  <text x="950" y="88" fill="#f44747" font-size="11" font-weight="bold">3</text>
+  <text x="990" y="88" fill="#858585" font-size="11">경과:</text>
+  <text x="1038" y="88" fill="#858585" font-size="11">4h 23m</text>
 
-  <!-- ══════════ Feeds Panel (Top ~55%) ══════════ -->
-  <rect x="0" y="78" width="1200" height="340" fill="#1e1e1e"/>
+  <!-- Feeds section -->
+  <rect y="101" width="1200" height="20" class="panel"/>
+  <rect y="121" width="1200" height="1" fill="#3c3c3c"/>
+  <text x="14" y="116" fill="#4ec9b0" font-size="11" font-weight="bold" letter-spacing="0.5">FEEDS</text>
 
-  <!-- Section Header: FEEDS -->
-  <rect x="0" y="78" width="1200" height="20" fill="#252526"/>
-  <line x1="0" y1="98" x2="1200" y2="98" stroke="#3c3c3c"/>
-  <text x="14" y="93" font-size="11" fill="#4ec9b0" font-weight="600" letter-spacing="0.5">FEEDS</text>
+  <!-- Search bar -->
+  <rect x="14" y="128" width="1172" height="24" rx="4" fill="#3c3c3c"/>
+  <rect x="15" y="129" width="1170" height="22" rx="3" class="bg"/>
+  <text x="28" y="144" fill="#585858" font-size="10">검색 (프롬프트, 파일명, 명령어...)</text>
 
-  <!-- Search Bar -->
-  <rect x="14" y="106" width="1172" height="26" rx="4" fill="#3c3c3c"/>
-  <rect x="15" y="107" width="1170" height="24" rx="3" fill="#1e1e1e"/>
-  <text x="28" y="123" font-size="10" fill="#585858">검색 (프롬프트, 파일명, 명령어...)</text>
+  <!-- Session filter buttons -->
+  <rect x="14" y="160" width="50" height="20" rx="10" fill="#333"/>
+  <text x="22" y="174" fill="#d4d4d4" font-size="10">&#9654; 전체</text>
+  <line x1="72" y1="162" x2="72" y2="178" stroke="#3c3c3c"/>
+  <rect x="82" y="160" width="50" height="20" rx="10" fill="#1a3a5c"/>
+  <text x="107" y="174" text-anchor="middle" fill="#569cd6" font-size="10">MAIN</text>
+  <rect x="140" y="160" width="50" height="20" rx="10" fill="#2d1a3c"/>
+  <text x="165" y="174" text-anchor="middle" fill="#c586c0" font-size="10">웹앱</text>
+  <rect x="198" y="160" width="70" height="20" rx="10" fill="#1a3c2d"/>
+  <text x="233" y="174" text-anchor="middle" fill="#4ec9b0" font-size="10">API서버</text>
 
-  <!-- Session Filter Buttons -->
-  <!-- "All" toggle button -->
-  <rect x="14" y="140" width="42" height="20" rx="10" fill="#333"/>
-  <text x="22" y="154" font-size="10" fill="#d4d4d4">▶ All</text>
-  <!-- Divider -->
-  <line x1="64" y1="142" x2="64" y2="158" stroke="#3c3c3c" stroke-width="1"/>
-  <!-- MAIN -->
-  <rect x="74" y="140" width="50" height="20" rx="10" fill="#1a3a5c"/>
-  <text x="99" y="154" text-anchor="middle" font-size="10" fill="#569cd6">MAIN</text>
-  <!-- 웹앱 -->
-  <rect x="132" y="140" width="58" height="20" rx="10" fill="#2d1a3c"/>
-  <text x="161" y="154" text-anchor="middle" font-size="10" fill="#c586c0">웹앱</text>
-  <!-- API서버 -->
-  <rect x="198" y="140" width="70" height="20" rx="10" fill="#1a3c2d"/>
-  <text x="233" y="154" text-anchor="middle" font-size="10" fill="#4ec9b0">API서버</text>
+  <!-- Expanded prompt group -->
+  <rect x="8" y="190" width="1184" height="22" rx="3" fill="#2a2d2e"/>
+  <text x="16" y="205" fill="#858585" font-size="10">&#9660;</text>
+  <rect x="32" y="193" width="38" height="16" rx="8" fill="#1a3a5c"/>
+  <text x="51" y="205" text-anchor="middle" fill="#569cd6" font-size="9">MAIN</text>
+  <text x="78" y="205" fill="#858585" font-size="10">10:30</text>
+  <text x="126" y="205" fill="#d4d4d4" font-size="10">모든 패널의 폰트 크기를 10% 키워줘.</text>
+  <rect x="1158" y="193" width="24" height="16" rx="8" fill="#3c3c3c"/>
+  <text x="1170" y="205" text-anchor="middle" fill="#d4d4d4" font-size="9">5</text>
 
-  <!-- ── Prompt Group 1: Expanded ── -->
-  <rect x="8" y="170" width="1184" height="22" rx="3" fill="#2a2d2e"/>
-  <!-- Expand arrow -->
-  <text x="16" y="185" font-size="10" fill="#858585">▼</text>
-  <!-- Session tag: MAIN -->
-  <rect x="30" y="173" width="38" height="16" rx="8" fill="#1a3a5c"/>
-  <text x="49" y="185" text-anchor="middle" font-size="9" fill="#569cd6">MAIN</text>
-  <!-- Timestamp -->
-  <text x="76" y="185" font-size="10" fill="#858585">10:30:42</text>
-  <!-- Prompt text -->
-  <text x="140" y="185" font-size="10" fill="#d4d4d4">글씨 크기를 전체적으로 10% 키워줘.</text>
-  <!-- Tool count badge -->
-  <rect x="1160" y="173" width="22" height="16" rx="8" fill="#3c3c3c"/>
-  <text x="1171" y="185" text-anchor="middle" font-size="9" fill="#d4d4d4">5</text>
+  <!-- Tool sub-items -->
+  <text x="48" y="224" fill="#4ec9b0" font-size="10">&#10003;</text>
+  <text x="62" y="224" fill="#858585" font-size="10">Read dashboard/style.css</text>
+  <text x="48" y="240" fill="#4ec9b0" font-size="10">&#10003;</text>
+  <text x="62" y="240" fill="#858585" font-size="10">Edit dashboard/style.css (12 changes)</text>
+  <text x="48" y="256" fill="#4ec9b0" font-size="10">&#10003;</text>
+  <text x="62" y="256" fill="#858585" font-size="10">Read dashboard/viewer.js</text>
+  <text x="48" y="272" fill="#4ec9b0" font-size="10">&#10003;</text>
+  <text x="62" y="272" fill="#858585" font-size="10">Edit dashboard/viewer.js</text>
 
-  <!-- Sub-item 1: Read tool -->
-  <text x="46" y="207" font-size="10" fill="#858585">10:30:25</text>
-  <text x="108" y="207" font-size="10" fill="#6a9955">✓</text>
-  <text x="120" y="207" font-size="10" fill="#4ec9b0">Read</text>
-  <text x="160" y="207" font-size="10" fill="#d4d4d4">dashboard/style.css</text>
-  <text x="340" y="207" font-size="10" fill="#858585">10:30:36</text>
-  <text x="410" y="207" font-size="10" fill="#c586c0">95ms</text>
+  <!-- Assistant response -->
+  <circle cx="54" cy="288" r="4" fill="#6a9955"/>
+  <text x="66" y="292" fill="#6a9955" font-size="10">완료. 전체 패널 폰트 크기 10% 증가.</text>
 
-  <!-- Sub-item 2: Edit tool -->
-  <text x="46" y="224" font-size="10" fill="#858585">10:30:37</text>
-  <text x="108" y="224" font-size="10" fill="#6a9955">✓</text>
-  <text x="120" y="224" font-size="10" fill="#4ec9b0">Edit</text>
-  <text x="160" y="224" font-size="10" fill="#d4d4d4">dashboard/style.css</text>
-  <text x="340" y="224" font-size="10" fill="#858585">10:30:48</text>
-  <text x="410" y="224" font-size="10" fill="#c586c0">210ms</text>
+  <!-- Collapsed prompt group 2 -->
+  <rect x="8" y="304" width="1184" height="22" rx="3" fill="#2a2d2e"/>
+  <text x="16" y="319" fill="#858585" font-size="10">&#9654;</text>
+  <rect x="32" y="307" width="38" height="16" rx="8" fill="#1a3a5c"/>
+  <text x="51" y="319" text-anchor="middle" fill="#569cd6" font-size="9">MAIN</text>
+  <text x="78" y="319" fill="#858585" font-size="10">10:15</text>
+  <text x="126" y="319" fill="#d4d4d4" font-size="10">헤더에 다크모드 토글 버튼 추가해줘.</text>
+  <rect x="1158" y="307" width="24" height="16" rx="8" fill="#3c3c3c"/>
+  <text x="1170" y="319" text-anchor="middle" fill="#d4d4d4" font-size="9">3</text>
 
-  <!-- Sub-item 3: Read tool -->
-  <text x="46" y="241" font-size="10" fill="#858585">10:30:49</text>
-  <text x="108" y="241" font-size="10" fill="#6a9955">✓</text>
-  <text x="120" y="241" font-size="10" fill="#4ec9b0">Read</text>
-  <text x="160" y="241" font-size="10" fill="#d4d4d4">dashboard/viewer.js</text>
-  <text x="340" y="241" font-size="10" fill="#858585">10:30:50</text>
-  <text x="410" y="241" font-size="10" fill="#c586c0">42ms</text>
+  <!-- Collapsed prompt group 3 -->
+  <rect x="8" y="334" width="1184" height="22" rx="3" fill="#2a2d2e"/>
+  <text x="16" y="349" fill="#858585" font-size="10">&#9654;</text>
+  <rect x="32" y="337" width="64" height="16" rx="8" fill="#1a3c2d"/>
+  <text x="64" y="349" text-anchor="middle" fill="#4ec9b0" font-size="9">API서버</text>
+  <text x="104" y="349" fill="#858585" font-size="10">09:45</text>
+  <text x="152" y="349" fill="#d4d4d4" font-size="10">JWT 인증 미들웨어 리팩토링해줘.</text>
+  <rect x="1152" y="337" width="30" height="16" rx="8" fill="#3c3c3c"/>
+  <text x="1167" y="349" text-anchor="middle" fill="#d4d4d4" font-size="9">12</text>
 
-  <!-- Sub-item 4: Edit tool -->
-  <text x="46" y="258" font-size="10" fill="#858585">10:31:01</text>
-  <text x="108" y="258" font-size="10" fill="#6a9955">✓</text>
-  <text x="120" y="258" font-size="10" fill="#4ec9b0">Edit</text>
-  <text x="160" y="258" font-size="10" fill="#d4d4d4">dashboard/viewer.js</text>
-  <text x="340" y="258" font-size="10" fill="#858585">10:31:14</text>
-  <text x="410" y="258" font-size="10" fill="#c586c0">185ms</text>
+  <!-- Resize handle -->
+  <line x1="0" y1="380" x2="1200" y2="380" stroke="#569cd6" stroke-width="2" opacity="0.6"/>
+  <rect x="580" y="377" width="40" height="6" rx="3" fill="#569cd6" opacity="0.5"/>
 
-  <!-- Sub-item 5: Assistant text response (green dot) -->
-  <circle cx="52" cy="274" r="4" fill="#6a9955"/>
-  <text x="64" y="278" font-size="10" fill="#6a9955">완료. 목록 전체 크기 10% 커짐.</text>
+  <!-- Code Viewer (left) -->
+  <rect y="386" width="599" height="280" class="bg"/>
+  <rect y="386" width="599" height="18" class="panel"/>
+  <line x1="0" y1="404" x2="599" y2="404" stroke="#3c3c3c"/>
+  <text x="14" y="399" fill="#569cd6" font-size="10" font-weight="bold">Code Viewer</text>
+  <text x="130" y="399" fill="#858585" font-size="10">style.css</text>
+  <text x="300" y="399" fill="#858585" font-size="10">248 lines</text>
 
-  <!-- ── Prompt Group 2: Collapsed ── -->
-  <rect x="8" y="292" width="1184" height="22" rx="3" fill="#2a2d2e"/>
-  <text x="16" y="307" font-size="10" fill="#858585">▶</text>
-  <rect x="30" y="295" width="38" height="16" rx="8" fill="#1a3a5c"/>
-  <text x="49" y="307" text-anchor="middle" font-size="9" fill="#569cd6">MAIN</text>
-  <text x="76" y="307" font-size="10" fill="#858585">10:15:03</text>
-  <text x="140" y="307" font-size="10" fill="#d4d4d4">하단 섹션 제거하고 이벤트 수 표시해줘</text>
-  <rect x="1160" y="295" width="22" height="16" rx="8" fill="#3c3c3c"/>
-  <text x="1171" y="307" text-anchor="middle" font-size="9" fill="#d4d4d4">3</text>
+  <!-- Line number gutter -->
+  <rect y="404" width="36" height="262" fill="#1a1a1a"/>
 
-  <!-- ── Prompt Group 3: Collapsed ── -->
-  <rect x="8" y="322" width="1184" height="22" rx="3" fill="#2a2d2e"/>
-  <text x="16" y="337" font-size="10" fill="#858585">▶</text>
-  <rect x="30" y="325" width="58" height="16" rx="8" fill="#1a3c2d"/>
-  <text x="59" y="337" text-anchor="middle" font-size="9" fill="#4ec9b0">API서버</text>
-  <text x="96" y="337" font-size="10" fill="#858585">09:45:11</text>
-  <text x="160" y="337" font-size="10" fill="#d4d4d4">주문 API 상태 매핑 수정해줘</text>
-  <rect x="1154" y="325" width="28" height="16" rx="8" fill="#3c3c3c"/>
-  <text x="1168" y="337" text-anchor="middle" font-size="9" fill="#d4d4d4">12</text>
+  <!-- Code lines with syntax colors -->
+  <text x="30" y="420" text-anchor="end" fill="#585858" font-size="10">14</text>
+  <text x="42" y="420" font-size="10"><tspan fill="#d7ba7d">.feed-panel</tspan><tspan fill="#d4d4d4"> {</tspan></text>
 
-  <!-- Activity scrollbar track -->
-  <rect x="1193" y="170" width="4" height="180" rx="2" fill="#2a2a2a"/>
-  <rect x="1193" y="170" width="4" height="60" rx="2" fill="#555"/>
+  <text x="30" y="436" text-anchor="end" fill="#585858" font-size="10">15</text>
+  <text x="52" y="436" font-size="10"><tspan fill="#9cdcfe">font-size</tspan><tspan fill="#d4d4d4">: </tspan><tspan fill="#b5cea8">14</tspan><tspan fill="#ce9178">px</tspan><tspan fill="#d4d4d4">;</tspan></text>
 
-  <!-- ══════════ Resize Handle ══════════ -->
-  <line x1="0" y1="418" x2="1200" y2="418" stroke="#569cd6" stroke-width="2" opacity="0.6"/>
-  <rect x="580" y="415" width="40" height="6" rx="3" fill="#569cd6" opacity="0.5"/>
+  <text x="30" y="452" text-anchor="end" fill="#585858" font-size="10">16</text>
+  <text x="52" y="452" font-size="10"><tspan fill="#9cdcfe">line-height</tspan><tspan fill="#d4d4d4">: </tspan><tspan fill="#b5cea8">1.6</tspan><tspan fill="#d4d4d4">;</tspan></text>
 
-  <!-- ══════════ Bottom Split: Code Viewer (left) | Diff Viewer (right) ══════════ -->
-  <rect x="0" y="424" width="1200" height="248" fill="#1e1e1e"/>
+  <text x="30" y="468" text-anchor="end" fill="#585858" font-size="10">17</text>
+  <text x="52" y="468" font-size="10"><tspan fill="#9cdcfe">color</tspan><tspan fill="#d4d4d4">: </tspan><tspan fill="#ce9178">#d4d4d4</tspan><tspan fill="#d4d4d4">;</tspan></text>
 
-  <!-- ── Code Viewer (Left Half) ── -->
-  <rect x="0" y="424" width="600" height="248" fill="#1e1e1e"/>
+  <text x="30" y="484" text-anchor="end" fill="#585858" font-size="10">18</text>
+  <text x="52" y="484" font-size="10"><tspan fill="#9cdcfe">padding</tspan><tspan fill="#d4d4d4">: </tspan><tspan fill="#b5cea8">12</tspan><tspan fill="#ce9178">px</tspan><tspan fill="#d4d4d4">;</tspan></text>
 
-  <!-- Code Header -->
-  <rect x="0" y="424" width="600" height="18" fill="#252526"/>
-  <line x1="0" y1="442" x2="600" y2="442" stroke="#3c3c3c"/>
-  <text x="14" y="438" font-size="10" fill="#569cd6" font-weight="500">dashboard/style.css</text>
-  <text x="586" y="438" font-size="10" fill="#858585" text-anchor="end">248 lines</text>
+  <text x="30" y="500" text-anchor="end" fill="#585858" font-size="10">19</text>
+  <text x="42" y="500" font-size="10"><tspan fill="#d7ba7d">}</tspan></text>
 
-  <!-- Code Content: CSS with syntax highlighting -->
-  <!-- Line numbers gutter -->
-  <rect x="0" y="442" width="36" height="230" fill="#1a1a1a"/>
+  <text x="30" y="516" text-anchor="end" fill="#585858" font-size="10">20</text>
 
-  <!-- Line 1: .activity-panel { -->
-  <text x="30" y="458" font-size="10" fill="#585858" text-anchor="end">41</text>
-  <text x="42" y="458" font-size="10" fill="#d4d4d4"><tspan fill="#d7ba7d">.activity-panel</tspan> {</text>
-  <!-- Line 2: height: 55%; min-height: 120px; -->
-  <text x="30" y="474" font-size="10" fill="#585858" text-anchor="end">42</text>
-  <text x="52" y="474" font-size="10" fill="#d4d4d4"><tspan fill="#9cdcfe">height</tspan>: <tspan fill="#ce9178">55%</tspan>; <tspan fill="#9cdcfe">min-height</tspan>: <tspan fill="#ce9178">120px</tspan>;</text>
-  <!-- Line 3: border-bottom: 1px solid var(--border); -->
-  <text x="30" y="490" font-size="10" fill="#585858" text-anchor="end">43</text>
-  <text x="52" y="490" font-size="10" fill="#d4d4d4"><tspan fill="#9cdcfe">border-bottom</tspan>: <tspan fill="#ce9178">1px</tspan> <tspan fill="#ce9178">solid</tspan> <tspan fill="#dcdcaa">var</tspan>(<tspan fill="#9cdcfe">--border</tspan>);</text>
-  <!-- Line 4: display: flex; -->
-  <text x="30" y="506" font-size="10" fill="#585858" text-anchor="end">44</text>
-  <text x="52" y="506" font-size="10" fill="#d4d4d4"><tspan fill="#9cdcfe">display</tspan>: <tspan fill="#ce9178">flex</tspan>;</text>
-  <!-- Line 5: } -->
-  <text x="30" y="522" font-size="10" fill="#585858" text-anchor="end">45</text>
-  <text x="42" y="522" font-size="10" fill="#d4d4d4">}</text>
-  <!-- Line 6: blank -->
-  <text x="30" y="538" font-size="10" fill="#585858" text-anchor="end">46</text>
-  <!-- Line 7: .code-viewer { -->
-  <text x="30" y="554" font-size="10" fill="#585858" text-anchor="end">47</text>
-  <text x="42" y="554" font-size="10" fill="#d4d4d4"><tspan fill="#d7ba7d">.code-viewer</tspan> {</text>
-  <!-- Line 8: flex: 1; -->
-  <text x="30" y="570" font-size="10" fill="#585858" text-anchor="end">48</text>
-  <text x="52" y="570" font-size="10" fill="#d4d4d4"><tspan fill="#9cdcfe">flex</tspan>: <tspan fill="#b5cea8">1</tspan>;</text>
-  <!-- Line 9: overflow-y: auto; -->
-  <text x="30" y="586" font-size="10" fill="#585858" text-anchor="end">49</text>
-  <text x="52" y="586" font-size="10" fill="#d4d4d4"><tspan fill="#9cdcfe">overflow-y</tspan>: <tspan fill="#ce9178">auto</tspan>;</text>
-  <!-- Line 10: } -->
-  <text x="30" y="602" font-size="10" fill="#585858" text-anchor="end">50</text>
-  <text x="42" y="602" font-size="10" fill="#d4d4d4">}</text>
+  <text x="30" y="532" text-anchor="end" fill="#585858" font-size="10">21</text>
+  <text x="42" y="532" font-size="10"><tspan fill="#d7ba7d">.header</tspan><tspan fill="#d4d4d4"> {</tspan></text>
 
-  <!-- Code scrollbar -->
-  <rect x="593" y="442" width="4" height="230" rx="2" fill="#2a2a2a"/>
-  <rect x="593" y="442" width="4" height="40" rx="2" fill="#555"/>
+  <text x="30" y="548" text-anchor="end" fill="#585858" font-size="10">22</text>
+  <text x="52" y="548" font-size="10"><tspan fill="#9cdcfe">display</tspan><tspan fill="#d4d4d4">: </tspan><tspan fill="#ce9178">flex</tspan><tspan fill="#d4d4d4">;</tspan></text>
 
-  <!-- ── Vertical Divider between Code and Diff ── -->
-  <line x1="600" y1="424" x2="600" y2="672" stroke="#3c3c3c" stroke-width="1"/>
+  <text x="30" y="564" text-anchor="end" fill="#585858" font-size="10">23</text>
+  <text x="52" y="564" font-size="10"><tspan fill="#9cdcfe">align-items</tspan><tspan fill="#d4d4d4">: </tspan><tspan fill="#ce9178">center</tspan><tspan fill="#d4d4d4">;</tspan></text>
 
-  <!-- ── Diff Viewer (Right Half) ── -->
-  <rect x="600" y="424" width="600" height="248" fill="#1e1e1e"/>
+  <text x="30" y="580" text-anchor="end" fill="#585858" font-size="10">24</text>
+  <text x="42" y="580" font-size="10"><tspan fill="#d7ba7d">}</tspan></text>
 
-  <!-- Diff Header -->
-  <rect x="600" y="424" width="600" height="18" fill="#252526"/>
-  <line x1="600" y1="442" x2="1200" y2="442" stroke="#3c3c3c"/>
-  <text x="614" y="438" font-size="10" fill="#569cd6" font-weight="500">Edit: dashboard/style.css</text>
-  <text x="1186" y="438" font-size="10" fill="#858585" text-anchor="end">10:30:48</text>
+  <!-- Vertical divider -->
+  <line x1="599" y1="386" x2="599" y2="666" stroke="#3c3c3c"/>
 
-  <!-- Diff Content -->
-  <!-- Context line -->
-  <text x="614" y="458" font-size="10" fill="#858585">  .activity-panel {</text>
+  <!-- Diff Viewer (right) -->
+  <rect x="600" y="386" width="600" height="280" class="bg"/>
+  <rect x="600" y="386" width="600" height="18" class="panel"/>
+  <line x1="600" y1="404" x2="1200" y2="404" stroke="#3c3c3c"/>
+  <text x="614" y="399" fill="#569cd6" font-size="10" font-weight="bold">Diff Viewer</text>
+  <text x="740" y="399" fill="#858585" font-size="10">Edit: style.css</text>
+  <text x="1186" y="399" text-anchor="end" fill="#858585" font-size="10">10:30</text>
 
-  <!-- Deleted line (red) -->
-  <rect x="600" y="462" width="600" height="16" fill="#2d1515"/>
-  <text x="614" y="474" font-size="10" fill="#f44747">-   height: 35%; min-height: 120px;</text>
+  <!-- Diff: context -->
+  <text x="614" y="420" fill="#858585" font-size="10">  .feed-panel {</text>
 
-  <!-- Added line (green) -->
-  <rect x="600" y="478" width="600" height="16" fill="#1d2d1d"/>
-  <text x="614" y="490" font-size="10" fill="#6a9955">+   height: 55%; min-height: 120px;</text>
+  <!-- Diff: deleted (red) -->
+  <rect x="600" y="424" width="600" height="16" fill="#f44747" opacity="0.1"/>
+  <text x="614" y="436" fill="#f44747" font-size="10">-   font-size: 12px;</text>
 
-  <!-- Context lines -->
-  <text x="614" y="510" font-size="10" fill="#858585">    border-bottom: 1px solid var(--border);</text>
-  <text x="614" y="526" font-size="10" fill="#858585">    display: flex;</text>
-  <text x="614" y="542" font-size="10" fill="#858585">    flex-direction: column;</text>
-  <text x="614" y="558" font-size="10" fill="#858585">    flex-shrink: 0;</text>
-  <text x="614" y="574" font-size="10" fill="#858585">  }</text>
+  <!-- Diff: added (green) -->
+  <rect x="600" y="440" width="600" height="16" fill="#6a9955" opacity="0.1"/>
+  <text x="614" y="452" fill="#6a9955" font-size="10">+   font-size: 14px;</text>
 
-  <!-- Diff scrollbar -->
-  <rect x="1193" y="442" width="4" height="230" rx="2" fill="#2a2a2a"/>
-  <rect x="1193" y="442" width="4" height="50" rx="2" fill="#555"/>
+  <!-- Diff: context lines -->
+  <text x="614" y="468" fill="#858585" font-size="10">    line-height: 1.6;</text>
+  <text x="614" y="484" fill="#858585" font-size="10">    color: #d4d4d4;</text>
+  <text x="614" y="500" fill="#858585" font-size="10">    padding: 12px;</text>
+  <text x="614" y="516" fill="#858585" font-size="10">  }</text>
 
-  <!-- ══════════ Footer ══════════ -->
-  <rect x="0" y="672" width="1200" height="28" fill="#252526"/>
-  <line x1="0" y1="672" x2="1200" y2="672" stroke="#3c3c3c"/>
-  <!-- Connected status -->
-  <circle cx="16" cy="688" r="4" fill="#6a9955"/>
-  <text x="26" y="692" font-size="10" fill="#858585">Connected</text>
-  <!-- Action count -->
-  <text x="1186" y="692" font-size="10" fill="#858585" text-anchor="end">Actions: 2,662</text>
-
-  </g>
+  <!-- Footer -->
+  <rect y="666" width="1200" height="34" class="panel"/>
+  <rect y="666" width="1200" height="1" fill="#3c3c3c"/>
+  <circle cx="20" cy="684" r="4" fill="#4ec9b0"/>
+  <text x="30" y="688" fill="#858585" font-size="10">Connected</text>
+  <text x="1186" y="688" text-anchor="end" fill="#858585" font-size="10">Actions: 2,662</text>
 </svg>
