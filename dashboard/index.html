@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>monitor-agent</title>
+  <link href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <h1>monitor-agent</h1>
+  <div class="stats">
+    <span class="stat-running" id="stat-running">Running: 0</span>
+    <span class="stat-done" id="stat-done">Done: 0</span>
+    <span class="stat-error" id="stat-error">Errors: 0</span>
+    <span class="stat-time" id="stat-time">Elapsed: --:--</span>
+  </div>
+</header>
+
+<main>
+  <div class="activity-panel">
+    <h2>Feeds</h2>
+    <div class="activity-search"><input type="text" id="activity-search" placeholder="Search (prompts, files, commands...)"></div>
+    <div class="session-filters" id="session-filters">
+      <button class="fold-btn" id="toggle-all" title="Expand/Collapse all">▶ All</button>
+      <div class="fold-divider"></div>
+    </div>
+    <div class="activity-list" id="activity-list"></div>
+  </div>
+
+  <div class="resize-handle" id="resize-activity"></div>
+  <div class="content-panel">
+    <div class="code-viewer">
+      <div class="code-header">
+        <span class="code-filename" id="code-filename">Select a file</span>
+        <span class="code-info" id="code-info"></span>
+      </div>
+      <div class="code-content" id="code-content">
+        <div class="code-placeholder">
+          <span class="code-placeholder-icon">{ }</span>
+          Click a file in Feeds to view its code
+          <span class="code-placeholder-sub">Click any Read, Write, or Edit item</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="diff-panel" id="diff-panel">
+      <div class="diff-header">
+        <span id="diff-filename">Diff</span>
+        <span class="code-info" id="diff-time"></span>
+      </div>
+      <div class="diff-content" id="diff-content"><span style="color: var(--text-dim)">Click an Edit item to see changes</span></div>
+    </div>
+
+    <div class="browser-viewer" id="browser-viewer">
+      <div class="browser-header">
+        <span>Browser View</span>
+        <span class="code-info" id="screenshot-time"></span>
+      </div>
+      <div class="browser-content" id="browser-content">
+        <span style="color: var(--text-dim)">Waiting for screenshot...</span>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div>
+    <span class="connection-dot disconnected" id="connection-dot"></span>
+    <span id="connection-status">Connecting...</span>
+  </div>
+  <span id="event-count" style="color: var(--text-dim); font-size: var(--text-xs);"></span>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-javascript.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-typescript.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-jsx.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-tsx.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-python.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-csharp.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-json.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-css.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-bash.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-yaml.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-markdown.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-sql.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-go.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-rust.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/plugins/line-numbers/prism-line-numbers.min.js"></script>
+<script src="feed.js"></script>
+<script src="viewer.js"></script>
+<script src="connection.js"></script>
+
+</body>
+</html>

@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /**
  * monitor-agent Server
- * Claude Code 실시간 활동 대시보드 — http://localhost:3456
+ * Real-time activity dashboard for Claude Code — http://localhost:3456
  *
- * 사용법: node dashboard-server.mjs
+ * Usage: node server.mjs
  */
 
 import http from 'node:http';
@@ -13,10 +13,26 @@ import os from 'node:os';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const PORT = 3456;
+const PORT = parseInt(process.env.MONITOR_PORT || '3456');
 const MAX_FILE_LINES = 1500;
 const DEBOUNCE_MS = 100;
 const HEARTBEAT_MS = 30000;
+
+// ─── Remote access mode ────────────────────────────────────
+const REMOTE = process.env.MONITOR_REMOTE === 'true';
+const TOKEN = process.env.MONITOR_TOKEN || '';
+const HOST = REMOTE ? '0.0.0.0' : '127.0.0.1';
+
+function authenticate(req, res) {
+  if (!TOKEN) return true; // no token = no auth required
+  const url = new URL(req.url, `http://localhost:${PORT}`);
+  const queryToken = url.searchParams.get('token');
+  const headerToken = (req.headers.authorization || '').replace('Bearer ', '');
+  if (queryToken === TOKEN || headerToken === TOKEN) return true;
+  res.writeHead(401, { 'Content-Type': 'text/plain' });
+  res.end('Unauthorized — token required');
+  return false;
+}
 
 // ─── 세션 발견 ───────────────────────────────────────────
 
@@ -46,6 +62,43 @@ function extractProjectName(dirName, baseName) {
 
 const MAX_EVENTS = 25555;
 const RETENTION_DAYS = 7;
+
+// ─── Byte-offset 캐시 (빠른 재시작용) ─────────────────────
+
+const OFFSETS_PATH = path.join(__dirname, 'offsets.json');
+const OFFSET_SAVE_INTERVAL_MS = 30000; // 30초마다 자동 저장
+
+/** 메모리 내 offset 캐시: { "filename.jsonl": byteOffset, ... } */
+let offsetCache = {};
+
+function loadOffsets() {
+  try {
+    if (fs.existsSync(OFFSETS_PATH)) {
+      const raw = fs.readFileSync(OFFSETS_PATH, 'utf8');
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object') {
+        offsetCache = parsed;
+        console.log(`  Loaded ${Object.keys(offsetCache).length} cached offsets from offsets.json`);
+      }
+    }
+  } catch {
+    offsetCache = {};
+  }
+}
+
+function saveOffsets() {
+  try {
+    fs.writeFileSync(OFFSETS_PATH, JSON.stringify(offsetCache, null, 2), 'utf8');
+  } catch { /* 저장 실패 시 무시 — 다음 주기에 재시도 */ }
+}
+
+// 서버 시작 시 offset 로드
+loadOffsets();
+
+// 주기적 offset 저장 (30초)
+const offsetSaveTimer = setInterval(saveOffsets, OFFSET_SAVE_INTERVAL_MS);
+
+// ─── 세션 발견 함수 ─────────────────────────────────────
 
 function discoverAllTranscripts() {
   const claudeDir = path.join(os.homedir(), '.claude');
@@ -337,6 +390,37 @@ function readFileContent(filePath) {
   }
 }
 
+// ─── 프롬프트 단위 페이지네이션 ────────────────────────────
+
+function sliceByPrompts(beforeIdx, promptLimit) {
+  const end = Math.min(beforeIdx, allRecentEvents.length);
+
+  // beforeIdx 이전의 모든 prompt 위치를 수집
+  const promptPositions = [];
+  for (let i = 0; i < end; i++) {
+    if (allRecentEvents[i].type === 'prompt') {
+      promptPositions.push(i);
+    }
+  }
+
+  // 마지막 N개 prompt의 시작 위치에서 자르기
+  // → 항상 prompt 이벤트에서 시작하므로 orphan 액션 없음
+  let startIdx;
+  if (promptPositions.length === 0) {
+    startIdx = 0;
+  } else if (promptPositions.length <= promptLimit) {
+    startIdx = promptPositions[0];
+  } else {
+    startIdx = promptPositions[promptPositions.length - promptLimit];
+  }
+
+  return {
+    events: allRecentEvents.slice(startIdx, end),
+    startIdx,
+    hasMore: startIdx > 0,
+  };
+}
+
 // ─── SSE 관리 ───────────────────────────────────────────
 
 const clients = new Set();
@@ -357,6 +441,9 @@ function broadcast(eventType, data) {
 // ─── Transcript 감시 ────────────────────────────────────
 
 function watchTranscript(transcriptPath, state, projectName) {
+  const cacheKey = path.basename(transcriptPath);
+  // 초기 로드는 항상 0부터 (히스토리 전체 읽기)
+  // offset 캐시는 초기 로드 후 실시간 감시에서만 사용
   let byteOffset = 0;
   let lineBuf = '';
   let debounceTimer = null;
@@ -371,6 +458,9 @@ function watchTranscript(transcriptPath, state, projectName) {
     fs.readSync(fd, buf, 0, buf.length, byteOffset);
     fs.closeSync(fd);
     byteOffset = stat.size;
+
+    // offset 캐시 갱신
+    offsetCache[cacheKey] = byteOffset;
 
     const chunk = lineBuf + buf.toString('utf8');
     const lines = chunk.split('\n');
@@ -393,6 +483,9 @@ function watchTranscript(transcriptPath, state, projectName) {
   // 초기 로드 — 최근 이벤트
   const initialEvents = readNewLines();
   const recentEvents = initialEvents.slice(-MAX_EVENTS);
+
+  // 초기 로드 후 offset 저장
+  offsetCache[cacheKey] = byteOffset;
 
   // 새 이벤트 처리 + 브로드캐스트
   function processAndBroadcast() {
@@ -492,27 +585,118 @@ function startWatchingTranscript(t) {
   console.log(`  + New session: ${t.project} (${path.basename(t.transcriptPath).slice(0, 8)}...)`);
 }
 
-// 새 세션 자동 감지 (10초마다 스캔)
+// ─── 디렉토리 감시 (fs.watch) + 폴백 스캔 ──────────────
+
+const dirWatchers = new Map(); // dirPath → fs.FSWatcher
+
+/**
+ * 프로젝트 디렉토리에 fs.watch를 설정하여 새 .jsonl 파일 감지
+ */
+function watchProjectDirectory(dirPath) {
+  if (dirWatchers.has(dirPath)) return;
+
+  try {
+    const watcher = fs.watch(dirPath, (eventType, filename) => {
+      // 새 .jsonl 파일이 생겼을 때만 반응
+      if (!filename || !filename.endsWith('.jsonl')) return;
+
+      const fullPath = path.join(dirPath, filename);
+      if (!fs.existsSync(fullPath)) return;
+
+      // discoverAllTranscripts로 메타데이터 포함한 전체 발견 후 매칭
+      const allCurrent = discoverAllTranscripts();
+      for (const t of allCurrent) {
+        if (t.transcriptPath === fullPath) {
+          startWatchingTranscript(t);
+          break;
+        }
+      }
+    });
+
+    dirWatchers.set(dirPath, watcher);
+    console.log(`  👁 Watching dir: ${path.basename(dirPath)}`);
+  } catch {
+    // fs.watch 실패 시 무시 — 폴백 스캔이 커버함
+  }
+}
+
+/**
+ * 매칭되는 프로젝트 디렉토리들을 찾아서 fs.watch 설정
+ */
+function setupDirectoryWatchers() {
+  const claudeDir = path.join(os.homedir(), '.claude');
+  const projectsDir = path.join(claudeDir, 'projects');
+  if (!fs.existsSync(projectsDir)) return;
+
+  const workDir = process.argv[2] || process.cwd();
+  const baseDirName = cwdToProjectDir(workDir);
+
+  try {
+    const dirs = fs.readdirSync(projectsDir);
+    for (const dir of dirs) {
+      if (!dir.toLowerCase().startsWith(baseDirName.toLowerCase())) continue;
+
+      const projectDir = path.join(projectsDir, dir);
+      try {
+        if (fs.statSync(projectDir).isDirectory()) {
+          watchProjectDirectory(projectDir);
+        }
+      } catch { /* skip */ }
+    }
+  } catch { /* skip */ }
+
+  // projects 디렉토리 자체도 감시 — 새 프로젝트 폴더 생성 감지
+  if (!dirWatchers.has(projectsDir)) {
+    try {
+      const parentWatcher = fs.watch(projectsDir, (eventType, filename) => {
+        if (!filename) return;
+        const newDir = path.join(projectsDir, filename);
+        if (!filename.toLowerCase().startsWith(baseDirName.toLowerCase())) return;
+
+        try {
+          if (fs.existsSync(newDir) && fs.statSync(newDir).isDirectory()) {
+            watchProjectDirectory(newDir);
+          }
+        } catch { /* skip */ }
+      });
+      dirWatchers.set(projectsDir, parentWatcher);
+    } catch { /* skip */ }
+  }
+}
+
+// 폴백: 60초마다 전체 스캔 (fs.watch가 놓칠 수 있는 경우 대비)
+const FALLBACK_SCAN_INTERVAL_MS = 60000;
+
 setInterval(() => {
   const current = discoverAllTranscripts();
   for (const t of current) {
     startWatchingTranscript(t);
   }
-}, 10000);
+  // 새 디렉토리가 생겼을 수 있으므로 watcher도 갱신
+  setupDirectoryWatchers();
+}, FALLBACK_SCAN_INTERVAL_MS);
 
 // 모든 IT 하위 프로젝트 transcript 감시
 const allTranscripts = discoverAllTranscripts();
 let allRecentEvents = [];
 
 if (allTranscripts.length === 0) {
-  console.log('  아직 Claude Code 세션이 없습니다. 새 세션을 자동 감지합니다...');
+  console.log('  No active Claude Code sessions found. Watching for new sessions...');
 } else {
   for (const t of allTranscripts) {
     startWatchingTranscript(t);
   }
 }
 
+// 디렉토리 감시 시작
+setupDirectoryWatchers();
+
+// 초기 로드 후 offset 저장
+saveOffsets();
+
 const server = http.createServer((req, res) => {
+  if (!authenticate(req, res)) return;
+
   const url = new URL(req.url, `http://localhost:${PORT}`);
 
   // SSE 엔드포인트
@@ -525,16 +709,20 @@ const server = http.createServer((req, res) => {
     });
     res.req.socket.setTimeout(0);
 
-    // 초기 데이터 전송
+    // 초기 데이터 전송 (최근 50 프롬프트)
+    const PROMPT_PAGE = 50;
+    const initEvents = sliceByPrompts(allRecentEvents.length, PROMPT_PAGE);
     const initData = {
-      recentEvents: allRecentEvents,
+      recentEvents: initEvents.events,
+      totalEvents: allRecentEvents.length,
+      startIdx: initEvents.startIdx,
+      hasMore: initEvents.hasMore,
       stats: {
         running: state.pendingTools.size,
         completed: state.completedCount,
         errors: state.errorCount,
         sessionStart: state.sessionStart?.toISOString(),
       },
-      projects: allTranscripts.map(t => t.project),
     };
     res.write(`event: init\ndata: ${JSON.stringify(initData)}\n\n`);
 
@@ -569,6 +757,16 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // 이벤트 페이지네이션 API (프롬프트 단위)
+  if (url.pathname === '/api/events') {
+    const beforeIdx = parseInt(url.searchParams.get('before') || allRecentEvents.length);
+    const promptLimit = Math.min(parseInt(url.searchParams.get('prompts') || 10), 50);
+    const result = sliceByPrompts(beforeIdx, promptLimit);
+    res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end(JSON.stringify(result));
+    return;
+  }
+
   // 스크린샷 파일 서빙
   if (url.pathname.startsWith('/screenshots/')) {
     const fileName = path.basename(url.pathname);
@@ -585,17 +783,38 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // 메인 HTML
+  // Dashboard static files
+  const dashDir = path.join(__dirname, 'dashboard');
+  const mimeTypes = { '.html': 'text/html', '.css': 'text/css', '.js': 'application/javascript' };
+
   if (url.pathname === '/' || url.pathname === '/index.html') {
-    const htmlPath = path.join(__dirname, 'dashboard.html');
+    const htmlPath = path.join(dashDir, 'index.html');
     if (fs.existsSync(htmlPath)) {
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
       fs.createReadStream(htmlPath).pipe(res);
     } else {
-      res.writeHead(500);
-      res.end('dashboard.html not found');
+      // fallback to legacy single file
+      const legacyPath = path.join(__dirname, 'dashboard.html');
+      if (fs.existsSync(legacyPath)) {
+        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+        fs.createReadStream(legacyPath).pipe(res);
+      } else {
+        res.writeHead(500);
+        res.end('dashboard not found');
+      }
     }
     return;
+  }
+
+  // Serve CSS/JS from dashboard/
+  const ext = path.extname(url.pathname);
+  if (mimeTypes[ext]) {
+    const filePath = path.join(dashDir, path.basename(url.pathname));
+    if (fs.existsSync(filePath)) {
+      res.writeHead(200, { 'Content-Type': mimeTypes[ext] + '; charset=utf-8' });
+      fs.createReadStream(filePath).pipe(res);
+      return;
+    }
   }
 
   res.writeHead(404);
@@ -604,15 +823,19 @@ const server = http.createServer((req, res) => {
 
 server.requestTimeout = 0;
 
-server.listen(PORT, () => {
+server.listen(PORT, HOST, () => {
   console.log('');
   console.log('  monitor-agent');
-  console.log(`  http://localhost:${PORT}`);
+  console.log(`  http://${HOST}:${PORT}`);
+  if (REMOTE) {
+    console.log('  ⚠ Remote access: ON');
+    console.log(TOKEN ? '  🔑 Token auth: ON' : '  ⚠ Token auth: OFF (unprotected!)');
+  }
   console.log('');
   console.log(`  Projects: ${allTranscripts.map(t => t.project).join(', ')}`);
-  console.log(`  SSE clients: 0`);
+  console.log(`  Offset cache: ${Object.keys(offsetCache).length} entries`);
   console.log('');
-  console.log('  Ctrl+C로 종료');
+  console.log('  Ctrl+C to stop');
   console.log('');
 });
 
@@ -622,7 +845,16 @@ setInterval(() => {
 }, 5000);
 
 process.on('SIGINT', () => {
-  console.log('\n  대시보드 종료');
+  console.log('\n  Saving offsets before shutdown...');
+  saveOffsets();
+
+  // 디렉토리 watcher 정리
+  for (const [, watcher] of dirWatchers) {
+    try { watcher.close(); } catch { /* ignore */ }
+  }
+
+  clearInterval(offsetSaveTimer);
+  console.log('  Dashboard stopped');
   server.close();
   process.exit(0);
 });

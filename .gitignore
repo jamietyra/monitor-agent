@@ -1,5 +1,7 @@
 node_modules/
 screenshots/
+offsets.json
 *.log
+*.png
 .DS_Store
 Thumbs.db
