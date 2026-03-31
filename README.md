@@ -5,7 +5,7 @@ Real-time activity dashboard for [Claude Code](https://claude.ai/code). Watch pr
 [한국어](README.ko.md)
 
 <p align="center">
-  <img src="preview.svg?v=3" alt="monitor-agent dashboard preview" width="100%">
+  <img src="https://raw.githubusercontent.com/jamietyra/monitor-agent/main/preview.svg" alt="monitor-agent dashboard preview" width="100%">
 </p>
 
 ## Features
