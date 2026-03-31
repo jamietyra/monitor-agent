@@ -44,19 +44,21 @@ function extractProjectName(dirName, baseName) {
   return dirName.split('-').filter(Boolean).pop() || dirName.slice(0, 10);
 }
 
+const MAX_EVENTS = 25555;
+const RETENTION_DAYS = 7;
+
 function discoverAllTranscripts() {
   const claudeDir = path.join(os.homedir(), '.claude');
   const projectsDir = path.join(claudeDir, 'projects');
   if (!fs.existsSync(projectsDir)) return [];
 
-  // 현재 작업 디렉토리 기반으로 관련 프로젝트 탐지
   const workDir = process.argv[2] || process.cwd();
   const baseDirName = cwdToProjectDir(workDir);
   const results = [];
+  const cutoff = Date.now() - RETENTION_DAYS * 24 * 60 * 60 * 1000;
 
   const dirs = fs.readdirSync(projectsDir);
   for (const dir of dirs) {
-    // 현재 폴더 및 하위 프로젝트만 매칭
     if (!dir.toLowerCase().startsWith(baseDirName.toLowerCase())) continue;
 
     const projectDir = path.join(projectsDir, dir);
@@ -68,18 +70,23 @@ function discoverAllTranscripts() {
         name: f,
         full: path.join(projectDir, f),
         mtime: fs.statSync(path.join(projectDir, f)).mtimeMs,
-      }))
-      .sort((a, b) => b.mtime - a.mtime);
+      }));
 
-    if (jsonlFiles.length > 0) {
-      results.push({
-        project: extractProjectName(dir, baseDirName),
-        transcriptPath: jsonlFiles[0].full,
-        dirName: dir,
-      });
+    for (const f of jsonlFiles) {
+      if (f.mtime >= cutoff) {
+        results.push({
+          project: extractProjectName(dir, baseDirName),
+          transcriptPath: f.full,
+          dirName: dir,
+          mtime: f.mtime,
+        });
+      }
+      // 7일 초과 파일은 무시만 함 (삭제/이동 안 함)
     }
   }
 
+  // 시간순 정렬 (오래된 것 먼저)
+  results.sort((a, b) => a.mtime - b.mtime);
   return results;
 }
 
@@ -127,15 +134,15 @@ function extractTarget(toolName, input) {
     case 'Bash': {
       const cmd = input.command;
       if (!cmd) return undefined;
-      return cmd.length > 100 ? cmd.slice(0, 100) + '...' : cmd;
+      return cmd;
     }
     case 'Agent':
     case 'Task': {
       const desc = input.description || input.prompt;
       const subType = input.subagent_type;
-      if (subType && desc) return `${subType}: ${desc.slice(0, 35)}...`;
+      if (subType && desc) return `${subType}: ${desc}`;
       if (subType) return subType;
-      if (desc) return desc.slice(0, 50);
+      if (desc) return desc;
       return undefined;
     }
     case 'WebSearch':
@@ -157,10 +164,46 @@ function processEntry(entry, state) {
     state.sessionStart = timestamp;
   }
 
-  const content = entry.message?.content;
-  if (!content || !Array.isArray(content)) return events;
+  // 사용자 프롬프트 감지
+  if (entry.type === 'user' && entry.message?.role === 'user') {
+    const content = entry.message.content;
+    let text = '';
+    if (typeof content === 'string') {
+      text = content;
+    } else if (Array.isArray(content)) {
+      text = content.filter(b => b.type === 'text').map(b => b.text).join(' ');
+    }
+    // 시스템 메시지 제외
+    if (text && !text.startsWith('<') && text.trim().length > 0) {
+      state.promptId = (state.promptId || 0) + 1;
+      events.push({
+        type: 'prompt',
+        text: text.slice(0, 200),
+        time: timestamp.toISOString(),
+        promptId: state.promptId,
+      });
+    }
+  }
 
-  for (const block of content) {
+  // assistant 텍스트 응답 감지
+  if (entry.message?.role === 'assistant' && Array.isArray(entry.message.content)) {
+    for (const block of entry.message.content) {
+      if (block.type === 'text' && block.text && block.text.trim().length > 0) {
+        events.push({
+          type: 'assistant_text',
+          text: block.text.slice(0, 300),
+          time: timestamp.toISOString(),
+          promptId: state.promptId || 0,
+        });
+        break; // 첫 텍스트 블록만
+      }
+    }
+  }
+
+  const msgContent = entry.message?.content;
+  if (!msgContent || !Array.isArray(msgContent)) return events;
+
+  for (const block of msgContent) {
     if (block.type === 'tool_use' && block.id && block.name) {
       const target = extractTarget(block.name, block.input);
       const isPlaywright = block.name.startsWith('mcp__plugin_playwright');
@@ -187,6 +230,7 @@ function processEntry(entry, state) {
           target,
           time: timestamp.toISOString(),
           id: block.id,
+          promptId: state.promptId || 0,
           isPlaywright,
           filePath: (block.name === 'Read' || block.name === 'Edit' || block.name === 'Write')
             ? (block.input?.file_path || block.input?.path) : null,
@@ -348,7 +392,7 @@ function watchTranscript(transcriptPath, state, projectName) {
 
   // 초기 로드 — 최근 이벤트
   const initialEvents = readNewLines();
-  const recentEvents = initialEvents.slice(-30);
+  const recentEvents = initialEvents.slice(-MAX_EVENTS);
 
   // 새 이벤트 처리 + 브로드캐스트
   function processAndBroadcast() {
@@ -358,7 +402,7 @@ function watchTranscript(transcriptPath, state, projectName) {
     for (const ev of newEvents) {
       // 최근 이벤트 목록 갱신 (새로고침 시 최신 상태 유지)
       allRecentEvents.push(ev);
-      if (allRecentEvents.length > 50) allRecentEvents.shift();
+      if (allRecentEvents.length > MAX_EVENTS) allRecentEvents.shift();
 
       broadcast('activity', ev);
 
@@ -444,7 +488,7 @@ function startWatchingTranscript(t) {
   const { recentEvents } = watchTranscript(t.transcriptPath, state, t.project);
   allRecentEvents.push(...recentEvents);
   allRecentEvents.sort((a, b) => new Date(a.time) - new Date(b.time));
-  if (allRecentEvents.length > 50) allRecentEvents = allRecentEvents.slice(-50);
+  if (allRecentEvents.length > MAX_EVENTS) allRecentEvents = allRecentEvents.slice(-MAX_EVENTS);
   console.log(`  + New session: ${t.project} (${path.basename(t.transcriptPath).slice(0, 8)}...)`);
 }
 
