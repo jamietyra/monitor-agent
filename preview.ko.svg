@@ -31,7 +31,7 @@
   <!-- Header bar -->
   <rect y="66" width="1200" height="34" class="panel"/>
   <rect y="100" width="1200" height="1" fill="#3c3c3c"/>
-  <text x="16" y="88" fill="#569cd6" font-size="14" font-weight="bold">monitor-agent</text>
+  <text x="16" y="88" fill="#ff6b35" font-size="14" font-weight="bold">monitor-agent</text>
   <text x="720" y="88" fill="#858585" font-size="11">실행중:</text>
   <text x="780" y="88" fill="#4ec9b0" font-size="11" font-weight="bold">2</text>
   <text x="815" y="88" fill="#858585" font-size="11">완료:</text>
@@ -44,7 +44,7 @@
   <!-- Feeds section -->
   <rect y="101" width="1200" height="20" class="panel"/>
   <rect y="121" width="1200" height="1" fill="#3c3c3c"/>
-  <text x="14" y="116" fill="#4ec9b0" font-size="11" font-weight="bold" letter-spacing="0.5">FEEDS</text>
+  <text x="14" y="116" fill="#569cd6" font-size="11" font-weight="bold" letter-spacing="0.5">FEEDS</text>
 
   <!-- Search bar -->
   <rect x="14" y="128" width="1172" height="24" rx="4" fill="#3c3c3c"/>
