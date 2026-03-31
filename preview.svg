@@ -1,24 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 700" font-family="'Cascadia Code','Fira Code','JetBrains Mono','Consolas',monospace">
-  <defs>
-    <style>
-      .bg { fill: #1e1e1e; }
-      .panel { fill: #252526; }
-      .chrome-bg { fill: #202124; }
-      .chrome-addr { fill: #35363a; }
-      .border { stroke: #3c3c3c; stroke-width: 1; fill: none; }
-    </style>
-    <clipPath id="roundClip">
-      <rect width="1200" height="700" rx="8"/>
-    </clipPath>
-  </defs>
 
   <!-- Background -->
-  <rect width="1200" height="700" class="bg" rx="8"/>
-  <g clip-path="url(#roundClip)">
+  <rect width="1200" height="700" fill="#1e1e1e" rx="8"/>
+  <g>
 
   <!-- ══════════ Browser Chrome ══════════ -->
-  <rect width="1200" height="25" class="chrome-bg"/>
-  <rect x="0" y="17" width="1200" height="8" class="chrome-bg"/>
+  <rect width="1200" height="25" fill="#202124"/>
+  <rect x="0" y="17" width="1200" height="8" fill="#202124"/>
   <!-- Active tab -->
   <rect x="8" y="4" width="160" height="21" rx="6" fill="#1e1e1e"/>
   <text x="30" y="18" font-size="10" fill="#d4d4d4">monitor-agent</text>
@@ -26,12 +14,12 @@
   <text x="180" y="18" font-size="12" fill="#858585">+</text>
 
   <!-- Address bar -->
-  <rect x="0" y="25" width="1200" height="23" class="chrome-addr"/>
+  <rect x="0" y="25" width="1200" height="23" fill="#35363a"/>
   <rect x="200" y="29" width="500" height="15" rx="7" fill="#292b2e"/>
   <text x="450" y="40" text-anchor="middle" font-size="10" fill="#d4d4d4">localhost:3456</text>
 
   <!-- ══════════ Header Bar ══════════ -->
-  <rect x="0" y="48" width="1200" height="30" class="panel"/>
+  <rect x="0" y="48" width="1200" height="30" fill="#252526"/>
   <line x1="0" y1="78" x2="1200" y2="78" stroke="#3c3c3c"/>
   <text x="16" y="68" font-size="14" font-weight="600" fill="#569cd6">monitor-agent</text>
   <!-- Stats -->
@@ -45,10 +33,10 @@
   <text x="1080" y="68" font-size="11" fill="#858585"> 2h 15m</text>
 
   <!-- ══════════ Feeds Panel (Top ~55%) ══════════ -->
-  <rect x="0" y="78" width="1200" height="340" class="bg"/>
+  <rect x="0" y="78" width="1200" height="340" fill="#1e1e1e"/>
 
   <!-- Section Header: FEEDS -->
-  <rect x="0" y="78" width="1200" height="20" class="panel"/>
+  <rect x="0" y="78" width="1200" height="20" fill="#252526"/>
   <line x1="0" y1="98" x2="1200" y2="98" stroke="#3c3c3c"/>
   <text x="14" y="93" font-size="11" fill="#4ec9b0" font-weight="600" letter-spacing="0.5">FEEDS</text>
 
@@ -153,13 +141,13 @@
   <rect x="580" y="415" width="40" height="6" rx="3" fill="#569cd6" opacity="0.5"/>
 
   <!-- ══════════ Bottom Split: Code Viewer (left) | Diff Viewer (right) ══════════ -->
-  <rect x="0" y="424" width="1200" height="248" class="bg"/>
+  <rect x="0" y="424" width="1200" height="248" fill="#1e1e1e"/>
 
   <!-- ── Code Viewer (Left Half) ── -->
-  <rect x="0" y="424" width="600" height="248" class="bg"/>
+  <rect x="0" y="424" width="600" height="248" fill="#1e1e1e"/>
 
   <!-- Code Header -->
-  <rect x="0" y="424" width="600" height="18" class="panel"/>
+  <rect x="0" y="424" width="600" height="18" fill="#252526"/>
   <line x1="0" y1="442" x2="600" y2="442" stroke="#3c3c3c"/>
   <text x="14" y="438" font-size="10" fill="#569cd6" font-weight="500">dashboard/style.css</text>
   <text x="586" y="438" font-size="10" fill="#858585" text-anchor="end">248 lines</text>
@@ -206,10 +194,10 @@
   <line x1="600" y1="424" x2="600" y2="672" stroke="#3c3c3c" stroke-width="1"/>
 
   <!-- ── Diff Viewer (Right Half) ── -->
-  <rect x="600" y="424" width="600" height="248" class="bg"/>
+  <rect x="600" y="424" width="600" height="248" fill="#1e1e1e"/>
 
   <!-- Diff Header -->
-  <rect x="600" y="424" width="600" height="18" class="panel"/>
+  <rect x="600" y="424" width="600" height="18" fill="#252526"/>
   <line x1="600" y1="442" x2="1200" y2="442" stroke="#3c3c3c"/>
   <text x="614" y="438" font-size="10" fill="#569cd6" font-weight="500">Edit: dashboard/style.css</text>
   <text x="1186" y="438" font-size="10" fill="#858585" text-anchor="end">10:30:48</text>
@@ -226,35 +214,19 @@
   <rect x="600" y="478" width="600" height="16" fill="#1d2d1d"/>
   <text x="614" y="490" font-size="10" fill="#6a9955">+   height: 55%; min-height: 120px;</text>
 
-  <!-- Context line -->
+  <!-- Context lines -->
   <text x="614" y="510" font-size="10" fill="#858585">    border-bottom: 1px solid var(--border);</text>
   <text x="614" y="526" font-size="10" fill="#858585">    display: flex;</text>
-  <text x="614" y="542" font-size="10" fill="#858585">  }</text>
-
-  <!-- Separator -->
-  <line x1="614" y1="552" x2="1186" y2="552" stroke="#3c3c3c" stroke-dasharray="4"/>
-
-  <!-- Context line -->
-  <text x="614" y="568" font-size="10" fill="#858585">  .feed-label {</text>
-
-  <!-- Deleted line 2 (red) -->
-  <rect x="600" y="572" width="600" height="16" fill="#2d1515"/>
-  <text x="614" y="584" font-size="10" fill="#f44747">-   color: #858585;</text>
-
-  <!-- Added line 2 (green) -->
-  <rect x="600" y="588" width="600" height="16" fill="#1d2d1d"/>
-  <text x="614" y="600" font-size="10" fill="#6a9955">+   color: #4ec9b0;</text>
-
-  <!-- Context line -->
-  <text x="614" y="620" font-size="10" fill="#858585">    font-weight: 600;</text>
-  <text x="614" y="636" font-size="10" fill="#858585">  }</text>
+  <text x="614" y="542" font-size="10" fill="#858585">    flex-direction: column;</text>
+  <text x="614" y="558" font-size="10" fill="#858585">    flex-shrink: 0;</text>
+  <text x="614" y="574" font-size="10" fill="#858585">  }</text>
 
   <!-- Diff scrollbar -->
   <rect x="1193" y="442" width="4" height="230" rx="2" fill="#2a2a2a"/>
   <rect x="1193" y="442" width="4" height="50" rx="2" fill="#555"/>
 
   <!-- ══════════ Footer ══════════ -->
-  <rect x="0" y="672" width="1200" height="28" class="panel"/>
+  <rect x="0" y="672" width="1200" height="28" fill="#252526"/>
   <line x1="0" y1="672" x2="1200" y2="672" stroke="#3c3c3c"/>
   <!-- Connected status -->
   <circle cx="16" cy="688" r="4" fill="#6a9955"/>
