@@ -10,19 +10,13 @@ Real-time activity dashboard for [Claude Code](https://claude.ai/code). Watch pr
 
 ## Features
 
-- **Prompt-grouped Activity Feed** — Tool calls are grouped under the user prompt that triggered them, with collapsible groups and expand/collapse all toggle
-- **Session Filter Buttons** — Auto-detected, color-coded pill buttons to filter by project (e.g. main, web-app, api-server)
-- **Search / Filter Bar** — Search across prompts, filenames, and commands
-- **Code Viewer** — Displays file contents with syntax highlighting. Click an Edit item to highlight changed lines and auto-scroll to them
-- **Diff Viewer** — Side-by-side with Code Viewer. Click any past Edit item to review what changed (red = removed, green = added)
-- **Assistant Text Responses** — Shown inline with a green dot indicator
-- **Panel Resize** — Drag the handle between the feed and code panels to adjust layout
-- **Prompt-based Pagination** — Initial load shows the last 50 prompts. Click "Load 20 more prompts" to view older history
-- **Multi-session Support** — Loads all transcripts from the last 7 days across sub-projects
-- **Instant Session Detection** — Uses directory watchers to detect new Claude Code sessions immediately (60s fallback scan)
-- **Fast Restart** — Byte-offset cache (`offsets.json`) enables near-instant server restarts
-- **Remote Access** — Optional remote mode with token authentication for accessing the dashboard from other machines
-- **Zero Dependencies** — Pure Node.js built-in modules only, no `npm install` needed
+- **Activity Feed** — Every prompt, tool call, and response grouped in collapsible sections with search and session filters
+- **Code Viewer + Diff Viewer** — Side-by-side file content and change tracking. Click any Edit to highlight changed lines
+- **Multi-session** — Monitors all Claude Code sessions across sub-projects simultaneously
+- **Instant Detection** — New sessions detected immediately via directory watchers
+- **Remote Access** — Optional token-based authentication for accessing from other machines
+- **Resizable Layout** — Drag to adjust panel sizes to your preference
+- **Zero Dependencies** — Just `node server.mjs`. No npm install, no build step
 
 ## Quick Start
 

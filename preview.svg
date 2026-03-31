@@ -35,22 +35,22 @@
   <line x1="0" y1="78" x2="1200" y2="78" stroke="#3c3c3c"/>
   <text x="16" y="68" font-size="14" font-weight="600" fill="#569cd6">monitor-agent</text>
   <!-- Stats -->
-  <text x="780" y="68" font-size="11" fill="#858585">Running:</text>
-  <text x="830" y="68" font-size="11" fill="#dcdcaa"> 2</text>
-  <text x="860" y="68" font-size="11" fill="#858585">Done:</text>
-  <text x="900" y="68" font-size="11" fill="#6a9955"> 847</text>
-  <text x="950" y="68" font-size="11" fill="#858585">Errors:</text>
-  <text x="1000" y="68" font-size="11" fill="#f44747"> 3</text>
-  <text x="1050" y="68" font-size="11" fill="#858585">Elapsed:</text>
-  <text x="1110" y="68" font-size="11" fill="#858585"> 2h 15m</text>
+  <text x="740" y="68" font-size="11" fill="#858585">Running:</text>
+  <text x="800" y="68" font-size="11" fill="#dcdcaa"> 2</text>
+  <text x="840" y="68" font-size="11" fill="#858585">Done:</text>
+  <text x="878" y="68" font-size="11" fill="#6a9955"> 847</text>
+  <text x="920" y="68" font-size="11" fill="#858585">Errors:</text>
+  <text x="970" y="68" font-size="11" fill="#f44747"> 3</text>
+  <text x="1020" y="68" font-size="11" fill="#858585">Elapsed:</text>
+  <text x="1080" y="68" font-size="11" fill="#858585"> 2h 15m</text>
 
-  <!-- ══════════ Activity Feed Panel (Top ~40%) ══════════ -->
-  <rect x="0" y="78" width="1200" height="292" class="bg"/>
+  <!-- ══════════ Feeds Panel (Top ~55%) ══════════ -->
+  <rect x="0" y="78" width="1200" height="340" class="bg"/>
 
-  <!-- Section Header: 활동 피드 -->
+  <!-- Section Header: FEEDS -->
   <rect x="0" y="78" width="1200" height="20" class="panel"/>
   <line x1="0" y1="98" x2="1200" y2="98" stroke="#3c3c3c"/>
-  <text x="14" y="93" font-size="11" fill="#858585" letter-spacing="0.5">ACTIVITY FEED</text>
+  <text x="14" y="93" font-size="11" fill="#4ec9b0" font-weight="600" letter-spacing="0.5">FEEDS</text>
 
   <!-- Search Bar -->
   <rect x="14" y="106" width="1172" height="26" rx="4" fill="#3c3c3c"/>
@@ -58,15 +58,22 @@
   <text x="28" y="123" font-size="10" fill="#585858">Search (prompts, files, commands...)</text>
 
   <!-- Session Filter Buttons -->
-  <rect x="14" y="140" width="50" height="20" rx="10" fill="#1a3a5c"/>
-  <text x="39" y="154" text-anchor="middle" font-size="10" fill="#569cd6">MAIN</text>
-  <rect x="72" y="140" width="70" height="20" rx="10" fill="#2d1a3c"/>
-  <text x="107" y="154" text-anchor="middle" font-size="10" fill="#c586c0">WEB-APP</text>
-  <rect x="150" y="140" width="90" height="20" rx="10" fill="#1a3c2d"/>
-  <text x="195" y="154" text-anchor="middle" font-size="10" fill="#4ec9b0">API-SERVER</text>
+  <!-- "All" toggle button -->
+  <rect x="14" y="140" width="42" height="20" rx="10" fill="#333"/>
+  <text x="22" y="154" font-size="10" fill="#d4d4d4">▶ All</text>
+  <!-- Divider -->
+  <line x1="64" y1="142" x2="64" y2="158" stroke="#3c3c3c" stroke-width="1"/>
+  <!-- MAIN -->
+  <rect x="74" y="140" width="50" height="20" rx="10" fill="#1a3a5c"/>
+  <text x="99" y="154" text-anchor="middle" font-size="10" fill="#569cd6">MAIN</text>
+  <!-- WEB-APP -->
+  <rect x="132" y="140" width="70" height="20" rx="10" fill="#2d1a3c"/>
+  <text x="167" y="154" text-anchor="middle" font-size="10" fill="#c586c0">WEB-APP</text>
+  <!-- API-SERVER -->
+  <rect x="210" y="140" width="90" height="20" rx="10" fill="#1a3c2d"/>
+  <text x="255" y="154" text-anchor="middle" font-size="10" fill="#4ec9b0">API-SERVER</text>
 
   <!-- ── Prompt Group 1: Expanded ── -->
-  <!-- Group header background -->
   <rect x="8" y="170" width="1184" height="22" rx="3" fill="#2a2d2e"/>
   <!-- Expand arrow -->
   <text x="16" y="185" font-size="10" fill="#858585">▼</text>
@@ -82,36 +89,36 @@
   <text x="1171" y="185" text-anchor="middle" font-size="9" fill="#d4d4d4">5</text>
 
   <!-- Sub-item 1: Read tool -->
-  <text x="46" y="207" font-size="10" fill="#858585">17:19:25</text>
+  <text x="46" y="207" font-size="10" fill="#858585">10:30:25</text>
   <text x="108" y="207" font-size="10" fill="#6a9955">✓</text>
   <text x="120" y="207" font-size="10" fill="#4ec9b0">Read</text>
-  <text x="160" y="207" font-size="10" fill="#d4d4d4">monitor-agent/dashboard.html</text>
-  <text x="410" y="207" font-size="10" fill="#858585">17:19:36</text>
-  <text x="480" y="207" font-size="10" fill="#c586c0">95ms</text>
+  <text x="160" y="207" font-size="10" fill="#d4d4d4">dashboard/style.css</text>
+  <text x="340" y="207" font-size="10" fill="#858585">10:30:36</text>
+  <text x="410" y="207" font-size="10" fill="#c586c0">95ms</text>
 
   <!-- Sub-item 2: Edit tool -->
-  <text x="46" y="224" font-size="10" fill="#858585">17:19:37</text>
+  <text x="46" y="224" font-size="10" fill="#858585">10:30:37</text>
   <text x="108" y="224" font-size="10" fill="#6a9955">✓</text>
   <text x="120" y="224" font-size="10" fill="#4ec9b0">Edit</text>
-  <text x="160" y="224" font-size="10" fill="#d4d4d4">monitor-agent/dashboard.html</text>
-  <text x="410" y="224" font-size="10" fill="#858585">17:19:48</text>
-  <text x="480" y="224" font-size="10" fill="#c586c0">210ms</text>
+  <text x="160" y="224" font-size="10" fill="#d4d4d4">dashboard/style.css</text>
+  <text x="340" y="224" font-size="10" fill="#858585">10:30:48</text>
+  <text x="410" y="224" font-size="10" fill="#c586c0">210ms</text>
 
   <!-- Sub-item 3: Read tool -->
-  <text x="46" y="241" font-size="10" fill="#858585">17:19:49</text>
+  <text x="46" y="241" font-size="10" fill="#858585">10:30:49</text>
   <text x="108" y="241" font-size="10" fill="#6a9955">✓</text>
   <text x="120" y="241" font-size="10" fill="#4ec9b0">Read</text>
-  <text x="160" y="241" font-size="10" fill="#d4d4d4">monitor-agent/server.mjs</text>
-  <text x="410" y="241" font-size="10" fill="#858585">17:19:50</text>
-  <text x="480" y="241" font-size="10" fill="#c586c0">42ms</text>
+  <text x="160" y="241" font-size="10" fill="#d4d4d4">dashboard/viewer.js</text>
+  <text x="340" y="241" font-size="10" fill="#858585">10:30:50</text>
+  <text x="410" y="241" font-size="10" fill="#c586c0">42ms</text>
 
   <!-- Sub-item 4: Edit tool -->
-  <text x="46" y="258" font-size="10" fill="#858585">17:20:01</text>
+  <text x="46" y="258" font-size="10" fill="#858585">10:31:01</text>
   <text x="108" y="258" font-size="10" fill="#6a9955">✓</text>
   <text x="120" y="258" font-size="10" fill="#4ec9b0">Edit</text>
-  <text x="160" y="258" font-size="10" fill="#d4d4d4">monitor-agent/dashboard.html</text>
-  <text x="410" y="258" font-size="10" fill="#858585">17:20:14</text>
-  <text x="480" y="258" font-size="10" fill="#c586c0">185ms</text>
+  <text x="160" y="258" font-size="10" fill="#d4d4d4">dashboard/viewer.js</text>
+  <text x="340" y="258" font-size="10" fill="#858585">10:31:14</text>
+  <text x="410" y="258" font-size="10" fill="#c586c0">185ms</text>
 
   <!-- Sub-item 5: Assistant text response (green dot) -->
   <circle cx="52" cy="274" r="4" fill="#6a9955"/>
@@ -123,7 +130,7 @@
   <rect x="30" y="295" width="38" height="16" rx="8" fill="#1a3a5c"/>
   <text x="49" y="307" text-anchor="middle" font-size="9" fill="#569cd6">MAIN</text>
   <text x="76" y="307" font-size="10" fill="#858585">10:15:03</text>
-  <text x="140" y="307" font-size="10" fill="#d4d4d4">Remove the footer section and show event count instead.</text>
+  <text x="140" y="307" font-size="10" fill="#d4d4d4">Remove the footer section and show event count</text>
   <rect x="1160" y="295" width="22" height="16" rx="8" fill="#3c3c3c"/>
   <text x="1171" y="307" text-anchor="middle" font-size="9" fill="#d4d4d4">3</text>
 
@@ -133,7 +140,7 @@
   <rect x="30" y="325" width="80" height="16" rx="8" fill="#1a3c2d"/>
   <text x="70" y="337" text-anchor="middle" font-size="9" fill="#4ec9b0">API-SERVER</text>
   <text x="118" y="337" font-size="10" fill="#858585">09:45:11</text>
-  <text x="182" y="337" font-size="10" fill="#d4d4d4">Fix the order status mapping in the REST endpoint.</text>
+  <text x="182" y="337" font-size="10" fill="#d4d4d4">Fix the order status mapping in the REST endpoint</text>
   <rect x="1154" y="325" width="28" height="16" rx="8" fill="#3c3c3c"/>
   <text x="1168" y="337" text-anchor="middle" font-size="9" fill="#d4d4d4">12</text>
 
@@ -142,80 +149,109 @@
   <rect x="1193" y="170" width="4" height="60" rx="2" fill="#555"/>
 
   <!-- ══════════ Resize Handle ══════════ -->
-  <line x1="0" y1="370" x2="1200" y2="370" stroke="#569cd6" stroke-width="2" opacity="0.6"/>
-  <rect x="580" y="367" width="40" height="6" rx="3" fill="#569cd6" opacity="0.5"/>
+  <line x1="0" y1="418" x2="1200" y2="418" stroke="#569cd6" stroke-width="2" opacity="0.6"/>
+  <rect x="580" y="415" width="40" height="6" rx="3" fill="#569cd6" opacity="0.5"/>
 
-  <!-- ══════════ Code Viewer (Middle ~35%) ══════════ -->
-  <rect x="0" y="376" width="1200" height="196" class="bg"/>
+  <!-- ══════════ Bottom Split: Code Viewer (left) | Diff Viewer (right) ══════════ -->
+  <rect x="0" y="424" width="1200" height="248" class="bg"/>
+
+  <!-- ── Code Viewer (Left Half) ── -->
+  <rect x="0" y="424" width="600" height="248" class="bg"/>
 
   <!-- Code Header -->
-  <rect x="0" y="376" width="1200" height="18" class="panel"/>
-  <line x1="0" y1="394" x2="1200" y2="394" stroke="#3c3c3c"/>
-  <text x="14" y="390" font-size="10" fill="#569cd6" font-weight="500">monitor-agent/dashboard.html</text>
-  <text x="1186" y="390" font-size="10" fill="#858585" text-anchor="end">1007줄</text>
+  <rect x="0" y="424" width="600" height="18" class="panel"/>
+  <line x1="0" y1="442" x2="600" y2="442" stroke="#3c3c3c"/>
+  <text x="14" y="438" font-size="10" fill="#569cd6" font-weight="500">dashboard/style.css</text>
+  <text x="586" y="438" font-size="10" fill="#858585" text-anchor="end">248 lines</text>
 
-  <!-- Code Content: HTML/CSS with syntax highlighting -->
+  <!-- Code Content: CSS with syntax highlighting -->
   <!-- Line numbers gutter -->
-  <rect x="0" y="394" width="36" height="178" fill="#1a1a1a"/>
+  <rect x="0" y="442" width="36" height="230" fill="#1a1a1a"/>
 
-  <!-- Line 1 -->
-  <text x="30" y="410" font-size="10" fill="#585858" text-anchor="end">847</text>
-  <text x="42" y="410" font-size="10" fill="#d4d4d4"><tspan fill="#858585">&lt;!</tspan><tspan fill="#569cd6">DOCTYPE</tspan> <tspan fill="#9cdcfe">html</tspan><tspan fill="#858585">&gt;</tspan></text>
-  <!-- Line 2 -->
-  <text x="30" y="426" font-size="10" fill="#585858" text-anchor="end">848</text>
-  <text x="42" y="426" font-size="10" fill="#858585">&lt;<tspan fill="#569cd6">html</tspan> <tspan fill="#9cdcfe">lang</tspan>=<tspan fill="#ce9178">"ko"</tspan>&gt;</text>
-  <!-- Line 3 -->
-  <text x="30" y="442" font-size="10" fill="#585858" text-anchor="end">849</text>
-  <text x="42" y="442" font-size="10" fill="#858585">&lt;<tspan fill="#569cd6">head</tspan>&gt;</text>
-  <!-- Line 4 -->
-  <text x="30" y="458" font-size="10" fill="#585858" text-anchor="end">850</text>
-  <text x="52" y="458" font-size="10" fill="#858585">&lt;<tspan fill="#569cd6">meta</tspan> <tspan fill="#9cdcfe">charset</tspan>=<tspan fill="#ce9178">"UTF-8"</tspan>&gt;</text>
-  <!-- Line 5 -->
-  <text x="30" y="474" font-size="10" fill="#585858" text-anchor="end">851</text>
-  <text x="52" y="474" font-size="10" fill="#858585">&lt;<tspan fill="#569cd6">title</tspan>&gt;<tspan fill="#d4d4d4">monitor-agent</tspan>&lt;/<tspan fill="#569cd6">title</tspan>&gt;</text>
-  <!-- Line 6 -->
-  <text x="30" y="490" font-size="10" fill="#585858" text-anchor="end">852</text>
-  <text x="52" y="490" font-size="10" fill="#858585">&lt;<tspan fill="#569cd6">style</tspan>&gt;</text>
-  <!-- Line 7 -->
-  <text x="30" y="506" font-size="10" fill="#585858" text-anchor="end">853</text>
-  <text x="62" y="506" font-size="10" fill="#d4d4d4"><tspan fill="#d7ba7d">*</tspan> { <tspan fill="#9cdcfe">margin</tspan>: <tspan fill="#b5cea8">0</tspan>; <tspan fill="#9cdcfe">padding</tspan>: <tspan fill="#b5cea8">0</tspan>; <tspan fill="#9cdcfe">box-sizing</tspan>: <tspan fill="#ce9178">border-box</tspan>; }</text>
-  <!-- Line 8 -->
-  <text x="30" y="522" font-size="10" fill="#585858" text-anchor="end">854</text>
-  <text x="62" y="522" font-size="10" fill="#d4d4d4"><tspan fill="#d7ba7d">body</tspan> {</text>
-  <!-- Line 9 -->
-  <text x="30" y="538" font-size="10" fill="#585858" text-anchor="end">855</text>
-  <text x="72" y="538" font-size="10" fill="#d4d4d4"><tspan fill="#9cdcfe">background</tspan>: <tspan fill="#ce9178">#1e1e1e</tspan>;</text>
-  <!-- Line 10 -->
-  <text x="30" y="554" font-size="10" fill="#585858" text-anchor="end">856</text>
-  <text x="72" y="554" font-size="10" fill="#d4d4d4"><tspan fill="#9cdcfe">color</tspan>: <tspan fill="#ce9178">#d4d4d4</tspan>;</text>
-  <!-- Line 11 -->
-  <text x="30" y="570" font-size="10" fill="#585858" text-anchor="end">857</text>
-  <text x="72" y="570" font-size="10" fill="#d4d4d4"><tspan fill="#9cdcfe">font-family</tspan>: <tspan fill="#ce9178">'Consolas'</tspan>, <tspan fill="#ce9178">monospace</tspan>;</text>
+  <!-- Line 1: .activity-panel { -->
+  <text x="30" y="458" font-size="10" fill="#585858" text-anchor="end">41</text>
+  <text x="42" y="458" font-size="10" fill="#d4d4d4"><tspan fill="#d7ba7d">.activity-panel</tspan> {</text>
+  <!-- Line 2: height: 55%; min-height: 120px; -->
+  <text x="30" y="474" font-size="10" fill="#585858" text-anchor="end">42</text>
+  <text x="52" y="474" font-size="10" fill="#d4d4d4"><tspan fill="#9cdcfe">height</tspan>: <tspan fill="#ce9178">55%</tspan>; <tspan fill="#9cdcfe">min-height</tspan>: <tspan fill="#ce9178">120px</tspan>;</text>
+  <!-- Line 3: border-bottom: 1px solid var(--border); -->
+  <text x="30" y="490" font-size="10" fill="#585858" text-anchor="end">43</text>
+  <text x="52" y="490" font-size="10" fill="#d4d4d4"><tspan fill="#9cdcfe">border-bottom</tspan>: <tspan fill="#ce9178">1px</tspan> <tspan fill="#ce9178">solid</tspan> <tspan fill="#dcdcaa">var</tspan>(<tspan fill="#9cdcfe">--border</tspan>);</text>
+  <!-- Line 4: display: flex; -->
+  <text x="30" y="506" font-size="10" fill="#585858" text-anchor="end">44</text>
+  <text x="52" y="506" font-size="10" fill="#d4d4d4"><tspan fill="#9cdcfe">display</tspan>: <tspan fill="#ce9178">flex</tspan>;</text>
+  <!-- Line 5: } -->
+  <text x="30" y="522" font-size="10" fill="#585858" text-anchor="end">45</text>
+  <text x="42" y="522" font-size="10" fill="#d4d4d4">}</text>
+  <!-- Line 6: blank -->
+  <text x="30" y="538" font-size="10" fill="#585858" text-anchor="end">46</text>
+  <!-- Line 7: .code-viewer { -->
+  <text x="30" y="554" font-size="10" fill="#585858" text-anchor="end">47</text>
+  <text x="42" y="554" font-size="10" fill="#d4d4d4"><tspan fill="#d7ba7d">.code-viewer</tspan> {</text>
+  <!-- Line 8: flex: 1; -->
+  <text x="30" y="570" font-size="10" fill="#585858" text-anchor="end">48</text>
+  <text x="52" y="570" font-size="10" fill="#d4d4d4"><tspan fill="#9cdcfe">flex</tspan>: <tspan fill="#b5cea8">1</tspan>;</text>
+  <!-- Line 9: overflow-y: auto; -->
+  <text x="30" y="586" font-size="10" fill="#585858" text-anchor="end">49</text>
+  <text x="52" y="586" font-size="10" fill="#d4d4d4"><tspan fill="#9cdcfe">overflow-y</tspan>: <tspan fill="#ce9178">auto</tspan>;</text>
+  <!-- Line 10: } -->
+  <text x="30" y="602" font-size="10" fill="#585858" text-anchor="end">50</text>
+  <text x="42" y="602" font-size="10" fill="#d4d4d4">}</text>
 
-  <!-- ══════════ Diff Viewer (Bottom ~25%) ══════════ -->
-  <line x1="0" y1="572" x2="1200" y2="572" stroke="#3c3c3c"/>
+  <!-- Code scrollbar -->
+  <rect x="593" y="442" width="4" height="230" rx="2" fill="#2a2a2a"/>
+  <rect x="593" y="442" width="4" height="40" rx="2" fill="#555"/>
+
+  <!-- ── Vertical Divider between Code and Diff ── -->
+  <line x1="600" y1="424" x2="600" y2="672" stroke="#3c3c3c" stroke-width="1"/>
+
+  <!-- ── Diff Viewer (Right Half) ── -->
+  <rect x="600" y="424" width="600" height="248" class="bg"/>
 
   <!-- Diff Header -->
-  <rect x="0" y="572" width="1200" height="18" class="panel"/>
-  <line x1="0" y1="590" x2="1200" y2="590" stroke="#3c3c3c"/>
-  <text x="14" y="586" font-size="10" fill="#569cd6" font-weight="500">Edit: monitor-agent/dashboard.html</text>
-  <text x="1186" y="586" font-size="10" fill="#858585" text-anchor="end">17:20:14</text>
+  <rect x="600" y="424" width="600" height="18" class="panel"/>
+  <line x1="600" y1="442" x2="1200" y2="442" stroke="#3c3c3c"/>
+  <text x="614" y="438" font-size="10" fill="#569cd6" font-weight="500">Edit: dashboard/style.css</text>
+  <text x="1186" y="438" font-size="10" fill="#858585" text-anchor="end">10:30:48</text>
 
   <!-- Diff Content -->
-  <!-- Deleted line 1 (red) -->
-  <rect x="0" y="592" width="1200" height="16" fill="#2d1515"/>
-  <text x="14" y="604" font-size="10" fill="#f44747">-  font-size: 11px;</text>
-  <!-- Added line 1 (green) -->
-  <rect x="0" y="608" width="1200" height="16" fill="#1d2d1d"/>
-  <text x="14" y="620" font-size="10" fill="#6a9955">+  font-size: 12.1px;</text>
+  <!-- Context line -->
+  <text x="614" y="458" font-size="10" fill="#858585">  .activity-panel {</text>
+
+  <!-- Deleted line (red) -->
+  <rect x="600" y="462" width="600" height="16" fill="#2d1515"/>
+  <text x="614" y="474" font-size="10" fill="#f44747">-   height: 35%; min-height: 120px;</text>
+
+  <!-- Added line (green) -->
+  <rect x="600" y="478" width="600" height="16" fill="#1d2d1d"/>
+  <text x="614" y="490" font-size="10" fill="#6a9955">+   height: 55%; min-height: 120px;</text>
+
+  <!-- Context line -->
+  <text x="614" y="510" font-size="10" fill="#858585">    border-bottom: 1px solid var(--border);</text>
+  <text x="614" y="526" font-size="10" fill="#858585">    display: flex;</text>
+  <text x="614" y="542" font-size="10" fill="#858585">  }</text>
+
   <!-- Separator -->
-  <line x1="14" y1="630" x2="1186" y2="630" stroke="#3c3c3c" stroke-dasharray="4"/>
+  <line x1="614" y1="552" x2="1186" y2="552" stroke="#3c3c3c" stroke-dasharray="4"/>
+
+  <!-- Context line -->
+  <text x="614" y="568" font-size="10" fill="#858585">  .feed-label {</text>
+
   <!-- Deleted line 2 (red) -->
-  <rect x="0" y="634" width="1200" height="16" fill="#2d1515"/>
-  <text x="14" y="646" font-size="10" fill="#f44747">-  padding: 6px 10px;</text>
+  <rect x="600" y="572" width="600" height="16" fill="#2d1515"/>
+  <text x="614" y="584" font-size="10" fill="#f44747">-   color: #858585;</text>
+
   <!-- Added line 2 (green) -->
-  <rect x="0" y="650" width="1200" height="16" fill="#1d2d1d"/>
-  <text x="14" y="662" font-size="10" fill="#6a9955">+  padding: 6.6px 11px;</text>
+  <rect x="600" y="588" width="600" height="16" fill="#1d2d1d"/>
+  <text x="614" y="600" font-size="10" fill="#6a9955">+   color: #4ec9b0;</text>
+
+  <!-- Context line -->
+  <text x="614" y="620" font-size="10" fill="#858585">    font-weight: 600;</text>
+  <text x="614" y="636" font-size="10" fill="#858585">  }</text>
+
+  <!-- Diff scrollbar -->
+  <rect x="1193" y="442" width="4" height="230" rx="2" fill="#2a2a2a"/>
+  <rect x="1193" y="442" width="4" height="50" rx="2" fill="#555"/>
 
   <!-- ══════════ Footer ══════════ -->
   <rect x="0" y="672" width="1200" height="28" class="panel"/>
@@ -223,8 +259,8 @@
   <!-- Connected status -->
   <circle cx="16" cy="688" r="4" fill="#6a9955"/>
   <text x="26" y="692" font-size="10" fill="#858585">Connected</text>
-  <!-- Event count -->
-  <text x="1186" y="692" font-size="10" fill="#858585" text-anchor="end">Events: 2,662</text>
+  <!-- Action count -->
+  <text x="1186" y="692" font-size="10" fill="#858585" text-anchor="end">Actions: 2,662</text>
 
   </g>
 </svg>
