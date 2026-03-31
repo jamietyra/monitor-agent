@@ -5,7 +5,7 @@
 [English](README.md)
 
 <p align="center">
-  <img src="preview.ko.svg" alt="monitor-agent 대시보드 미리보기" width="100%">
+  <img src="preview.ko.svg?v=3" alt="monitor-agent 대시보드 미리보기" width="100%">
 </p>
 
 ## 기능
