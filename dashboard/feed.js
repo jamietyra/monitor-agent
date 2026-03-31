@@ -56,7 +56,11 @@
   };
 
   var searchInput = document.getElementById('activity-search');
-  searchInput.addEventListener('input', applyFilters);
+  var searchTimer = null;
+  searchInput.addEventListener('input', function() {
+    if (searchTimer) clearTimeout(searchTimer);
+    searchTimer = setTimeout(applyFilters, 150);
+  });
 
   function applyFilters() {
     var q = searchInput.value.toLowerCase().trim();
@@ -130,6 +134,7 @@
   var currentToolsContainer = null;
   var currentToolCount = 0;
   var currentSession = null;
+  var toolItemMap = new Map(); // tool_id → DOM element cache
 
   function collapseCurrentGroup() {
     if (!currentGroup) return;
@@ -229,9 +234,9 @@
       return;
     }
 
-    // tool_done/tool_error → 기존 줄 업데이트
+    // tool_done/tool_error → 기존 줄 업데이트 (Map lookup O(1))
     if ((ev.type === 'tool_done' || ev.type === 'tool_error') && ev.id) {
-      var existing = document.querySelector('.activity-item[data-tool-id="' + ev.id + '"]');
+      var existing = toolItemMap.get(ev.id);
       if (existing) {
         var iconEl = existing.querySelector('.activity-icon');
         if (ev.type === 'tool_done') {
@@ -268,7 +273,10 @@
 
     var item = document.createElement('div');
     item.className = 'activity-item';
-    if (ev.id) item.dataset.toolId = ev.id;
+    if (ev.id) {
+      item.dataset.toolId = ev.id;
+      toolItemMap.set(ev.id, item);
+    }
 
     if (ev.diff) item._diffData = { filePath: ev.filePath, fileName: ev.target, diff: ev.diff, time: ev.time };
 
@@ -357,7 +365,7 @@
     }
 
     if ((ev.type === 'tool_done' || ev.type === 'tool_error') && ev.id) {
-      var existing = document.querySelector('.activity-item[data-tool-id="' + ev.id + '"]');
+      var existing = toolItemMap.get(ev.id);
       if (existing) {
         var iconEl = existing.querySelector('.activity-icon');
         if (ev.type === 'tool_done') { iconEl.textContent = '\u2713'; iconEl.className = 'activity-icon icon-done'; }
@@ -378,7 +386,10 @@
     }
     var item = document.createElement('div');
     item.className = 'activity-item';
-    if (ev.id) item.dataset.toolId = ev.id;
+    if (ev.id) {
+      item.dataset.toolId = ev.id;
+      toolItemMap.set(ev.id, item);
+    }
     if (ev.diff) item._diffData = { filePath: ev.filePath, fileName: ev.target, diff: ev.diff, time: ev.time };
     if (ev.filePath) {
       item.dataset.filePath = ev.filePath;

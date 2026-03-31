@@ -29,15 +29,17 @@
     codeContent.innerHTML = '';
     codeContent.appendChild(pre);
 
-    // 500줄 이하만 하이라이트 (성능)
-    if (fileData.totalLines <= 500) {
-      Prism.highlightElement(code);
-    }
+    // 구문 하이라이트 후 Edit diff 하이라이트 적용
+    var savedHighlight = pendingHighlight;
+    pendingHighlight = null;
 
-    // Edit diff 하이라이트: 변경된 줄 표시 + 자동 스크롤
-    if (pendingHighlight) {
-      highlightChangedLines(code, pendingHighlight);
-      pendingHighlight = null;
+    if (fileData.totalLines <= 1000 && typeof Prism !== 'undefined') {
+      requestAnimationFrame(function() {
+        Prism.highlightElement(code);
+        if (savedHighlight) highlightChangedLines(code, savedHighlight);
+      });
+    } else if (savedHighlight) {
+      highlightChangedLines(code, savedHighlight);
     }
 
     // 클릭된 항목만 강조 (clickedElement가 있을 때만)
