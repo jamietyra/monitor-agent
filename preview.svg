@@ -1,189 +1,265 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 700" font-family="'Cascadia Code','Fira Code','JetBrains Mono','Consolas',monospace">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 720">
   <defs>
     <style>
-      .bg { fill: #1e1e1e; }
-      .panel { fill: #252526; }
-      .chrome-bg { fill: #202124; }
-      .chrome-addr { fill: #35363a; }
-      .border { stroke: #3c3c3c; stroke-width: 1; fill: none; }
+      .bg { fill: #d9cba8; }
+      .panel { fill: #ebe0c7; }
+      .hover { fill: #f5ecd4; }
+      .ink { fill: #2a1f1a; }
+      .dim { fill: #6b5a4a; }
+      .muted { fill: #9a8b78; }
+      .accent { fill: #8B1A1A; }
+      .mono { font-family: 'Cascadia Code','Fira Code','Consolas',monospace; }
+      .serif { font-family: 'Fraunces',Georgia,serif; font-style: italic; }
+      .hand { font-family: 'Caveat','Comic Sans MS',cursive; }
+      .ui { font-family: system-ui,-apple-system,sans-serif; }
     </style>
+    <filter id="ballShadow"><feDropShadow dx="0" dy="5" stdDeviation="3" flood-opacity="0.22"/></filter>
   </defs>
 
-  <!-- Background -->
-  <rect width="1200" height="700" class="bg" rx="8"/>
+  <!-- Canvas -->
+  <rect width="1200" height="720" class="bg" rx="8"/>
 
-  <!-- Chrome tab bar -->
-  <rect width="1200" height="36" class="chrome-bg" rx="8"/>
-  <rect y="28" width="1200" height="8" class="chrome-bg"/>
-  <rect x="80" y="8" width="200" height="28" rx="8" fill="#35363a"/>
-  <circle cx="96" cy="22" r="6" fill="#569cd6"/>
-  <text x="112" y="26" fill="#d4d4d4" font-size="11">monitor-agent</text>
-  <text x="264" y="26" fill="#858585" font-size="11">x</text>
-  <circle cx="1140" cy="18" r="6" fill="#858585" opacity="0.4"/>
-  <circle cx="1160" cy="18" r="6" fill="#858585" opacity="0.4"/>
-  <circle cx="1180" cy="18" r="6" fill="#858585" opacity="0.4"/>
-
-  <!-- Address bar -->
-  <rect y="36" width="1200" height="30" class="chrome-bg"/>
-  <rect x="80" y="42" width="1040" height="18" class="chrome-addr" rx="9"/>
-  <text x="100" y="55" fill="#858585" font-size="10">localhost:3000</text>
+  <!-- Browser chrome -->
+  <rect width="1200" height="36" fill="#c5b492" rx="8"/>
+  <rect y="28" width="1200" height="8" fill="#c5b492"/>
+  <rect x="80" y="8" width="240" height="28" rx="8" fill="#d9cba8"/>
+  <circle cx="96" cy="22" r="6" class="accent"/>
+  <text x="112" y="26" class="ink" font-size="11">monitor-agent</text>
+  <text x="304" y="28" class="dim" font-size="14">×</text>
+  <circle cx="1140" cy="18" r="6" class="muted" opacity="0.5"/>
+  <circle cx="1160" cy="18" r="6" class="muted" opacity="0.5"/>
+  <circle cx="1180" cy="18" r="6" class="muted" opacity="0.5"/>
+  <rect y="36" width="1200" height="30" fill="#c5b492"/>
+  <rect x="80" y="42" width="1040" height="18" rx="9" fill="#b09c7c"/>
+  <text x="100" y="55" class="dim" font-size="10">localhost:3141</text>
 
   <!-- Header bar -->
   <rect y="66" width="1200" height="34" class="panel"/>
-  <rect y="100" width="1200" height="1" fill="#3c3c3c"/>
-  <text x="16" y="88" fill="#ff6b35" font-size="14" font-weight="bold">monitor-agent</text>
-  <text x="740" y="88" fill="#858585" font-size="11">Running:</text>
-  <text x="805" y="88" fill="#4ec9b0" font-size="11" font-weight="bold">2</text>
-  <text x="840" y="88" fill="#858585" font-size="11">Done:</text>
-  <text x="882" y="88" fill="#d4d4d4" font-size="11" font-weight="bold">847</text>
-  <text x="930" y="88" fill="#858585" font-size="11">Errors:</text>
-  <text x="986" y="88" fill="#f44747" font-size="11" font-weight="bold">3</text>
+  <line x1="0" y1="100" x2="1200" y2="100" stroke="#8a6a3a"/>
 
-  <!-- Feeds section -->
-  <rect y="101" width="1200" height="20" class="panel"/>
-  <rect y="121" width="1200" height="1" fill="#3c3c3c"/>
-  <text x="14" y="116" fill="#569cd6" font-size="11" font-weight="bold" letter-spacing="0.5">FEEDS</text>
+  <!-- Title -->
+  <text x="20" y="90" class="serif accent" font-size="19" font-weight="700">monitor-agent</text>
 
-  <!-- Search bar -->
-  <rect x="14" y="128" width="1172" height="24" rx="4" fill="#3c3c3c"/>
-  <rect x="15" y="129" width="1170" height="22" rx="3" class="bg"/>
-  <text x="28" y="144" fill="#585858" font-size="10">Search (prompts, files, commands...)</text>
+  <!-- Toggle buttons (all active) -->
+  <rect x="180" y="75" width="62" height="20" rx="12" class="accent"/>
+  <text x="211" y="89" text-anchor="middle" class="serif" fill="#ebe0c7" font-size="11" font-weight="600">Wilson</text>
+  <rect x="247" y="75" width="44" height="20" rx="12" class="accent"/>
+  <text x="269" y="89" text-anchor="middle" class="serif" fill="#ebe0c7" font-size="11" font-weight="600">File</text>
+  <rect x="296" y="75" width="48" height="20" rx="12" class="accent"/>
+  <text x="320" y="89" text-anchor="middle" class="serif" fill="#ebe0c7" font-size="11" font-weight="600">Feed</text>
+  <rect x="349" y="75" width="44" height="20" rx="12" class="accent"/>
+  <text x="371" y="89" text-anchor="middle" class="serif" fill="#ebe0c7" font-size="11" font-weight="600">Diff</text>
+  <rect x="413" y="75" width="58" height="20" rx="12" fill="none" stroke="#8a6a3a"/>
+  <text x="442" y="89" text-anchor="middle" class="serif dim" font-size="11" font-weight="600">Beige</text>
 
-  <!-- Session filter buttons -->
-  <rect x="14" y="160" width="44" height="20" rx="10" fill="#333"/>
-  <text x="22" y="174" fill="#d4d4d4" font-size="10">&#9654; All</text>
-  <line x1="66" y1="162" x2="66" y2="178" stroke="#3c3c3c"/>
-  <rect x="76" y="160" width="50" height="20" rx="10" fill="#1a3a5c"/>
-  <text x="101" y="174" text-anchor="middle" fill="#569cd6" font-size="10">MAIN</text>
-  <rect x="134" y="160" width="70" height="20" rx="10" fill="#2d1a3c"/>
-  <text x="169" y="174" text-anchor="middle" fill="#c586c0" font-size="10">WEB-APP</text>
-  <rect x="212" y="160" width="90" height="20" rx="10" fill="#1a3c2d"/>
-  <text x="257" y="174" text-anchor="middle" fill="#4ec9b0" font-size="10">API-SERVER</text>
+  <!-- Stats -->
+  <text x="860" y="88" class="dim" font-size="11">Running:</text>
+  <text x="917" y="88" fill="#a87a1a" font-size="11" font-weight="bold">2</text>
+  <text x="935" y="88" class="dim" font-size="11">Done:</text>
+  <text x="973" y="88" fill="#4a7a35" font-size="11" font-weight="bold">847</text>
+  <text x="1005" y="88" class="dim" font-size="11">Errors:</text>
+  <text x="1048" y="88" class="accent" font-size="11" font-weight="bold">3</text>
+  <text x="1068" y="88" class="dim" font-size="11">Elapsed: 00:42:15</text>
 
-  <!-- Expanded prompt group -->
-  <rect x="8" y="190" width="1184" height="22" rx="3" fill="#2a2d2e"/>
-  <text x="16" y="205" fill="#858585" font-size="10">&#9660;</text>
-  <rect x="32" y="193" width="38" height="16" rx="8" fill="#1a3a5c"/>
-  <text x="51" y="205" text-anchor="middle" fill="#569cd6" font-size="9">MAIN</text>
-  <text x="78" y="205" fill="#858585" font-size="10">10:30</text>
-  <text x="126" y="205" fill="#d4d4d4" font-size="10">Increase the font size by 10% across all panels.</text>
-  <rect x="1158" y="193" width="24" height="16" rx="8" fill="#3c3c3c"/>
-  <text x="1170" y="205" text-anchor="middle" fill="#d4d4d4" font-size="9">5</text>
+  <!-- WILSON PANEL -->
+  <rect x="0" y="100" width="300" height="600" class="panel"/>
+  <line x1="300" y1="100" x2="300" y2="700" stroke="#8a6a3a"/>
 
-  <!-- Tool sub-items -->
-  <text x="48" y="224" fill="#4ec9b0" font-size="10">&#10003;</text>
-  <text x="62" y="224" fill="#858585" font-size="10">Read dashboard/style.css</text>
-  <text x="48" y="240" fill="#4ec9b0" font-size="10">&#10003;</text>
-  <text x="62" y="240" fill="#858585" font-size="10">Edit dashboard/style.css (12 changes)</text>
-  <text x="48" y="256" fill="#4ec9b0" font-size="10">&#10003;</text>
-  <text x="62" y="256" fill="#858585" font-size="10">Read dashboard/viewer.js</text>
-  <text x="48" y="272" fill="#4ec9b0" font-size="10">&#10003;</text>
-  <text x="62" y="272" fill="#858585" font-size="10">Edit dashboard/viewer.js</text>
+  <g transform="rotate(-1 150 148)">
+    <text x="150" y="152" text-anchor="middle" class="hand" font-weight="600" font-size="30">
+      <tspan fill="#8B1A1A">t</tspan><tspan fill="#2a7a70">h</tspan><tspan fill="#4a7a35">i</tspan><tspan fill="#8a4a8a">n</tspan><tspan fill="#8B1A1A">k</tspan><tspan fill="#2a7a70">i</tspan><tspan fill="#4a7a35">n</tspan><tspan fill="#8a4a8a">g</tspan>
+    </text>
+  </g>
 
-  <!-- Assistant response -->
-  <circle cx="54" cy="288" r="4" fill="#6a9955"/>
-  <text x="66" y="292" fill="#6a9955" font-size="10">Done. All panel font sizes scaled up by 10%.</text>
+  <g transform="translate(75 178) scale(3.125)" filter="url(#ballShadow)">
+    <circle cx="24" cy="24" r="22" fill="#f0ebe0" stroke="#d8d0c4" stroke-width="0.8"/>
+    <line x1="3" y1="16" x2="45" y2="16" stroke="#ccc4b8" stroke-width="0.5"/>
+    <line x1="3" y1="33" x2="45" y2="33" stroke="#ccc4b8" stroke-width="0.5"/>
+    <path d="M11 14 C9 9 13 5 17 7 C19 4 22 3 25 5 C27 3 31 4 33 7 C36 5 40 9 37 14 C41 18 43 24 41 31 C39 38 33 44 24 44 C15 44 9 38 7 31 C5 24 7 18 11 14 Z" fill="#8B1A1A"/>
+    <path d="M12 19 Q14 14 19 16 Q22 18 20 23 Q17 26 13 23 Q11 21 12 19 Z" fill="white" opacity="0.9"/>
+    <circle cx="17" cy="18" r="2" fill="#1a1a2e"/>
+    <path d="M28 16 Q33 14 36 19 Q37 22 35 24 Q31 27 28 23 Q26 19 28 16 Z" fill="white" opacity="0.9"/>
+    <circle cx="33" cy="18" r="2" fill="#1a1a2e"/>
+    <circle cx="24" cy="28" r="1" fill="white" opacity="0.25"/>
+    <path d="M18 35 Q24 39 30 35" fill="none" stroke="white" stroke-width="1" opacity="0.35" stroke-linecap="round"/>
+  </g>
 
-  <!-- Collapsed prompt group 2 -->
-  <rect x="8" y="304" width="1184" height="22" rx="3" fill="#2a2d2e"/>
-  <text x="16" y="319" fill="#858585" font-size="10">&#9654;</text>
-  <rect x="32" y="307" width="38" height="16" rx="8" fill="#1a3a5c"/>
-  <text x="51" y="319" text-anchor="middle" fill="#569cd6" font-size="9">MAIN</text>
-  <text x="78" y="319" fill="#858585" font-size="10">10:15</text>
-  <text x="126" y="319" fill="#d4d4d4" font-size="10">Add dark mode toggle to the header component.</text>
-  <rect x="1158" y="307" width="24" height="16" rx="8" fill="#3c3c3c"/>
-  <text x="1170" y="319" text-anchor="middle" fill="#d4d4d4" font-size="9">3</text>
+  <rect x="30" y="355" width="240" height="44" rx="4" class="hover" stroke="#8a6a3a"/>
+  <circle cx="62" cy="377" r="3" fill="#8B1A1A"/>
+  <text x="150" y="381" text-anchor="middle" class="ui ink" font-size="12">Read: dashboard.html</text>
 
-  <!-- Collapsed prompt group 3 -->
-  <rect x="8" y="334" width="1184" height="22" rx="3" fill="#2a2d2e"/>
-  <text x="16" y="349" fill="#858585" font-size="10">&#9654;</text>
-  <rect x="32" y="337" width="80" height="16" rx="8" fill="#1a3c2d"/>
-  <text x="72" y="349" text-anchor="middle" fill="#4ec9b0" font-size="9">API-SERVER</text>
-  <text x="120" y="349" fill="#858585" font-size="10">09:45</text>
-  <text x="168" y="349" fill="#d4d4d4" font-size="10">Refactor auth middleware for JWT validation.</text>
-  <rect x="1152" y="337" width="30" height="16" rx="8" fill="#3c3c3c"/>
-  <text x="1167" y="349" text-anchor="middle" fill="#d4d4d4" font-size="9">12</text>
+  <line x1="0" y1="432" x2="300" y2="432" stroke="#8a6a3a"/>
+  <text x="14" y="455" class="serif accent" font-size="17" font-weight="600">Recent Files</text>
+  <line x1="0" y1="466" x2="300" y2="466" stroke="#8a6a3a"/>
 
-  <!-- Resize handle -->
-  <line x1="0" y1="380" x2="1200" y2="380" stroke="#569cd6" stroke-width="2" opacity="0.6"/>
-  <rect x="580" y="377" width="40" height="6" rx="3" fill="#569cd6" opacity="0.5"/>
+  <g class="mono" font-size="11">
+    <text x="14" y="486" class="muted">◇</text>
+    <text x="32" y="486" fill="#2a7a70">dashboard.html</text>
+    <text x="230" y="486" class="serif accent" font-size="10">read</text>
+    <text x="262" y="486" class="muted" font-size="9">10:30</text>
 
-  <!-- Code Viewer (left) -->
-  <rect y="386" width="599" height="280" class="bg"/>
-  <rect y="386" width="599" height="18" class="panel"/>
-  <line x1="0" y1="404" x2="599" y2="404" stroke="#3c3c3c"/>
-  <text x="14" y="399" fill="#569cd6" font-size="10" font-weight="bold">Code Viewer</text>
-  <text x="130" y="399" fill="#858585" font-size="10">style.css</text>
-  <text x="300" y="399" fill="#858585" font-size="10">248 lines</text>
+    <text x="14" y="506" class="muted">✎</text>
+    <text x="32" y="506" fill="#2a7a70">style.css</text>
+    <text x="230" y="506" class="serif" fill="#a87a1a" font-size="10">edit</text>
+    <text x="262" y="506" class="muted" font-size="9">10:28</text>
 
-  <!-- Line number gutter -->
-  <rect y="404" width="36" height="262" fill="#1a1a1a"/>
+    <text x="14" y="526" class="muted">+</text>
+    <text x="32" y="526" fill="#2a7a70">wilson.js</text>
+    <text x="230" y="526" class="serif" fill="#4a7a35" font-size="10">write</text>
+    <text x="262" y="526" class="muted" font-size="9">10:25</text>
 
-  <!-- Code lines with syntax colors -->
-  <text x="30" y="420" text-anchor="end" fill="#585858" font-size="10">14</text>
-  <text x="42" y="420" font-size="10"><tspan fill="#d7ba7d">.feed-panel</tspan><tspan fill="#d4d4d4"> {</tspan></text>
+    <text x="14" y="546" class="muted">◇</text>
+    <text x="32" y="546" fill="#2a7a70">index.html</text>
+    <text x="230" y="546" class="serif accent" font-size="10">read</text>
+    <text x="262" y="546" class="muted" font-size="9">10:24</text>
 
-  <text x="30" y="436" text-anchor="end" fill="#585858" font-size="10">15</text>
-  <text x="52" y="436" font-size="10"><tspan fill="#9cdcfe">font-size</tspan><tspan fill="#d4d4d4">: </tspan><tspan fill="#b5cea8">14</tspan><tspan fill="#ce9178">px</tspan><tspan fill="#d4d4d4">;</tspan></text>
+    <rect x="0" y="552" width="300" height="20" class="hover"/>
+    <rect x="0" y="552" width="2" height="20" class="accent"/>
+    <text x="14" y="567" class="muted">✎</text>
+    <text x="32" y="567" fill="#2a7a70">server.mjs</text>
+    <text x="230" y="567" class="serif" fill="#a87a1a" font-size="10">edit</text>
+    <text x="262" y="567" class="muted" font-size="9">10:22</text>
 
-  <text x="30" y="452" text-anchor="end" fill="#585858" font-size="10">16</text>
-  <text x="52" y="452" font-size="10"><tspan fill="#9cdcfe">line-height</tspan><tspan fill="#d4d4d4">: </tspan><tspan fill="#b5cea8">1.6</tspan><tspan fill="#d4d4d4">;</tspan></text>
+    <text x="14" y="587" class="muted">◇</text>
+    <text x="32" y="587" fill="#2a7a70">README.md</text>
+    <text x="230" y="587" class="serif accent" font-size="10">read</text>
+    <text x="262" y="587" class="muted" font-size="9">10:20</text>
 
-  <text x="30" y="468" text-anchor="end" fill="#585858" font-size="10">17</text>
-  <text x="52" y="468" font-size="10"><tspan fill="#9cdcfe">color</tspan><tspan fill="#d4d4d4">: </tspan><tspan fill="#ce9178">#d4d4d4</tspan><tspan fill="#d4d4d4">;</tspan></text>
+    <text x="14" y="607" class="muted">✎</text>
+    <text x="32" y="607" fill="#2a7a70">config.json</text>
+    <text x="230" y="607" class="serif" fill="#a87a1a" font-size="10">edit</text>
+    <text x="262" y="607" class="muted" font-size="9">10:18</text>
 
-  <text x="30" y="484" text-anchor="end" fill="#585858" font-size="10">18</text>
-  <text x="52" y="484" font-size="10"><tspan fill="#9cdcfe">padding</tspan><tspan fill="#d4d4d4">: </tspan><tspan fill="#b5cea8">12</tspan><tspan fill="#ce9178">px</tspan><tspan fill="#d4d4d4">;</tspan></text>
+    <text x="14" y="627" class="muted">+</text>
+    <text x="32" y="627" fill="#2a7a70">utils.js</text>
+    <text x="230" y="627" class="serif" fill="#4a7a35" font-size="10">write</text>
+    <text x="262" y="627" class="muted" font-size="9">10:15</text>
 
-  <text x="30" y="500" text-anchor="end" fill="#585858" font-size="10">19</text>
-  <text x="42" y="500" font-size="10"><tspan fill="#d7ba7d">}</tspan></text>
+    <text x="14" y="647" class="muted">◇</text>
+    <text x="32" y="647" fill="#2a7a70">feed.js</text>
+    <text x="230" y="647" class="serif accent" font-size="10">read</text>
+    <text x="262" y="647" class="muted" font-size="9">10:12</text>
 
-  <text x="30" y="516" text-anchor="end" fill="#585858" font-size="10">20</text>
+    <text x="14" y="667" class="muted">✎</text>
+    <text x="32" y="667" fill="#2a7a70">viewer.js</text>
+    <text x="230" y="667" class="serif" fill="#a87a1a" font-size="10">edit</text>
+    <text x="262" y="667" class="muted" font-size="9">10:08</text>
+  </g>
 
-  <text x="30" y="532" text-anchor="end" fill="#585858" font-size="10">21</text>
-  <text x="42" y="532" font-size="10"><tspan fill="#d7ba7d">.header</tspan><tspan fill="#d4d4d4"> {</tspan></text>
+  <!-- FEEDS SECTION -->
+  <text x="314" y="124" class="serif accent" font-size="17" font-weight="600">Feeds</text>
+  <line x1="300" y1="133" x2="1200" y2="133" stroke="#8a6a3a"/>
 
-  <text x="30" y="548" text-anchor="end" fill="#585858" font-size="10">22</text>
-  <text x="52" y="548" font-size="10"><tspan fill="#9cdcfe">display</tspan><tspan fill="#d4d4d4">: </tspan><tspan fill="#ce9178">flex</tspan><tspan fill="#d4d4d4">;</tspan></text>
+  <rect x="314" y="141" width="872" height="22" rx="4" class="panel" stroke="#8a6a3a"/>
+  <text x="328" y="156" class="muted" font-size="10">Search (prompts, files, commands...)</text>
 
-  <text x="30" y="564" text-anchor="end" fill="#585858" font-size="10">23</text>
-  <text x="52" y="564" font-size="10"><tspan fill="#9cdcfe">align-items</tspan><tspan fill="#d4d4d4">: </tspan><tspan fill="#ce9178">center</tspan><tspan fill="#d4d4d4">;</tspan></text>
+  <rect x="314" y="171" width="44" height="20" rx="10" class="panel" stroke="#8a6a3a"/>
+  <text x="336" y="185" text-anchor="middle" class="ink" font-size="10">▶ All</text>
+  <line x1="366" y1="173" x2="366" y2="189" stroke="#8a6a3a"/>
+  <rect x="376" y="171" width="58" height="20" rx="10" fill="#f0e4c0" stroke="#8a6a3a"/>
+  <text x="405" y="185" text-anchor="middle" class="accent" font-size="10" font-weight="600">MAIN</text>
+  <rect x="442" y="171" width="62" height="20" rx="10" fill="#e8dcb8" stroke="#8a6a3a"/>
+  <text x="473" y="185" text-anchor="middle" fill="#8a4a8a" font-size="10" font-weight="600">webapp</text>
 
-  <text x="30" y="580" text-anchor="end" fill="#585858" font-size="10">24</text>
-  <text x="42" y="580" font-size="10"><tspan fill="#d7ba7d">}</tspan></text>
+  <rect x="300" y="200" width="900" height="22" class="panel"/>
+  <text x="314" y="215" class="dim">▼</text>
+  <rect x="328" y="206" width="50" height="12" rx="6" fill="#f0e4c0"/>
+  <text x="353" y="215" text-anchor="middle" class="accent" font-size="9" font-weight="600">MAIN</text>
+  <text x="388" y="215" class="mono muted" font-size="10">10:30</text>
+  <text x="428" y="215" class="mono ink" font-size="11">Increase hero section font size by 10%</text>
+  <text x="1180" y="215" text-anchor="end" class="mono muted" font-size="10">[5]</text>
 
-  <!-- Vertical divider -->
-  <line x1="599" y1="386" x2="599" y2="666" stroke="#3c3c3c"/>
+  <g class="mono" font-size="11">
+    <text x="348" y="240" class="muted" font-size="10">10:30:25</text>
+    <text x="410" y="240" fill="#4a7a35">✓</text>
+    <text x="425" y="240" fill="#2a7a70">Read</text>
+    <text x="465" y="240" class="dim">dashboard.html</text>
+    <text x="1180" y="240" text-anchor="end" class="muted" font-size="10">95ms</text>
 
-  <!-- Diff Viewer (right) -->
-  <rect x="600" y="386" width="600" height="280" class="bg"/>
-  <rect x="600" y="386" width="600" height="18" class="panel"/>
-  <line x1="600" y1="404" x2="1200" y2="404" stroke="#3c3c3c"/>
-  <text x="614" y="399" fill="#569cd6" font-size="10" font-weight="bold">Diff Viewer</text>
-  <text x="740" y="399" fill="#858585" font-size="10">Edit: style.css</text>
-  <text x="1186" y="399" text-anchor="end" fill="#858585" font-size="10">10:30</text>
+    <text x="348" y="258" class="muted" font-size="10">10:30:26</text>
+    <text x="410" y="258" fill="#4a7a35">✓</text>
+    <text x="425" y="258" fill="#2a7a70">Edit</text>
+    <text x="465" y="258" class="dim">dashboard.html</text>
+    <text x="1180" y="258" text-anchor="end" class="muted" font-size="10">142ms</text>
 
-  <!-- Diff: context -->
-  <text x="614" y="420" fill="#858585" font-size="10">  .feed-panel {</text>
+    <text x="348" y="276" fill="#4a7a35" font-size="13">●</text>
+    <text x="366" y="276" class="dim">Done. All items scaled up 10%.</text>
+  </g>
 
-  <!-- Diff: deleted (red) -->
-  <rect x="600" y="424" width="600" height="16" fill="#f44747" opacity="0.1"/>
-  <text x="614" y="436" fill="#f44747" font-size="10">-   font-size: 12px;</text>
+  <rect x="300" y="292" width="900" height="22" class="panel"/>
+  <text x="314" y="307" class="dim">▶</text>
+  <rect x="328" y="298" width="50" height="12" rx="6" fill="#f0e4c0"/>
+  <text x="353" y="307" text-anchor="middle" class="accent" font-size="9" font-weight="600">MAIN</text>
+  <text x="388" y="307" class="mono muted" font-size="10">10:15</text>
+  <text x="428" y="307" class="mono ink" font-size="11">Remove footer section</text>
+  <text x="1180" y="307" text-anchor="end" class="mono muted" font-size="10">[3]</text>
 
-  <!-- Diff: added (green) -->
-  <rect x="600" y="440" width="600" height="16" fill="#6a9955" opacity="0.1"/>
-  <text x="614" y="452" fill="#6a9955" font-size="10">+   font-size: 14px;</text>
+  <rect x="300" y="322" width="900" height="22" class="panel"/>
+  <text x="314" y="337" class="dim">▶</text>
+  <rect x="328" y="328" width="62" height="12" rx="6" fill="#e8dcb8"/>
+  <text x="359" y="337" text-anchor="middle" fill="#8a4a8a" font-size="9" font-weight="600">webapp</text>
+  <text x="400" y="337" class="mono muted" font-size="10">09:45</text>
+  <text x="440" y="337" class="mono ink" font-size="11">Fix order API endpoint validation</text>
+  <text x="1180" y="337" text-anchor="end" class="mono muted" font-size="10">[12]</text>
 
-  <!-- Diff: context lines -->
-  <text x="614" y="468" fill="#858585" font-size="10">    line-height: 1.6;</text>
-  <text x="614" y="484" fill="#858585" font-size="10">    color: #d4d4d4;</text>
-  <text x="614" y="500" fill="#858585" font-size="10">    padding: 12px;</text>
-  <text x="614" y="516" fill="#858585" font-size="10">  }</text>
+  <rect x="300" y="430" width="900" height="4" fill="#8a6a3a" opacity="0.35"/>
+
+  <!-- CODE VIEWER -->
+  <rect x="300" y="434" width="450" height="24" class="panel"/>
+  <text x="314" y="451" class="ink" font-size="11" font-weight="600">dashboard.html</text>
+  <text x="744" y="451" text-anchor="end" class="muted" font-size="10">1,007 lines</text>
+  <line x1="300" y1="458" x2="750" y2="458" stroke="#8a6a3a"/>
+
+  <rect x="300" y="458" width="450" height="242" fill="#141210"/>
+  <g class="mono" font-size="10">
+    <text x="315" y="476" fill="#555">1</text><text x="340" y="476" fill="#c586c0">&lt;!DOCTYPE</text><text x="398" y="476" fill="#569cd6"> html</text><text x="428" y="476" fill="#d4d4d4">&gt;</text>
+    <text x="315" y="490" fill="#555">2</text><text x="340" y="490" fill="#c586c0">&lt;html</text><text x="375" y="490" fill="#569cd6"> lang</text><text x="402" y="490" fill="#d4d4d4">=</text><text x="408" y="490" fill="#ce9178">"en"</text><text x="431" y="490" fill="#d4d4d4">&gt;</text>
+    <text x="315" y="504" fill="#555">3</text><text x="340" y="504" fill="#c586c0">&lt;head&gt;</text>
+    <text x="315" y="518" fill="#555">4</text><text x="350" y="518" fill="#c586c0">&lt;meta</text><text x="385" y="518" fill="#569cd6"> charset</text><text x="427" y="518" fill="#d4d4d4">=</text><text x="433" y="518" fill="#ce9178">"UTF-8"</text><text x="474" y="518" fill="#c586c0">/&gt;</text>
+    <text x="315" y="532" fill="#555">5</text><text x="350" y="532" fill="#c586c0">&lt;title&gt;</text><text x="393" y="532" fill="#d4d4d4">monitor-agent</text><text x="466" y="532" fill="#c586c0">&lt;/title&gt;</text>
+    <text x="315" y="546" fill="#555">6</text><text x="340" y="546" fill="#c586c0">&lt;/head&gt;</text>
+    <text x="315" y="560" fill="#555">7</text><text x="340" y="560" fill="#c586c0">&lt;body&gt;</text>
+    <rect x="300" y="564" width="450" height="14" fill="#a87a1a" opacity="0.15"/>
+    <rect x="300" y="564" width="3" height="14" fill="#a87a1a"/>
+    <text x="315" y="574" fill="#555">8</text><text x="350" y="574" fill="#c586c0">&lt;h1</text><text x="370" y="574" fill="#569cd6"> style</text><text x="400" y="574" fill="#d4d4d4">=</text><text x="406" y="574" fill="#ce9178">"font-size:1.1rem"</text><text x="502" y="574" fill="#c586c0">&gt;</text><text x="510" y="574" fill="#d4d4d4">Welcome</text><text x="553" y="574" fill="#c586c0">&lt;/h1&gt;</text>
+    <text x="315" y="588" fill="#555">9</text><text x="350" y="588" fill="#6a9955">// Main content</text>
+    <text x="312" y="602" fill="#555">10</text><text x="350" y="602" fill="#c586c0">&lt;div</text><text x="376" y="602" fill="#569cd6"> class</text><text x="405" y="602" fill="#d4d4d4">=</text><text x="411" y="602" fill="#ce9178">"hero"</text><text x="447" y="602" fill="#c586c0">&gt;</text>
+    <text x="312" y="616" fill="#555">11</text><text x="360" y="616" fill="#d4d4d4">...</text>
+    <text x="312" y="630" fill="#555">12</text><text x="340" y="630" fill="#c586c0">&lt;/body&gt;</text>
+    <text x="312" y="644" fill="#555">13</text><text x="340" y="644" fill="#c586c0">&lt;/html&gt;</text>
+  </g>
+
+  <!-- DIFF VIEWER -->
+  <line x1="750" y1="434" x2="750" y2="700" stroke="#8a6a3a"/>
+  <rect x="750" y="434" width="450" height="24" class="panel"/>
+  <text x="764" y="451" class="ink" font-size="11" font-weight="600">Edit: dashboard.html</text>
+  <text x="1186" y="451" text-anchor="end" class="muted" font-size="10">10:30:26</text>
+  <line x1="750" y1="458" x2="1200" y2="458" stroke="#8a6a3a"/>
+
+  <g class="mono" font-size="10">
+    <rect x="750" y="468" width="450" height="16" fill="#c62828" opacity="0.1"/>
+    <text x="764" y="480" class="accent">-</text>
+    <text x="780" y="480" class="ink">&lt;h1 style="font-size:1rem"&gt;Welcome&lt;/h1&gt;</text>
+
+    <rect x="750" y="486" width="450" height="16" fill="#c62828" opacity="0.1"/>
+    <text x="764" y="498" class="accent">-</text>
+    <text x="780" y="498" class="ink">&lt;p&gt;Old description&lt;/p&gt;</text>
+
+    <line x1="764" y1="512" x2="1180" y2="512" stroke="#8a6a3a" opacity="0.5" stroke-dasharray="2 2"/>
+
+    <rect x="750" y="520" width="450" height="16" fill="#4a7a35" opacity="0.12"/>
+    <text x="764" y="532" fill="#4a7a35">+</text>
+    <text x="780" y="532" class="ink">&lt;h1 style="font-size:1.1rem"&gt;Welcome&lt;/h1&gt;</text>
+
+    <rect x="750" y="538" width="450" height="16" fill="#4a7a35" opacity="0.12"/>
+    <text x="764" y="550" fill="#4a7a35">+</text>
+    <text x="780" y="550" class="ink">&lt;p&gt;Updated description (10% larger)&lt;/p&gt;</text>
+  </g>
 
   <!-- Footer -->
-  <rect y="666" width="1200" height="34" class="panel"/>
-  <rect y="666" width="1200" height="1" fill="#3c3c3c"/>
-  <circle cx="20" cy="684" r="4" fill="#4ec9b0"/>
-  <text x="30" y="688" fill="#858585" font-size="10">Connected</text>
-  <text x="1186" y="688" text-anchor="end" fill="#858585" font-size="10">Actions: 2,662</text>
+  <rect y="700" width="1200" height="20" class="panel"/>
+  <line x1="0" y1="700" x2="1200" y2="700" stroke="#8a6a3a"/>
+  <circle cx="14" cy="710" r="4" fill="#4a7a35"/>
+  <text x="26" y="714" class="dim" font-size="10">Connected</text>
+  <text x="1186" y="714" text-anchor="end" class="muted" font-size="10">Actions: 1,234</text>
 </svg>

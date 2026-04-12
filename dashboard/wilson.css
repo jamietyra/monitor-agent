@@ -1,0 +1,358 @@
+/* ─── Wilson — AI Companion Panel ──────────────────────── */
+
+/* ── Header: Panel Toggle Buttons ─────────────────────── */
+.header-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xl);        /* monitor-agent ↔ 토글 간격 확대 */
+}
+.panel-toggles {
+  display: flex;
+  gap: 5px;
+}
+.panel-toggle {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-family: var(--font-display);
+  font-size: 0.82rem;
+  font-style: italic;
+  font-weight: 600;
+  padding: 4px 14px;           /* 글자 주변 공기 확보 */
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-out);
+  line-height: 1.5;
+}
+.panel-toggle:hover {
+  color: var(--text-dim);
+  border-color: var(--text-dim);
+}
+.panel-toggle.active {
+  color: var(--bg);
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+/* 테마 전환 버튼 */
+.theme-switch {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  font-family: var(--font-display);
+  font-size: 0.82rem;
+  font-style: italic;
+  font-weight: 600;
+  padding: 4px 14px;
+  border-radius: 12px;
+  cursor: pointer;
+  margin-left: var(--space-lg);
+  transition: all var(--duration-fast) var(--ease-out);
+  line-height: 1.5;
+}
+.theme-switch:hover {
+  color: var(--text);
+  border-color: var(--text-dim);
+}
+
+/* ── Panel Hidden ─────────────────────────────────────── */
+.panel-hidden { display: none !important; }
+
+/* ── State-based emphasis (미묘하게, 거슬리지 않게) ──── */
+/* solving 상태: 위쪽 얇은 빨간 선 (과한 glow 제거) */
+body.wilson-state-solving .diff-panel {
+  box-shadow: inset 0 1px 0 rgba(232, 74, 63, 0.6);
+  transition: box-shadow 0.4s var(--ease-out);
+}
+/* working 상태: emphasis 제거 — working은 워낙 자주 일어나므로 조용히 */
+/* thinking: feeds 상단 얇은 선 */
+body.wilson-state-thinking .activity-panel {
+  box-shadow: inset 0 1px 0 var(--accent);
+  transition: box-shadow 0.4s var(--ease-out);
+}
+
+/* ── Wilson Panel Layout ──────────────────────────────── */
+#wilson-panel {
+  width: 300px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-panel);
+  border-right: 1px solid var(--border);
+  overflow: hidden;
+}
+
+/* ── Character Area ───────────────────────────────────── */
+.wilson-character {
+  width: 300px;
+  min-height: 380px;        /* 말풍선 공간 확보 + 여백 적정화 */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-md);     /* status → svg → bubble 일관된 리듬 */
+  padding: var(--space-xl) var(--space-md);
+  flex-shrink: 0;
+  color: var(--text);
+  position: relative;
+  border-bottom: 1px solid var(--border);
+}
+
+/* ── SVG Container (150px) ────────────────────────────── */
+.wilson-svg-wrap {
+  width: 150px;
+  height: 150px;
+  cursor: pointer;
+  filter: drop-shadow(0 5px 10px rgba(0, 0, 0, 0.22));
+  will-change: transform;
+  position: relative;
+  z-index: 1;
+  border-radius: 50%;       /* 원형 포커스 링 */
+  outline: none;            /* 기본 outline 제거, focus-visible로 제어 */
+}
+.wilson-svg-wrap:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 4px;
+}
+.wilson-svg-wrap svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* ── Status Text — handwritten display ────────────────── */
+.wilson-status {
+  font-family: var(--font-hand);
+  font-size: 1.55rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  letter-spacing: 0.3px;
+  min-width: 160px;
+  text-align: center;
+  line-height: 1;
+  position: relative;
+  z-index: 1;
+  transform: rotate(-1deg);
+}
+
+/* ── Speech Bubble — clean card ──────────────────────── */
+.wilson-bubble {
+  margin-top: 4px;
+  padding: 10px 14px;
+  width: 240px;
+  min-height: 56px;
+  box-sizing: border-box;
+  background: var(--bg-hover);
+  color: var(--text);
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Pretendard', 'Noto Sans KR', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 400;
+  line-height: 1.45;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity var(--duration-normal) var(--ease-out),
+              transform var(--duration-normal) var(--ease-out);
+  pointer-events: none;
+  position: relative;
+  z-index: 1;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+.wilson-bubble.visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+/* Action indicator dot */
+.action-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-deep);
+  margin-right: var(--space-xs);
+  vertical-align: middle;
+  animation: wilson-pulse 1s ease-in-out infinite;
+}
+
+/* ── Recent Files List ────────────────────────────────── */
+.wilson-recent {
+  flex: 1;
+  overflow: hidden;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+}
+.wilson-recent-header {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-style: italic;
+  letter-spacing: -0.01em;
+  color: var(--accent);
+  padding: 10px var(--space-md);
+  border-bottom: 1px solid var(--border);
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.wilson-recent-list {
+  flex: 1;
+  overflow-y: auto;
+  contain: layout style;
+}
+.wilson-file-empty {
+  padding: 24px var(--space-md);
+  text-align: center;
+  color: var(--text-dim);
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+.wilson-file-empty small {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-style: normal;
+  font-family: system-ui, sans-serif;
+}
+.wilson-file-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 5px var(--space-md);
+  font-family: var(--font-mono);
+  font-size: calc(var(--text-xs) * 1.1);
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: background var(--duration-fast);
+  border-left: 2px solid transparent;
+}
+.wilson-file-item:hover {
+  background: var(--bg-hover);
+  color: var(--text);
+}
+.wilson-file-item.active {
+  background: var(--bg-hover);
+  border-left-color: var(--accent);
+}
+.wilson-file-icon {
+  flex-shrink: 0;
+  width: 14px;
+  text-align: center;
+}
+.wilson-file-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--cyan);
+}
+.wilson-file-action {
+  flex-shrink: 0;
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-style: italic;
+  font-weight: 600;
+  text-transform: lowercase;
+  letter-spacing: 0;
+}
+.wilson-file-action.edit { color: var(--yellow); }
+.wilson-file-action.write { color: var(--green); }
+.wilson-file-action.read { color: var(--accent); }
+.wilson-file-time {
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+  font-size: 9px;
+}
+
+/* ── State Animations (5 states, SVG swap) ────────────── */
+
+/* waiting — gentle breathing */
+.wilson-state-waiting .wilson-svg-wrap {
+  animation: wilson-breathe 2s ease-in-out infinite;
+}
+@keyframes wilson-breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.04); }
+}
+
+/* thinking — rapid wobble (eye-rolling feel) */
+.wilson-state-thinking .wilson-svg-wrap {
+  animation: wilson-think 0.5s ease-in-out infinite;
+}
+@keyframes wilson-think {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(8deg); }
+  75% { transform: rotate(-8deg); }
+}
+
+/* working — fast ball spin */
+.wilson-state-working .wilson-svg-wrap {
+  animation: wilson-spin 0.5s linear infinite;
+}
+@keyframes wilson-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* solving — sparkle pulse */
+.wilson-state-solving .wilson-svg-wrap {
+  animation: wilson-glow 1s ease-in-out infinite;
+}
+@keyframes wilson-glow {
+  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 6px rgba(139, 26, 26, 0.35)); }
+  50% { transform: scale(1.08); filter: drop-shadow(0 0 14px rgba(220, 220, 170, 0.6)); }
+}
+
+/* sleeping — slow breathing + dim */
+.wilson-state-sleeping .wilson-svg-wrap {
+  animation: wilson-sleep 5s ease-in-out infinite;
+  opacity: 0.6;
+}
+@keyframes wilson-sleep {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+}
+
+/* ── Click Wobble ─────────────────────────────────────── */
+.wilson-wobble .wilson-svg-wrap {
+  animation: wilson-wobble 0.5s ease-out !important;
+}
+@keyframes wilson-wobble {
+  0% { transform: rotate(0); }
+  15% { transform: rotate(-12deg); }
+  30% { transform: rotate(10deg); }
+  45% { transform: rotate(-7deg); }
+  60% { transform: rotate(4deg); }
+  80% { transform: rotate(-2deg); }
+  100% { transform: rotate(0); }
+}
+
+/* ── Utility Animations ───────────────────────────────── */
+@keyframes wilson-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* ── Reduced Motion ───────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .wilson-svg-wrap,
+  .action-dot {
+    animation: none !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ── Small Screens ────────────────────────────────────── */
+@media (max-width: 900px) {
+  #wilson-panel { display: none; }
+  .panel-toggle[data-panel="wilson"] { display: none; }
+}

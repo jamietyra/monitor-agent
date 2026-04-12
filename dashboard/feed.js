@@ -259,7 +259,24 @@
           existing.style.cursor = 'pointer';
           existing.onclick = function() {
             window.displayCode._clickedEl = this;
+            if (this._diffData) {
+              window.pendingHighlight = this._diffData;
+              window.displayDiff(this._diffData);
+            } else {
+              window.pendingHighlight = null;
+            }
+            window.fileCache.delete(ev.filePath);
             window.requestFileContent(ev.filePath);
+          };
+        }
+
+        // output이 있고 filePath 클릭이 아직 없으면 output 클릭 추가
+        if (ev.output && !existing.dataset.filePath) {
+          existing.style.cursor = 'pointer';
+          existing._outputData = { name: ev.name, target: ev.target, output: ev.output, time: ev.time };
+          existing.onclick = function() {
+            window.displayCode._clickedEl = this;
+            if (window.displayOutput) window.displayOutput(this._outputData);
           };
         }
         return;

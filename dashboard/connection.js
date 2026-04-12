@@ -20,7 +20,7 @@
     });
     document.addEventListener('mousemove', function(e) {
       if (!dragging) return;
-      var main = document.querySelector('main');
+      var main = document.querySelector('.main-content');
       var rect = main.getBoundingClientRect();
       var pct = ((e.clientY - rect.top) / rect.height) * 100;
       panel.style.height = Math.max(10, Math.min(70, pct)) + '%';
@@ -84,11 +84,11 @@
       if (loadMoreBtn) loadMoreBtn.remove();
       loadMoreBtn = document.createElement('button');
       loadMoreBtn.className = 'load-more-btn';
-      loadMoreBtn.textContent = '▲ Load 20 more prompts';
+      loadMoreBtn.textContent = '▲ Load 100 more prompts';
       loadMoreBtn.onclick = function() {
         loadMoreBtn.textContent = 'Loading...';
         loadMoreBtn.disabled = true;
-        fetch('/api/events?before=' + loadedStartIdx + '&prompts=20')
+        fetch('/api/events?before=' + loadedStartIdx + '&prompts=100')
           .then(function(r) { return r.json(); })
           .then(function(data) {
             if (data.events && data.events.length > 0) {
@@ -108,7 +108,7 @@
               window.activityList.scrollTop = scrollT + (newScrollH - scrollH);
             }
             if (hasMoreEvents) {
-              loadMoreBtn.textContent = '▲ Load 20 more prompts';
+              loadMoreBtn.textContent = '▲ Load 100 more prompts';
               loadMoreBtn.disabled = false;
             } else {
               loadMoreBtn.remove();
@@ -116,7 +116,7 @@
             }
           })
           .catch(function() {
-            loadMoreBtn.textContent = '▲ Load 20 more prompts';
+            loadMoreBtn.textContent = '▲ Load 100 more prompts';
             loadMoreBtn.disabled = false;
           });
       };
@@ -128,9 +128,12 @@
       var data = JSON.parse(e.data);
 
       if (data.recentEvents) {
+        if (window.wilson) window.wilson.startBatch();
         for (var i = 0; i < data.recentEvents.length; i++) {
           window.addActivityItem(data.recentEvents[i]);
+          if (window.wilson) window.wilson.onEvent(data.recentEvents[i]);
         }
+        if (window.wilson) window.wilson.endBatch();
       }
 
       // 페이지네이션 상태 설정
@@ -146,6 +149,7 @@
     es.addEventListener('activity', function(e) {
       var ev = JSON.parse(e.data);
       window.addActivityItem(ev);
+      if (window.wilson) window.wilson.onEvent(ev);
     });
 
     // 파일 콘텐츠
@@ -159,6 +163,7 @@
     es.addEventListener('file_diff', function(e) {
       var data = JSON.parse(e.data);
       window.displayDiff(data);
+      if (window.wilson) window.wilson.onFileDiff(data);
     });
 
     // 스크린샷

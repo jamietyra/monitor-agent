@@ -6,12 +6,25 @@
   <title>monitor-agent</title>
   <link rel="preload" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
   <noscript><link href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet"></noscript>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="wilson.css">
 </head>
 <body>
 
 <header>
-  <h1>monitor-agent</h1>
+  <div class="header-title">
+    <h1>monitor-agent</h1>
+    <div class="panel-toggles">
+      <button class="panel-toggle active" data-panel="wilson" title="Wilson 캐릭터 영역 표시/숨김">Wilson</button>
+      <button class="panel-toggle active" data-panel="file" title="Recent Files 목록 표시/숨김">File</button>
+      <button class="panel-toggle active" data-panel="feed" title="활동 피드 (Feeds) 표시/숨김">Feed</button>
+      <button class="panel-toggle active" data-panel="diff" title="코드 뷰어 + Diff 패널 표시/숨김">Diff</button>
+      <button class="theme-switch" id="theme-switch" title="테마 전환 (Beige / White / Dark)">Beige</button>
+    </div>
+  </div>
   <div class="stats">
     <span class="stat-running" id="stat-running">Running: 0</span>
     <span class="stat-done" id="stat-done">Done: 0</span>
@@ -21,47 +34,60 @@
 </header>
 
 <main>
-  <div class="activity-panel">
-    <h2>Feeds</h2>
-    <div class="activity-search"><input type="text" id="activity-search" placeholder="Search (prompts, files, commands...)"></div>
-    <div class="session-filters" id="session-filters">
-      <button class="fold-btn" id="toggle-all" title="Expand/Collapse all">▶ All</button>
-      <div class="fold-divider"></div>
+  <div id="wilson-panel" class="wilson-state-waiting">
+    <div class="wilson-character">
+      <div class="wilson-svg-wrap" id="wilson-svg-wrap"></div>
+      <div class="wilson-bubble" id="wilson-bubble"></div>
     </div>
-    <div class="activity-list" id="activity-list"></div>
+    <div class="wilson-recent">
+      <div class="wilson-recent-header">Recent Files</div>
+      <div class="wilson-recent-list" id="wilson-recent-list"></div>
+    </div>
   </div>
 
-  <div class="resize-handle" id="resize-activity"></div>
-  <div class="content-panel">
-    <div class="code-viewer">
-      <div class="code-header">
-        <span class="code-filename" id="code-filename">Select a file</span>
-        <span class="code-info" id="code-info"></span>
+  <div class="main-content">
+    <div class="activity-panel">
+      <h2>Feeds</h2>
+      <div class="activity-search"><input type="text" id="activity-search" placeholder="Search (prompts, files, commands...)"></div>
+      <div class="session-filters" id="session-filters">
+        <button class="fold-btn" id="toggle-all" title="Expand/Collapse all">▶ All</button>
+        <div class="fold-divider"></div>
       </div>
-      <div class="code-content" id="code-content">
-        <div class="code-placeholder">
-          <span class="code-placeholder-icon">{ }</span>
-          Click a file in Feeds to view its code
-          <span class="code-placeholder-sub">Click any Read, Write, or Edit item</span>
+      <div class="activity-list" id="activity-list"></div>
+    </div>
+
+    <div class="resize-handle" id="resize-activity"></div>
+    <div class="content-panel">
+      <div class="code-viewer">
+        <div class="code-header">
+          <span class="code-filename" id="code-filename">Select a file</span>
+          <span class="code-info" id="code-info"></span>
+        </div>
+        <div class="code-content" id="code-content">
+          <div class="code-placeholder">
+            <span class="code-placeholder-icon">{ }</span>
+            Click a file in Feeds to view its code
+            <span class="code-placeholder-sub">Click any Read, Write, or Edit item</span>
+          </div>
         </div>
       </div>
-    </div>
 
-    <div class="diff-panel" id="diff-panel">
-      <div class="diff-header">
-        <span id="diff-filename">Diff</span>
-        <span class="code-info" id="diff-time"></span>
+      <div class="diff-panel" id="diff-panel">
+        <div class="diff-header">
+          <span id="diff-filename">Diff</span>
+          <span class="code-info" id="diff-time"></span>
+        </div>
+        <div class="diff-content" id="diff-content"><span style="color: var(--text-dim)">Click an Edit item to see changes</span></div>
       </div>
-      <div class="diff-content" id="diff-content"><span style="color: var(--text-dim)">Click an Edit item to see changes</span></div>
-    </div>
 
-    <div class="browser-viewer" id="browser-viewer">
-      <div class="browser-header">
-        <span>Browser View</span>
-        <span class="code-info" id="screenshot-time"></span>
-      </div>
-      <div class="browser-content" id="browser-content">
-        <span style="color: var(--text-dim)">Waiting for screenshot...</span>
+      <div class="browser-viewer" id="browser-viewer">
+        <div class="browser-header">
+          <span>Browser View</span>
+          <span class="code-info" id="screenshot-time"></span>
+        </div>
+        <div class="browser-content" id="browser-content">
+          <span style="color: var(--text-dim)">Waiting for screenshot...</span>
+        </div>
       </div>
     </div>
   </div>
@@ -93,6 +119,7 @@
 <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-powershell.min.js" defer></script>
 <script src="feed.js"></script>
 <script src="viewer.js"></script>
+<script src="wilson.js"></script>
 <script src="connection.js"></script>
 
 </body>

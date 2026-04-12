@@ -14,6 +14,12 @@
   // ─── Code Viewer ──────────────────────────────────
   var pendingHighlight = null;
 
+  function clearDiff() {
+    diffFilename.textContent = 'Diff';
+    diffTime.textContent = '';
+    diffContent.innerHTML = '<span style="color: var(--text-dim)">Click an Edit item to see changes</span>';
+  }
+
   function displayCode(fileData) {
     codeFilename.textContent = fileData.fileName;
     var info = fileData.totalLines + ' lines';
@@ -28,6 +34,8 @@
 
     codeContent.innerHTML = '';
     codeContent.appendChild(pre);
+
+    if (!pendingHighlight) clearDiff();
 
     // 구문 하이라이트 후 Edit diff 하이라이트 적용
     var savedHighlight = pendingHighlight;
@@ -154,10 +162,32 @@
     browserContent.innerHTML = '<img src="/screenshots/' + encodeURIComponent(data.fileName) + '?t=' + Date.now() + '" alt="Browser screenshot">';
   }
 
+  // ─── Tool Output Viewer ────────────────────────────
+  function displayOutput(data) {
+    var title = data.name || 'Output';
+    if (data.target) title += ': ' + data.target.split(/[/\\]/).pop();
+    codeFilename.textContent = title;
+    var lines = (data.output || '').split('\n');
+    codeInfo.textContent = lines.length + ' lines';
+
+    var pre = document.createElement('pre');
+    var code = document.createElement('code');
+    code.className = 'language-plaintext';
+    code.textContent = data.output || '(no output)';
+    pre.appendChild(code);
+
+    codeContent.innerHTML = '';
+    codeContent.appendChild(pre);
+
+    pendingHighlight = null;
+    clearDiff();
+  }
+
   // ─── window 노출 ──────────────────────────────────
   window.displayCode = displayCode;
   window.displayDiff = displayDiff;
   window.displayScreenshot = displayScreenshot;
+  window.displayOutput = displayOutput;
   window.requestFileContent = requestFileContent;
   window.fileCache = fileCache;
 

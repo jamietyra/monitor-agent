@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * monitor-agent Server
- * Real-time activity dashboard for Claude Code — http://localhost:3456
+ * Real-time activity dashboard for Claude Code — http://localhost:3141
  *
  * Usage: node server.mjs
  */
@@ -13,7 +13,7 @@ import os from 'node:os';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const PORT = parseInt(process.env.MONITOR_PORT || '3456');
+const PORT = parseInt(process.env.MONITOR_PORT || '3141');
 const MAX_FILE_LINES = 1500;
 const DEBOUNCE_MS = 100;
 const HEARTBEAT_MS = 30000;
@@ -318,6 +318,15 @@ function processEntry(entry, state) {
         const pendingFilePath = (pending.name === 'Read' || pending.name === 'Edit' || pending.name === 'Write')
           ? (pending.input?.file_path || pending.input?.path) : null;
 
+        // Extract tool output (truncate to 5000 chars)
+        let output = '';
+        if (typeof block.content === 'string') {
+          output = block.content;
+        } else if (Array.isArray(block.content)) {
+          output = block.content.map(c => c.text || '').join('\n');
+        }
+        if (output.length > 5000) output = output.slice(0, 5000) + '\n... (truncated)';
+
         events.push({
           type: isError ? 'tool_error' : 'tool_done',
           name: displayName,
@@ -327,6 +336,7 @@ function processEntry(entry, state) {
           id: block.tool_use_id,
           isPlaywright: pending.isPlaywright,
           filePath: pendingFilePath,
+          output,
         });
 
         // Playwright 스크린샷 감지
@@ -709,8 +719,8 @@ const server = http.createServer((req, res) => {
     });
     res.req.socket.setTimeout(0);
 
-    // 초기 데이터 전송 (최근 50 프롬프트)
-    const PROMPT_PAGE = 50;
+    // 초기 데이터 전송 (최근 200 프롬프트)
+    const PROMPT_PAGE = 200;
     const initEvents = sliceByPrompts(allRecentEvents.length, PROMPT_PAGE);
     const initData = {
       recentEvents: initEvents.events,
@@ -760,7 +770,7 @@ const server = http.createServer((req, res) => {
   // 이벤트 페이지네이션 API (프롬프트 단위)
   if (url.pathname === '/api/events') {
     const beforeIdx = parseInt(url.searchParams.get('before') || allRecentEvents.length);
-    const promptLimit = Math.min(parseInt(url.searchParams.get('prompts') || 10), 50);
+    const promptLimit = parseInt(url.searchParams.get('prompts') || 10);
     const result = sliceByPrompts(beforeIdx, promptLimit);
     res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
     res.end(JSON.stringify(result));
