@@ -171,6 +171,8 @@
     codeInfo.textContent = lines.length + ' lines';
 
     var pre = document.createElement('pre');
+    pre.style.whiteSpace = 'pre-wrap';
+    pre.style.wordBreak = 'break-word';
     var code = document.createElement('code');
     code.className = 'language-plaintext';
     code.textContent = data.output || '(no output)';

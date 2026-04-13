@@ -130,23 +130,30 @@
     return '<span class="session-tag" style="background:' + color.bg + ';color:' + color.fg + '">' + escapeHtml(name) + '</span>';
   }
 
-  var currentGroup = null;
-  var currentToolsContainer = null;
-  var currentToolCount = 0;
-  var currentSession = null;
+  // 세션별 현재 활성 그룹 상태 (멀티세션 동시 실행 지원)
+  var sessionStates = {}; // project → { group, toolsContainer, toolCount }
   var toolItemMap = new Map(); // tool_id → DOM element cache
 
-  function collapseCurrentGroup() {
-    if (!currentGroup) return;
-    var toggle = currentGroup.querySelector('.prompt-toggle');
-    var tools = currentGroup.querySelector('.prompt-tools');
+  function getSessionState(project) {
+    var name = project || 'IT';
+    if (!sessionStates[name]) {
+      sessionStates[name] = { group: null, toolsContainer: null, toolCount: 0 };
+    }
+    return sessionStates[name];
+  }
+
+  function collapseSessionGroup(project) {
+    var s = getSessionState(project);
+    if (!s.group) return;
+    var toggle = s.group.querySelector('.prompt-toggle');
+    var tools = s.group.querySelector('.prompt-tools');
     if (toggle) toggle.classList.add('collapsed');
     if (tools) tools.classList.add('collapsed');
   }
 
   function createGroup(timeStr, text, promptId, project) {
-    // 이전 그룹 접기
-    collapseCurrentGroup();
+    // 같은 세션의 이전 그룹만 접기 (다른 세션은 유지)
+    collapseSessionGroup(project);
 
     var sessionName = project || 'IT';
     addSessionFilterBtn(sessionName);
@@ -180,9 +187,10 @@
     group.appendChild(tools);
     activityList.appendChild(group);
 
-    currentGroup = group;
-    currentToolsContainer = tools;
-    currentToolCount = 0;
+    var s = getSessionState(project);
+    s.group = group;
+    s.toolsContainer = tools;
+    s.toolCount = 0;
   }
 
   function ensurePromptGroup(ev) {
@@ -194,15 +202,17 @@
       return;
     }
 
-    if (!currentGroup) {
+    var s = getSessionState(ev.project);
+    if (!s.group) {
       createGroup('', '(previous)', null, ev.project);
     }
   }
 
-  function updateGroupCount() {
-    if (!currentGroup) return;
-    var countEl = currentGroup.querySelector('.prompt-count');
-    if (countEl) countEl.textContent = currentToolCount;
+  function updateGroupCount(project) {
+    var s = getSessionState(project);
+    if (!s.group) return;
+    var countEl = s.group.querySelector('.prompt-count');
+    if (countEl) countEl.textContent = s.toolCount;
   }
 
   function autoScroll() {
@@ -229,7 +239,16 @@
       item.className = 'assistant-text-item';
       var preview = ev.text.replace(/\n/g, ' ').slice(0, 150);
       item.innerHTML = '<span class="assistant-icon">\u25CF</span><span class="assistant-text">' + escapeHtml(preview) + '</span>';
-      currentToolsContainer.appendChild(item);
+      if (ev.text && ev.text.length > 150) {
+        item.style.cursor = 'pointer';
+        item.title = '클릭하여 전체 내용 보기';
+        item._outputData = { name: 'Assistant', target: '', output: ev.text, time: ev.time };
+        item.onclick = function() {
+          window.displayCode._clickedEl = this;
+          if (window.displayOutput) window.displayOutput(this._outputData);
+        };
+      }
+      getSessionState(ev.project).toolsContainer.appendChild(item);
       autoScroll();
       return;
     }
@@ -325,9 +344,10 @@
       '<span class="activity-duration"></span>',
     ].join('');
 
-    currentToolsContainer.appendChild(item);
-    currentToolCount++;
-    updateGroupCount();
+    var s = getSessionState(ev.project);
+    s.toolsContainer.appendChild(item);
+    s.toolCount++;
+    updateGroupCount(ev.project);
     autoScroll();
   }
 
@@ -377,6 +397,15 @@
       aItem.className = 'assistant-text-item';
       var preview = ev.text.replace(/\n/g, ' ').slice(0, 150);
       aItem.innerHTML = '<span class="assistant-icon">\u25CF</span><span class="assistant-text">' + escapeHtml(preview) + '</span>';
+      if (ev.text && ev.text.length > 150) {
+        aItem.style.cursor = 'pointer';
+        aItem.title = '클릭하여 전체 내용 보기';
+        aItem._outputData = { name: 'Assistant', target: '', output: ev.text, time: ev.time };
+        aItem.onclick = function() {
+          window.displayCode._clickedEl = this;
+          if (window.displayOutput) window.displayOutput(this._outputData);
+        };
+      }
       prevToolsContainer.appendChild(aItem);
       return;
     }
