@@ -244,7 +244,7 @@ function processEntry(entry, state) {
       if (block.type === 'text' && block.text && block.text.trim().length > 0) {
         events.push({
           type: 'assistant_text',
-          text: block.text.slice(0, 300),
+          text: block.text,
           time: timestamp.toISOString(),
           promptId: state.promptId || 0,
         });
@@ -318,14 +318,13 @@ function processEntry(entry, state) {
         const pendingFilePath = (pending.name === 'Read' || pending.name === 'Edit' || pending.name === 'Write')
           ? (pending.input?.file_path || pending.input?.path) : null;
 
-        // Extract tool output (truncate to 5000 chars)
+        // Extract tool output (full content)
         let output = '';
         if (typeof block.content === 'string') {
           output = block.content;
         } else if (Array.isArray(block.content)) {
           output = block.content.map(c => c.text || '').join('\n');
         }
-        if (output.length > 5000) output = output.slice(0, 5000) + '\n... (truncated)';
 
         events.push({
           type: isError ? 'tool_error' : 'tool_done',
