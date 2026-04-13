@@ -210,6 +210,15 @@ main { display: flex; flex-direction: row; flex: 1; overflow: hidden; }
 }
 .prompt-toggle.collapsed { transform: rotate(-90deg); }
 .prompt-text { color: var(--text); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ─── Subagent 표식 ─── */
+.sub-badge {
+  font-size: var(--text-xs); font-weight: 600; padding: 1px 5px; border-radius: 3px;
+  background: #8b7f6b; color: #fff; letter-spacing: 0.5px;
+  flex-shrink: 0; text-transform: uppercase;
+}
+.prompt-group.subagent-group { border-left: 3px solid var(--border); }
+.prompt-group.subagent-group .prompt-header { padding-left: calc(var(--space-md) - 3px); }
 .prompt-time { color: var(--text-dim); font-size: var(--text-xs); flex-shrink: 0; font-variant-numeric: tabular-nums; }
 .prompt-count {
   color: var(--accent); font-size: var(--text-xs); flex-shrink: 0;

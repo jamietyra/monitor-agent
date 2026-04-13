@@ -136,6 +136,44 @@ function discoverAllTranscripts() {
       }
       // 7일 초과 파일은 무시만 함 (삭제/이동 안 함)
     }
+
+    // 서브에이전트 transcript 탐색: <project>/<session-id>/subagents/*.jsonl
+    try {
+      const subDirs = fs.readdirSync(projectDir, { withFileTypes: true })
+        .filter(d => d.isDirectory());
+      for (const sd of subDirs) {
+        const subagentsDir = path.join(projectDir, sd.name, 'subagents');
+        if (!fs.existsSync(subagentsDir)) continue;
+        const subFiles = fs.readdirSync(subagentsDir).filter(f => f.endsWith('.jsonl'));
+        for (const sf of subFiles) {
+          const fullPath = path.join(subagentsDir, sf);
+          const mtime = fs.statSync(fullPath).mtimeMs;
+          if (mtime < cutoff) continue;
+          // meta.json 파싱 (agentType, description)
+          const metaPath = fullPath.replace(/\.jsonl$/, '.meta.json');
+          let agentType = 'Agent', description = '';
+          if (fs.existsSync(metaPath)) {
+            try {
+              const meta = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
+              agentType = meta.agentType || agentType;
+              description = meta.description || '';
+            } catch { /* skip */ }
+          }
+          const agentId = sf.replace(/\.jsonl$/, '');
+          results.push({
+            project: extractProjectName(dir, baseDirName),
+            transcriptPath: fullPath,
+            dirName: dir,
+            mtime,
+            isSubagent: true,
+            agentId,
+            agentType,
+            description,
+            parentSessionId: sd.name,
+          });
+        }
+      }
+    } catch { /* skip */ }
   }
 
   // 시간순 정렬 (오래된 것 먼저)
@@ -207,6 +245,50 @@ function extractTarget(toolName, input) {
     default:
       return undefined;
   }
+}
+
+/**
+ * Bash 명령어에서 파일 삭제/이동을 추출
+ * 반환: [{action: 'delete'|'move', filePath, fromPath?}]
+ */
+function parseFileOpsFromBash(command) {
+  if (!command || typeof command !== 'string') return [];
+  const ops = [];
+  // 명령어를 ; && || | 로 분리 (단순 파싱)
+  const segments = command.split(/[;&|]+/).map(s => s.trim()).filter(Boolean);
+  for (const seg of segments) {
+    // 공백 토큰화 (따옴표 보존)
+    const tokens = seg.match(/"[^"]*"|'[^']*'|\S+/g) || [];
+    if (tokens.length === 0) continue;
+    const cmd = tokens[0].toLowerCase();
+    const stripQ = (s) => s.replace(/^['"]|['"]$/g, '');
+    if (cmd === 'rm' || cmd === 'rmdir' || cmd === 'del') {
+      const paths = tokens.slice(1).filter(t => !t.startsWith('-'));
+      for (const p of paths) ops.push({ action: 'delete', filePath: stripQ(p) });
+    } else if (cmd === 'mv' || cmd === 'move') {
+      const args = tokens.slice(1).filter(t => !t.startsWith('-'));
+      if (args.length >= 2) {
+        ops.push({
+          action: 'move',
+          filePath: stripQ(args[args.length - 1]),
+          fromPath: stripQ(args[0]),
+        });
+      }
+    }
+  }
+  return ops;
+}
+
+/**
+ * MCP 파일시스템 도구에서 파일 작업 추출
+ */
+function parseFileOpFromMcp(toolName, input) {
+  if (!toolName || !input) return null;
+  if (toolName === 'mcp__filesystem__move_file') {
+    return { action: 'move', filePath: input.destination, fromPath: input.source };
+  }
+  // delete 도구는 현재 MCP filesystem에 명시적으로 없음 (write_file로 빈 내용도 가능하나 무시)
+  return null;
 }
 
 function processEntry(entry, state) {
@@ -299,6 +381,30 @@ function processEntry(entry, state) {
         }
 
         events.push(ev);
+
+        // 파일 삭제/이동 추출 (Bash + MCP filesystem)
+        let fileOps = [];
+        if (block.name === 'Bash' && block.input?.command) {
+          fileOps = parseFileOpsFromBash(block.input.command);
+        } else {
+          const mcpOp = parseFileOpFromMcp(block.name, block.input);
+          if (mcpOp) fileOps = [mcpOp];
+        }
+        for (const op of fileOps) {
+          if (!op.filePath) continue;
+          const fname = op.filePath.replace(/\\/g, '/').split('/').pop();
+          events.push({
+            type: 'file_action',
+            fileAction: op.action,
+            filePath: op.filePath,
+            fromPath: op.fromPath || null,
+            target: op.action === 'move'
+              ? (op.fromPath ? op.fromPath.split(/[/\\]/).pop() : '') + ' → ' + fname
+              : fname,
+            time: timestamp.toISOString(),
+            promptId: state.promptId || 0,
+          });
+        }
       }
     }
 
@@ -449,7 +555,7 @@ function broadcast(eventType, data) {
 
 // ─── Transcript 감시 ────────────────────────────────────
 
-function watchTranscript(transcriptPath, state, projectName) {
+function watchTranscript(transcriptPath, state, projectName, subagentInfo) {
   const cacheKey = path.basename(transcriptPath);
   // 초기 로드는 항상 0부터 (히스토리 전체 읽기)
   // offset 캐시는 초기 로드 후 실시간 감시에서만 사용
@@ -481,8 +587,16 @@ function watchTranscript(transcriptPath, state, projectName) {
       try {
         const entry = JSON.parse(line);
         const events = processEntry(entry, state);
-        // 프로젝트 태그 추가
-        for (const ev of events) { ev.project = projectName; }
+        // 프로젝트 태그 + 서브에이전트 마커
+        for (const ev of events) {
+          ev.project = projectName;
+          if (subagentInfo) {
+            ev.isSubagent = true;
+            ev.agentId = subagentInfo.agentId;
+            ev.agentType = subagentInfo.agentType;
+            ev.agentDescription = subagentInfo.description;
+          }
+        }
         allEvents.push(...events);
       } catch { /* skip */ }
     }
@@ -587,11 +701,25 @@ const watchedTranscripts = new Set();
 function startWatchingTranscript(t) {
   if (watchedTranscripts.has(t.transcriptPath)) return;
   watchedTranscripts.add(t.transcriptPath);
-  const { recentEvents } = watchTranscript(t.transcriptPath, state, t.project);
+  const subagentInfo = t.isSubagent ? {
+    agentId: t.agentId,
+    agentType: t.agentType,
+    description: t.description,
+  } : null;
+  // 서브에이전트는 별도 state로 promptId 충돌 방지
+  const stateForThis = t.isSubagent ? {
+    pendingTools: new Map(),
+    completedCount: 0,
+    errorCount: 0,
+    sessionStart: null,
+    promptId: 0,
+  } : state;
+  const { recentEvents } = watchTranscript(t.transcriptPath, stateForThis, t.project, subagentInfo);
   allRecentEvents.push(...recentEvents);
   allRecentEvents.sort((a, b) => new Date(a.time) - new Date(b.time));
   if (allRecentEvents.length > MAX_EVENTS) allRecentEvents = allRecentEvents.slice(-MAX_EVENTS);
-  console.log(`  + New session: ${t.project} (${path.basename(t.transcriptPath).slice(0, 8)}...)`);
+  const label = t.isSubagent ? `SUB[${t.agentType}]` : 'session';
+  console.log(`  + New ${label}: ${t.project} (${path.basename(t.transcriptPath).slice(0, 12)}...)`);
 }
 
 // ─── 디렉토리 감시 (fs.watch) + 폴백 스캔 ──────────────
@@ -627,6 +755,41 @@ function watchProjectDirectory(dirPath) {
   } catch {
     // fs.watch 실패 시 무시 — 폴백 스캔이 커버함
   }
+
+  // 기존 <session-id>/subagents/ 폴더가 있으면 함께 감시
+  try {
+    const entries = fs.readdirSync(dirPath, { withFileTypes: true });
+    for (const e of entries) {
+      if (!e.isDirectory()) continue;
+      const subagentsDir = path.join(dirPath, e.name, 'subagents');
+      if (fs.existsSync(subagentsDir)) {
+        watchSubagentsDirectory(subagentsDir);
+      }
+    }
+  } catch { /* skip */ }
+}
+
+/**
+ * 서브에이전트 transcript 폴더 감시: <session-id>/subagents/
+ */
+function watchSubagentsDirectory(dirPath) {
+  if (dirWatchers.has(dirPath)) return;
+  try {
+    const watcher = fs.watch(dirPath, (eventType, filename) => {
+      if (!filename || !filename.endsWith('.jsonl')) return;
+      const fullPath = path.join(dirPath, filename);
+      if (!fs.existsSync(fullPath)) return;
+      const allCurrent = discoverAllTranscripts();
+      for (const t of allCurrent) {
+        if (t.transcriptPath === fullPath) {
+          startWatchingTranscript(t);
+          break;
+        }
+      }
+    });
+    dirWatchers.set(dirPath, watcher);
+    console.log(`  👁 Watching subagents: ${path.basename(path.dirname(dirPath)).slice(0, 8)}`);
+  } catch { /* fs.watch 실패 시 폴백 스캔이 커버 */ }
 }
 
 /**

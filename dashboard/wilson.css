@@ -73,7 +73,7 @@ body.wilson-state-thinking .activity-panel {
 
 /* ── Wilson Panel Layout ──────────────────────────────── */
 #wilson-panel {
-  width: 300px;
+  width: 600px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
@@ -84,7 +84,7 @@ body.wilson-state-thinking .activity-panel {
 
 /* ── Character Area ───────────────────────────────────── */
 .wilson-character {
-  width: 300px;
+  width: 100%;
   min-height: 380px;        /* 말풍선 공간 확보 + 여백 적정화 */
   display: flex;
   flex-direction: column;
@@ -266,6 +266,8 @@ body.wilson-state-thinking .activity-panel {
 .wilson-file-action.edit { color: var(--yellow); }
 .wilson-file-action.write { color: var(--green); }
 .wilson-file-action.read { color: var(--accent); }
+.wilson-file-action.delete { color: var(--red, #e84a3f); }
+.wilson-file-action.move { color: var(--magenta, #b574c8); }
 .wilson-file-time {
   flex-shrink: 0;
   font-variant-numeric: tabular-nums;

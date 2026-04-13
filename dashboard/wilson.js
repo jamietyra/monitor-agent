@@ -839,10 +839,17 @@
   function trackFile(ev) {
     if (!ev.filePath) return;
     var fileName = ev.target || ev.filePath.split(/[/\\]/).pop();
-    var action = 'read';
-    var name = (ev.name || '').toLowerCase();
-    if (/write|create/.test(name)) action = 'write';
-    else if (/edit/.test(name)) action = 'edit';
+    var action;
+    if (ev.fileAction === 'delete' || ev.fileAction === 'move') {
+      // file_action 이벤트 (Bash rm/mv, MCP move_file 등)
+      action = ev.fileAction;
+    } else {
+      // 일반 tool_start (Read/Write/Edit)
+      action = 'read';
+      var name = (ev.name || '').toLowerCase();
+      if (/write|create/.test(name)) action = 'write';
+      else if (/edit/.test(name)) action = 'edit';
+    }
 
     var diffData = null;
     if (ev.diff) {
@@ -858,9 +865,10 @@
     recentFiles.unshift({
       filePath: ev.filePath,
       fileName: fileName,
-      action: diffData ? 'edit' : action,
+      action: action === 'delete' || action === 'move' ? action : (diffData ? 'edit' : action),
       time: ev.time,
-      diffData: diffData || (existing && existing.diffData) || null
+      diffData: diffData || (existing && existing.diffData) || null,
+      isDeleted: action === 'delete'
     });
     // 시간순 정렬 (최신이 위)
     recentFiles.sort(function(a, b) {
@@ -881,7 +889,11 @@
     for (var i = 0; i < recentFiles.length; i++) {
       var f = recentFiles[i];
       var timeStr = f.time && window.formatTime ? window.formatTime(f.time) : '';
-      var icon = f.action === 'edit' ? '\u270E' : f.action === 'write' ? '+' : '\u25C7';
+      var icon = f.action === 'edit' ? '\u270E'
+        : f.action === 'write' ? '+'
+        : f.action === 'delete' ? '\u2717'
+        : f.action === 'move' ? '\u2192'
+        : '\u25C7';
       html += '<div class="wilson-file-item" data-idx="' + i + '">' +
               '<span class="wilson-file-icon">' + icon + '</span>' +
               '<span class="wilson-file-name">' + escHtml(f.fileName) + '</span>' +
@@ -907,6 +919,20 @@
       var prev = recentListEl.querySelector('.wilson-file-item.active');
       if (prev) prev.classList.remove('active');
       item.classList.add('active');
+
+      // 삭제된 파일: 코드뷰어에 안내만 표시 (요청 안 함)
+      if (f.isDeleted) {
+        window.pendingHighlight = null;
+        if (window.displayOutput) {
+          window.displayOutput({
+            name: 'Deleted',
+            target: f.fileName,
+            output: '(이 파일은 삭제되어 내용을 표시할 수 없습니다)\n\n경로: ' + f.filePath,
+            time: f.time,
+          });
+        }
+        return;
+      }
 
       // Reuse existing viewer flow
       if (f.diffData) {

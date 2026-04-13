@@ -130,20 +130,57 @@
     return '<span class="session-tag" style="background:' + color.bg + ';color:' + color.fg + '">' + escapeHtml(name) + '</span>';
   }
 
-  // 세션별 현재 활성 그룹 상태 (멀티세션 동시 실행 지원)
-  var sessionStates = {}; // project → { group, toolsContainer, toolCount }
+  // 세션별 현재 활성 그룹 상태 (멀티세션 + subagent 지원)
+  // key: project명 (일반) / "SUB:" + agentId (서브에이전트)
+  var sessionStates = {};
   var toolItemMap = new Map(); // tool_id → DOM element cache
+  var isBatchLoading = false;
+  var IDLE_CLOSE_MS = 10000; // 최종 메시지 후 10초 무활동 시 그룹 자동 접힘
 
-  function getSessionState(project) {
-    var name = project || 'IT';
+  function openGroup(group) {
+    if (!group) return;
+    var toggle = group.querySelector('.prompt-toggle');
+    var tools = group.querySelector('.prompt-tools');
+    if (toggle) toggle.classList.remove('collapsed');
+    if (tools) tools.classList.remove('collapsed');
+  }
+  function closeGroup(group) {
+    if (!group) return;
+    var toggle = group.querySelector('.prompt-toggle');
+    var tools = group.querySelector('.prompt-tools');
+    if (toggle) toggle.classList.add('collapsed');
+    if (tools) tools.classList.add('collapsed');
+  }
+  function cancelGroupCloseTimer(group) {
+    if (group && group._closeTimer) {
+      clearTimeout(group._closeTimer);
+      group._closeTimer = null;
+    }
+  }
+  function scheduleGroupClose(group, delayMs) {
+    cancelGroupCloseTimer(group);
+    if (!group) return;
+    group._closeTimer = setTimeout(function() {
+      closeGroup(group);
+      group._closeTimer = null;
+    }, delayMs);
+  }
+
+  function getSessionKey(ev) {
+    if (ev && ev.isSubagent && ev.agentId) return 'SUB:' + ev.agentId;
+    return ev && ev.project ? ev.project : 'IT';
+  }
+
+  function getSessionState(key) {
+    var name = key || 'IT';
     if (!sessionStates[name]) {
       sessionStates[name] = { group: null, toolsContainer: null, toolCount: 0 };
     }
     return sessionStates[name];
   }
 
-  function collapseSessionGroup(project) {
-    var s = getSessionState(project);
+  function collapseSessionGroup(key) {
+    var s = getSessionState(key);
     if (!s.group) return;
     var toggle = s.group.querySelector('.prompt-toggle');
     var tools = s.group.querySelector('.prompt-tools');
@@ -151,24 +188,33 @@
     if (tools) tools.classList.add('collapsed');
   }
 
-  function createGroup(timeStr, text, promptId, project) {
-    // 같은 세션의 이전 그룹만 접기 (다른 세션은 유지)
-    collapseSessionGroup(project);
-
+  function createGroup(timeStr, text, promptId, ev) {
+    var key = getSessionKey(ev);
+    var project = ev && ev.project;
+    // 모든 그룹은 기본 접힘 — 활동 발생 시 자동 펼침
     var sessionName = project || 'IT';
     addSessionFilterBtn(sessionName);
 
     var group = document.createElement('div');
     group.className = 'prompt-group';
+    if (ev && ev.isSubagent) group.classList.add('subagent-group');
     group.dataset.session = sessionName;
     if (promptId) group.dataset.promptId = promptId;
+    if (ev && ev.agentId) group.dataset.agentId = ev.agentId;
 
     var header = document.createElement('div');
     header.className = 'prompt-header';
 
+    var subBadge = '';
+    if (ev && ev.isSubagent) {
+      var label = ev.agentType || 'Agent';
+      subBadge = '<span class="sub-badge" title="' + escapeHtml(ev.agentDescription || '') + '">SUB: ' + escapeHtml(label) + '</span>';
+    }
+
     header.innerHTML = [
       '<span class="prompt-toggle">▼</span>',
       makeSessionTag(project),
+      subBadge,
       '<span class="prompt-time">' + timeStr + '</span>',
       '<span class="prompt-text">' + escapeHtml(text) + '</span>',
       '<span class="prompt-count">0</span>',
@@ -187,7 +233,11 @@
     group.appendChild(tools);
     activityList.appendChild(group);
 
-    var s = getSessionState(project);
+    // 모든 그룹 기본 접힘 (활동 발생 시 자동 펼침)
+    header.querySelector('.prompt-toggle').classList.add('collapsed');
+    tools.classList.add('collapsed');
+
+    var s = getSessionState(key);
     s.group = group;
     s.toolsContainer = tools;
     s.toolCount = 0;
@@ -197,22 +247,34 @@
     if (ev.type === 'prompt') {
       var timeStr = ev.time ? formatTime(ev.time) : '';
       var previewText = ev.text.replace(/\n/g, ' ').slice(0, 160) || '(prompt)';
-      createGroup(timeStr, previewText, ev.promptId, ev.project);
+      createGroup(timeStr, previewText, ev.promptId, ev);
       autoScroll();
       return;
     }
 
-    var s = getSessionState(ev.project);
+    var s = getSessionState(getSessionKey(ev));
     if (!s.group) {
-      createGroup('', '(previous)', null, ev.project);
+      createGroup('', '(previous)', null, ev);
     }
   }
 
-  function updateGroupCount(project) {
-    var s = getSessionState(project);
+  function updateGroupCount(ev) {
+    var s = getSessionState(getSessionKey(ev));
     if (!s.group) return;
     var countEl = s.group.querySelector('.prompt-count');
     if (countEl) countEl.textContent = s.toolCount;
+  }
+
+  // 활동 발생 시 그룹 자동 펼침 / 최종 메시지 후 자동 접힘 타이머
+  function notifyGroupActivity(s, ev) {
+    if (isBatchLoading) return;
+    if (!s || !s.group) return;
+    openGroup(s.group);
+    if (ev.type === 'assistant_text') {
+      scheduleGroupClose(s.group, IDLE_CLOSE_MS);
+    } else {
+      cancelGroupCloseTimer(s.group);
+    }
   }
 
   function autoScroll() {
@@ -226,6 +288,9 @@
   }
 
   function addActivityItem(ev) {
+    // file_action은 Recent Files 전용 — Feeds에 표시 안 함
+    if (ev.type === 'file_action') return;
+
     // prompt 이벤트 처리
     if (ev.type === 'prompt') {
       ensurePromptGroup(ev);
@@ -248,7 +313,9 @@
           if (window.displayOutput) window.displayOutput(this._outputData);
         };
       }
-      getSessionState(ev.project).toolsContainer.appendChild(item);
+      var sAt = getSessionState(getSessionKey(ev));
+      sAt.toolsContainer.appendChild(item);
+      notifyGroupActivity(sAt, ev);
       autoScroll();
       return;
     }
@@ -344,10 +411,11 @@
       '<span class="activity-duration"></span>',
     ].join('');
 
-    var s = getSessionState(ev.project);
+    var s = getSessionState(getSessionKey(ev));
     s.toolsContainer.appendChild(item);
     s.toolCount++;
-    updateGroupCount(ev.project);
+    updateGroupCount(ev);
+    notifyGroupActivity(s, ev);
     autoScroll();
   }
 
@@ -466,6 +534,10 @@
 
   window.addActivityItem = addActivityItem;
   window.addActivityItemBefore = addActivityItemBefore;
+  window.feed = {
+    startBatch: function() { isBatchLoading = true; },
+    endBatch: function() { isBatchLoading = false; },
+  };
   window.escapeHtml = escapeHtml;
   window.formatTime = formatTime;
   window.formatDuration = formatDuration;

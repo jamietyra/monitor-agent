@@ -98,9 +98,11 @@
               var firstChild = window.activityList.firstChild;
               // loadMore 버튼 다음 요소가 첫 그룹
               var insertBefore = loadMoreBtn.nextSibling;
+              if (window.feed) window.feed.startBatch();
               for (var i = 0; i < data.events.length; i++) {
                 window.addActivityItemBefore(data.events[i], insertBefore);
               }
+              if (window.feed) window.feed.endBatch();
               loadedStartIdx = data.startIdx;
               hasMoreEvents = data.hasMore;
               // 스크롤 위치 유지
@@ -129,10 +131,12 @@
 
       if (data.recentEvents) {
         if (window.wilson) window.wilson.startBatch();
+        if (window.feed) window.feed.startBatch();
         for (var i = 0; i < data.recentEvents.length; i++) {
           window.addActivityItem(data.recentEvents[i]);
           if (window.wilson) window.wilson.onEvent(data.recentEvents[i]);
         }
+        if (window.feed) window.feed.endBatch();
         if (window.wilson) window.wilson.endBatch();
       }
 
