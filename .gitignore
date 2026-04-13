@@ -8,3 +8,6 @@ Thumbs.db
 
 # Claude Code HUD state (로컬 경로/session id 포함 — 공개 레포에 들어가면 안 됨)
 .omc/
+
+# 내부 설계 스펙 (공개 불필요)
+WILSON-SPEC.md
