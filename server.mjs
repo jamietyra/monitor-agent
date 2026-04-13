@@ -794,7 +794,7 @@ const server = http.createServer((req, res) => {
 
   // Dashboard static files
   const dashDir = path.join(__dirname, 'dashboard');
-  const mimeTypes = { '.html': 'text/html', '.css': 'text/css', '.js': 'application/javascript' };
+  const mimeTypes = { '.html': 'text/html', '.css': 'text/css', '.js': 'application/javascript', '.svg': 'image/svg+xml' };
 
   if (url.pathname === '/' || url.pathname === '/index.html') {
     const htmlPath = path.join(dashDir, 'index.html');
@@ -813,6 +813,16 @@ const server = http.createServer((req, res) => {
       }
     }
     return;
+  }
+
+  // /favicon.ico → favicon.svg (Chrome legacy path)
+  if (url.pathname === '/favicon.ico') {
+    const svgPath = path.join(dashDir, 'favicon.svg');
+    if (fs.existsSync(svgPath)) {
+      res.writeHead(200, { 'Content-Type': 'image/svg+xml; charset=utf-8' });
+      fs.createReadStream(svgPath).pipe(res);
+      return;
+    }
   }
 
   // Serve CSS/JS from dashboard/
