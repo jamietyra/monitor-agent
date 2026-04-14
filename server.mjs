@@ -297,9 +297,7 @@ function processEntry(entry, state) {
   const timestamp = entry.timestamp ? new Date(entry.timestamp) : new Date();
   const events = [];
 
-  if (!state.sessionStart && entry.timestamp) {
-    state.sessionStart = timestamp;
-  }
+  // stats 필드(running/done/errors/elapsed) 모두 제거됨
 
   // 사용자 프롬프트 감지
   if (entry.type === 'user' && entry.message?.role === 'user') {
@@ -323,6 +321,11 @@ function processEntry(entry, state) {
   }
 
   // assistant 텍스트 응답 감지
+  // 현재 활성 모델 트래킹 (footer 표시용) — 가장 최근 assistant 메시지의 모델 기록
+  if (entry.message?.role === 'assistant' && typeof entry.message.model === 'string') {
+    state.currentModel = entry.message.model;
+  }
+
   if (entry.message?.role === 'assistant' && Array.isArray(entry.message.content)) {
     for (const block of entry.message.content) {
       if (block.type === 'text' && block.text && block.text.trim().length > 0) {
@@ -415,9 +418,7 @@ function processEntry(entry, state) {
       if (pending) {
         const duration = (timestamp - pending.startTime) / 1000;
         const isError = block.is_error === true;
-
-        if (isError) state.errorCount++;
-        else state.completedCount++;
+        // stats(Running/Done/Errors) 카운터 제거됨 (사용자 요청 2026-04-14)
 
         const displayName = pending.isPlaywright
           ? 'Playwright:' + pending.name.split('__').pop()
@@ -669,12 +670,8 @@ function watchTranscript(transcriptPath, state, projectName, subagentInfo) {
       }
     }
 
-    broadcast('stats', {
-      running: state.pendingTools.size,
-      completed: state.completedCount,
-      errors: state.errorCount,
-      sessionStart: state.sessionStart?.toISOString(),
-    });
+    // 이전 stats(Running/Done/Errors/Elapsed) 필드 제거. 현재 활성 모델만 브로드캐스트.
+    broadcast('stats', { currentModel: state.currentModel || null });
 
     // ── usage_delta 브로드캐스트 (Step 5) ─────────────────
     // readNewLines 중 누적된 usage 이벤트를 1건씩 broadcast.
@@ -901,10 +898,9 @@ async function handleUsageRequest(req, res) {
 // ─── HTTP 서버 ──────────────────────────────────────────
 
 const state = {
-  pendingTools: new Map(),
-  completedCount: 0,
-  errorCount: 0,
-  sessionStart: null,
+  pendingTools: new Map(),      // tool_use → tool_result 매칭용 (duration 계산)
+  // stats(Running/Done/Errors/Elapsed) 제거됨 (사용자 요청 2026-04-14)
+  // 현재 활성 모델은 footer "Model:" 표시에 사용
 };
 
 // 감시 중인 transcript 경로 추적
@@ -918,12 +914,9 @@ function startWatchingTranscript(t) {
     agentType: t.agentType,
     description: t.description,
   } : null;
-  // 서브에이전트는 별도 state로 promptId 충돌 방지
+  // 서브에이전트는 별도 state로 promptId 충돌 방지 (pendingTools는 duration 추적용)
   const stateForThis = t.isSubagent ? {
     pendingTools: new Map(),
-    completedCount: 0,
-    errorCount: 0,
-    sessionStart: null,
     promptId: 0,
   } : state;
   const { recentEvents } = watchTranscript(t.transcriptPath, stateForThis, t.project, subagentInfo);
@@ -1101,12 +1094,7 @@ const server = http.createServer((req, res) => {
       totalEvents: allRecentEvents.length,
       startIdx: initEvents.startIdx,
       hasMore: initEvents.hasMore,
-      stats: {
-        running: state.pendingTools.size,
-        completed: state.completedCount,
-        errors: state.errorCount,
-        sessionStart: state.sessionStart?.toISOString(),
-      },
+      stats: { currentModel: state.currentModel || null },
     };
     res.write(`event: init\ndata: ${JSON.stringify(initData)}\n\n`);
 

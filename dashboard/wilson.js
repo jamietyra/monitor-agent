@@ -1070,7 +1070,7 @@
 
   // ─── Init ────────────────────────────────────────────
   resetTimers();
-  initToggles();
+  // initToggles(); — panel-toggles 기능 제거됨 (사용자 요청 2026-04-14)
   initTheme();
 
   // ─── Public API ──────────────────────────────────────

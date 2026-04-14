@@ -37,29 +37,16 @@
   <rect y="66" width="1200" height="34" class="panel"/>
   <line x1="0" y1="100" x2="1200" y2="100" stroke="#8a6a3a"/>
 
-  <!-- Title -->
-  <text x="20" y="90" class="serif accent" font-size="19" font-weight="700">monitor-agent</text>
+  <!-- Wilson brand (left, stays warm red regardless of page/theme) -->
+  <text x="20" y="90" class="serif" fill="#8B1A1A" font-size="19" font-weight="700">Wilson</text>
 
-  <!-- Toggle buttons (all active) -->
-  <rect x="180" y="75" width="62" height="20" rx="12" class="accent"/>
-  <text x="211" y="89" text-anchor="middle" class="serif" fill="#ebe0c7" font-size="11" font-weight="600">Wilson</text>
-  <rect x="247" y="75" width="44" height="20" rx="12" class="accent"/>
-  <text x="269" y="89" text-anchor="middle" class="serif" fill="#ebe0c7" font-size="11" font-weight="600">File</text>
-  <rect x="296" y="75" width="48" height="20" rx="12" class="accent"/>
-  <text x="320" y="89" text-anchor="middle" class="serif" fill="#ebe0c7" font-size="11" font-weight="600">Feed</text>
-  <rect x="349" y="75" width="44" height="20" rx="12" class="accent"/>
-  <text x="371" y="89" text-anchor="middle" class="serif" fill="#ebe0c7" font-size="11" font-weight="600">Diff</text>
-  <rect x="413" y="75" width="58" height="20" rx="12" fill="none" stroke="#8a6a3a"/>
-  <text x="442" y="89" text-anchor="middle" class="serif dim" font-size="11" font-weight="600">Beige</text>
+  <!-- Center: clickable page title with bidirectional arrow -->
+  <text x="600" y="90" text-anchor="middle" class="serif accent" font-size="19" font-weight="700">monitor-agent</text>
+  <text x="702" y="90" class="serif dim" font-size="17" font-weight="600">↔</text>
 
-  <!-- Stats -->
-  <text x="860" y="88" class="dim" font-size="11">Running:</text>
-  <text x="917" y="88" fill="#a87a1a" font-size="11" font-weight="bold">2</text>
-  <text x="935" y="88" class="dim" font-size="11">Done:</text>
-  <text x="973" y="88" fill="#4a7a35" font-size="11" font-weight="bold">847</text>
-  <text x="1005" y="88" class="dim" font-size="11">Errors:</text>
-  <text x="1048" y="88" class="accent" font-size="11" font-weight="bold">3</text>
-  <text x="1068" y="88" class="dim" font-size="11">Elapsed: 00:42:15</text>
+  <!-- Theme button (right, fixed 84px) -->
+  <rect x="1096" y="75" width="84" height="20" rx="12" fill="none" stroke="#8a6a3a"/>
+  <text x="1138" y="89" text-anchor="middle" class="serif dim" font-size="11" font-weight="600">Beige</text>
 
   <!-- WILSON PANEL -->
   <rect x="0" y="100" width="300" height="600" class="panel"/>
@@ -85,7 +72,6 @@
   </g>
 
   <rect x="30" y="355" width="240" height="44" rx="4" class="hover" stroke="#8a6a3a"/>
-  <circle cx="62" cy="377" r="3" fill="#8B1A1A"/>
   <text x="150" y="381" text-anchor="middle" class="ui ink" font-size="12">Read: dashboard.html</text>
 
   <line x1="0" y1="432" x2="300" y2="432" stroke="#8a6a3a"/>
@@ -261,5 +247,5 @@
   <line x1="0" y1="700" x2="1200" y2="700" stroke="#8a6a3a"/>
   <circle cx="14" cy="710" r="4" fill="#4a7a35"/>
   <text x="26" y="714" class="dim" font-size="10">Connected</text>
-  <text x="1186" y="714" text-anchor="end" class="muted" font-size="10">Actions: 1,234</text>
+  <text x="1186" y="714" text-anchor="end" class="muted" font-size="10">Model: Opus 4.6</text>
 </svg>

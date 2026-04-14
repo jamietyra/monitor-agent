@@ -124,12 +124,7 @@ header h1 {
   letter-spacing: -0.015em;
   font-style: italic;
 }
-.stats { display: flex; gap: 16px; font-size: var(--text-sm); font-variant-numeric: tabular-nums; }
-.stat-running { color: var(--yellow); }
-.stat-done { color: var(--green); }
-.stat-error { color: var(--red); transition: background var(--duration-normal) var(--ease-out); border-radius: 3px; padding: 0 var(--space-xs); }
-.stat-error.flash { background: rgba(244, 71, 71, 0.3); }
-.stat-time { color: var(--text-dim); }
+/* Stats(Running/Done/Errors/Elapsed) 스타일 제거됨 (사용자 요청 2026-04-14) */
 
 /* ─── Main Layout ─── */
 main { display: flex; flex-direction: row; flex: 1; overflow: hidden; }
@@ -143,7 +138,7 @@ main { display: flex; flex-direction: row; flex: 1; overflow: hidden; }
 }
 .activity-panel h2 {
   font-family: var(--font-display);
-  font-size: 1.05rem; letter-spacing: -0.01em;
+  font-size: 0.8rem; letter-spacing: -0.01em;
   color: var(--accent); padding: 10px var(--space-md);
   border-bottom: 1px solid var(--border); font-weight: 600;
   font-style: italic;

@@ -57,7 +57,7 @@ body[data-page="usage"] #wilson-panel {
 body[data-page="usage"] .page-section-title {
   font-family: var(--font-display);
   font-style: italic;
-  font-size: 1.05rem;
+  font-size: 0.8rem;
   font-weight: 600;
   color: var(--accent);
   margin: 0;
@@ -170,7 +170,7 @@ body[data-page="usage"] .refresh-btn:disabled .refresh-icon {
 
 #sessions-panel .panel-title {
   font-family: var(--font-display);
-  font-size: 1.05rem;
+  font-size: 0.8rem;
   font-style: italic;
   color: var(--accent);
   font-weight: 600;
@@ -531,7 +531,7 @@ body[data-page="usage"] .refresh-btn:disabled .refresh-icon {
 .chart-header h3 {
   font-family: var(--font-display);
   font-style: italic;
-  font-size: 1rem;
+  font-size: 0.8rem;
   font-weight: 600;
   color: var(--accent);
   margin: 0;

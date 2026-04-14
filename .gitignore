@@ -16,3 +16,6 @@ docs/
 # 토큰 사용량 집계 캐시 (로컬 전용) — .gitkeep만 유지, 그 외 모든 파일 무시
 cache/*
 !cache/.gitkeep
+
+# 로컬 아카이브 (구버전 파일 보관소)
+_archive/

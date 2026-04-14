@@ -5,7 +5,7 @@
 [English](README.md)
 
 <p align="center">
-  <img src="preview.ko.svg?v=3" alt="monitor-agent 대시보드 미리보기" width="100%">
+  <img src="preview.svg?v=3" alt="monitor-agent 대시보드 미리보기" width="100%">
 </p>
 
 ---
@@ -75,15 +75,42 @@ AI가 코드를 짜주는 건 기적 같지만, 나는 **AI가 정확히 뭘 하
 - **White** — 깔끔한 라이트
 - **Dark** — 개발자 클래식
 
-헤더 우측 [Beige] 버튼 클릭으로 순환. `localStorage`에 저장됩니다.
+헤더 우측 [Beige] 버튼 클릭으로 순환 (84px 고정 폭). `localStorage`에 저장됩니다.
 
-### 🎛️ 패널 토글
+### 🏷️ 공유 세션 태그 (Shared Session Tags)
 
-헤더의 `Wilson` / `File` / `Feed` / `Diff` 버튼으로 각 영역을 개별 on/off. 현재 작업에 필요한 것만 띄워놓을 수 있습니다.
+모든 프로젝트는 10색 팔레트에서 고정 슬롯을 부여받습니다 (`localStorage`로 유지). 같은 프로젝트 태그는 `/agent` Feeds, `/usage` Sessions 트리, Top Projects에서 동일한 색으로 표시됩니다. 어느 화면에서나 프로젝트를 한눈에 식별.
+
+### 🧭 헤더 정체성
+
+좌측 끝 **`Wilson`** 브랜드는 페이지나 테마가 바뀌어도 항상 따뜻한 빨강으로 유지됩니다 — 정체성 앵커 역할. 정중앙 제목(`monitor-agent ↔` / `monitor-usage ↔`)은 클릭하면 두 페이지를 양방향으로 전환합니다. 현재 사용 중인 모델(예: `Model: Opus 4.6`)은 푸터 우측에 표시됩니다.
 
 ### 🌍 멀티 세션 + 원격 접근
 
 모든 하위 프로젝트의 Claude Code 세션을 동시 모니터링. 토큰 인증으로 외부 기기에서도 접속 가능.
+
+---
+
+## 📊 monitor-usage — 비용·토큰 분석
+
+`/usage` 페이지에서 Claude의 장기 토큰·비용 사용 내역을 한눈에 확인할 수 있습니다.
+
+<p align="center">
+  <img src="preview.usage.svg?v=1" alt="monitor-usage 대시보드 미리보기" width="100%">
+</p>
+
+헤더의 **`monitor-agent`** 제목을 클릭하면 `monitor-usage`로 전환됩니다. 다시 클릭하면 원래 페이지로 돌아갑니다. 오른쪽 영역은 부드러운 슬라이드+페이드 전환이 일어나고, 강조색이 따뜻한 빨강에서 차분한 파랑으로 바뀝니다.
+
+### 주요 내용
+
+- **5개 지표 카드** — 비용 / 토큰 / 활성 시간 / 세션 / 프롬프트. 델타 색 통일: 증가=빨강, 감소=녹색, 동일=회색.
+- **차트** — 일일 사용량 단일 막대, 모델 분포 도넛(Opus 파랑 / Sonnet 녹색 / Haiku 노랑), Top Projects 리스트.
+- **Month Grid 달력** — 각 날짜 토큰/비용, 셀 클릭 시 일간 상세 모달.
+- **세션 트리** (왼쪽, Wilson 아래) — 프로젝트 태그별 2-level 트리, 레이블 `[MM/DD | 첫 프롬프트 요약]`, 서브에이전트 인라인.
+
+### 비용 정확도 참고
+
+Anthropic 공개 API 단가(Opus 4.6 $15/$75 per M, Sonnet 4.6 $3/$15, Haiku 4.5 $1/$5)에 캐시 읽기/쓰기·모델별 단가를 정확히 적용해 이벤트 단위로 계산합니다. **Claude 구독제를 쓰면 이 숫자는 "API로 썼다면 얼마일까" 가상값**이라 실제 청구액이 아닙니다. 사용 강도 지표로 해석하세요.
 
 ---
 
@@ -122,45 +149,30 @@ node server.mjs /path/to/your/project
 ## ⚙️ 작동 원리
 
 Claude Code는 모든 활동을 `~/.claude/projects/` 안의 transcript JSONL 파일에 기록합니다.
-monitor-agent는 이 파일들을 실시간 감시하고, 파싱된 이벤트를 **Server-Sent Events (SSE)**로 브라우저에 스트리밍합니다.
+monitor-agent는 이 파일들을 실시간 감시하고 두 갈래로 분기합니다 — 메인 대시보드용 SSE 스트림, 그리고 `/usage` 분석 페이지용 지속 집계기.
 
 ```
-Claude Code → transcript.jsonl → monitor-agent (server.mjs) → SSE → 브라우저 대시보드
-                                                                   │
-                                                                   └─► Wilson (5 states)
-                                                                   └─► Feeds
-                                                                   └─► Recent Files
-                                                                   └─► Code/Diff
+Claude Code → transcript.jsonl → monitor-agent (server.mjs)
+                                       │
+                                       ├─► SSE /events ─► /agent 페이지
+                                       │                  ├─► Wilson (5 states)
+                                       │                  ├─► Feeds
+                                       │                  ├─► Recent Files
+                                       │                  └─► Code / Diff 뷰어
+                                       │
+                                       └─► Aggregator ─► cache/usage-index.json
+                                                         (증분 스캔,
+                                                          byDate / byProject /
+                                                          bySession / byModel)
+                                                         │
+                                                         └─► GET /api/usage ─► /usage 페이지
+                                                                              ├─► 지표 카드
+                                                                              ├─► Daily / Model / Projects
+                                                                              ├─► Month Grid 달력
+                                                                              └─► 세션 트리
 ```
 
-디렉토리 워처로 새 세션을 즉시 감지하며, 60초마다 폴백 스캔을 수행합니다.
-
----
-
-## 🖥️ 대시보드 레이아웃
-
-```
-┌──────────────────────────────────────────────────────────────────────┐
-│ monitor-agent   [Wilson][File][Feed][Diff] [Beige]   Running:2 Done:... │
-├───────────────┬──────────────────────────────────────────────────────┤
-│               │ Feeds                                                │
-│   thinking... │ [검색...]                                             │
-│               │ [▶ All] [MAIN] [webapp]                               │
-│    🏐          │                                                      │
-│   (120x120)   │ ▼ 10:30  글씨 크기 10% 키워줘                   [5]   │
-│               │   ✓ Read dashboard.html  95ms                         │
-│               │   ● 완료. 목록 전체 크기 10% 커짐.                     │
-│   [말풍선]     │                                                      │
-│               ├──────────────────────┬───────────────────────────────┤
-├───────────────┤ 코드 뷰어              │ Diff 뷰어                     │
-│ Recent Files  │ dashboard.html 1007줄 │ Edit: dashboard.html          │
-│  ◇ server.mjs │ (PrismJS 하이라이트)  │ - 삭제된 코드 (빨강)           │
-│  ✎ style.css  │                      │ + 추가된 코드 (초록)           │
-│  + wilson.js  │                      │                               │
-├───────────────┴──────────────────────┴───────────────────────────────┤
-│ ● Connected                                        Actions: 2,662    │
-└──────────────────────────────────────────────────────────────────────┘
-```
+새 세션(+ 서브에이전트 transcript)은 디렉토리 워처로 즉시 감지되며 60초 폴백 스캔이 보조합니다. `/api/usage`는 디스크 캐시를 재활용 — scanCursor 이후의 새 이벤트만 파싱합니다.
 
 ---
 

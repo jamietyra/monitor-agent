@@ -75,15 +75,42 @@ Side-by-side file content (PrismJS syntax highlighting) and change tracking.
 - **White** — clean light
 - **Dark** — developer classic
 
-Cycle with the `[Beige]` button in the header. Choice is saved to `localStorage`.
+Cycle with the `[Beige]` button in the header (fixed 84px). Choice is saved to `localStorage`.
 
-### 🎛️ Panel Toggles
+### 🏷️ Shared Session Tags
 
-Header buttons `Wilson` / `File` / `Feed` / `Diff` individually hide each section. Keep only what you need visible.
+Every project gets a consistent color slot (10-color palette, assigned via `localStorage`) so the same project's tag looks identical across `/agent` Feeds, `/usage` Sessions tree, and Top Projects. Spot a project at a glance, anywhere.
+
+### 🧭 Header identity
+
+The left-side **`Wilson`** brand stays warm red across both pages and all themes — it's the identity anchor. The centered title (`monitor-agent ↔` / `monitor-usage ↔`) is clickable and flips you between the two pages. The active model (e.g. `Model: Opus 4.6`) lives in the right side of the footer.
 
 ### 🌍 Multi-session + Remote Access
 
 Monitors all Claude Code sessions across sub-projects simultaneously. Token-based authentication for remote access from other machines.
+
+---
+
+## 📊 monitor-usage — Cost & Token Analytics
+
+A second page at `/usage` gives you long-term visibility into Claude's token and dollar usage.
+
+<p align="center">
+  <img src="preview.usage.svg?v=1" alt="monitor-usage dashboard preview" width="100%">
+</p>
+
+Click the **`monitor-agent`** title in the header to switch to `monitor-usage`; click **`monitor-usage`** to go back. The right-side panel swaps with a smooth slide-and-fade transition and the accent color shifts from the warm red to calm blue.
+
+### What you can see
+
+- **5 metric cards** — Cost / Tokens / Active Time / Sessions / Prompts with uniform delta colors (increase = red, decrease = green, same = gray).
+- **Charts** — Daily Usage bar, Model Breakdown donut (Opus blue / Sonnet green / Haiku yellow), Top Projects list.
+- **Month Grid** calendar — per-day tokens and cost, click a cell for the day drill-down modal.
+- **Sessions tree** (left, below Wilson) — 2-level tree per project tag, labeled `[MM/DD | first prompt summary]`, with inline subagent breakdown.
+
+### Accuracy note
+
+Token cost is computed from Anthropic's public API rates (Opus 4.6 $15/$75 per M, Sonnet 4.6 $3/$15, Haiku 4.5 $1/$5) with proper cache-write/cache-read adjustments and per-event model resolution. **If you're on a Claude subscription plan this number is a theoretical "what-if" for pay-as-you-go API** — use it as a usage-intensity proxy, not an invoice.
 
 ---
 
@@ -122,45 +149,30 @@ Defaults to the current working directory.
 ## ⚙️ How It Works
 
 Claude Code writes all activity to transcript JSONL files in `~/.claude/projects/`.
-monitor-agent watches these files in real-time and streams parsed events to your browser via **Server-Sent Events (SSE)**.
+monitor-agent watches these files in real-time and branches to two surfaces — a live SSE stream for the main dashboard, and a persistent aggregator for the `/usage` analytics page.
 
 ```
-Claude Code → transcript.jsonl → monitor-agent (server.mjs) → SSE → Browser Dashboard
-                                                                   │
-                                                                   └─► Wilson (5 states)
-                                                                   └─► Feeds
-                                                                   └─► Recent Files
-                                                                   └─► Code/Diff
+Claude Code → transcript.jsonl → monitor-agent (server.mjs)
+                                       │
+                                       ├─► SSE /events ─► /agent page
+                                       │                  ├─► Wilson (5 states)
+                                       │                  ├─► Feeds
+                                       │                  ├─► Recent Files
+                                       │                  └─► Code / Diff viewer
+                                       │
+                                       └─► Aggregator ─► cache/usage-index.json
+                                                         (incremental scan,
+                                                          byDate / byProject /
+                                                          bySession / byModel)
+                                                         │
+                                                         └─► GET /api/usage ─► /usage page
+                                                                              ├─► Metric Cards
+                                                                              ├─► Daily / Model / Projects
+                                                                              ├─► Month Grid calendar
+                                                                              └─► Sessions tree
 ```
 
-New sessions are detected instantly via directory watchers, with a 60-second fallback scan.
-
----
-
-## 🖥️ Dashboard Layout
-
-```
-┌──────────────────────────────────────────────────────────────────────┐
-│ monitor-agent   [Wilson][File][Feed][Diff] [Beige]   Running:2 Done:... │
-├───────────────┬──────────────────────────────────────────────────────┤
-│               │ Feeds                                                │
-│   thinking... │ [Search...]                                           │
-│               │ [▶ All] [MAIN] [webapp]                               │
-│     🏐         │                                                      │
-│   (150x150)   │ ▼ 10:30  Increase font size by 10%             [5]   │
-│               │   ✓ Read dashboard.html  95ms                         │
-│               │   ● Done. All items scaled up 10%.                    │
-│  [bubble]     │                                                      │
-│               ├──────────────────────┬───────────────────────────────┤
-├───────────────┤ Code Viewer          │ Diff Viewer                   │
-│ Recent Files  │ dashboard.html 1007L │ Edit: dashboard.html          │
-│  ◇ server.mjs │ (syntax highlighted) │ - removed lines (red)         │
-│  ✎ style.css  │                      │ + added lines (green)         │
-│  + wilson.js  │                      │                               │
-├───────────────┴──────────────────────┴───────────────────────────────┤
-│ ● Connected                                        Actions: 2,662    │
-└──────────────────────────────────────────────────────────────────────┘
-```
+New sessions (and new subagent transcripts) are detected instantly via directory watchers, with a 60-second fallback scan. The `/api/usage` endpoint reuses its disk cache for fast reloads — only new events since the last scanCursor are parsed.
 
 ---
 

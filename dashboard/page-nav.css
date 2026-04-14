@@ -8,27 +8,62 @@
  * 설계 스펙: docs/specs/2026-04-13-monitor-usage-design.md §4b, §4c
  */
 
-/* ── 타이틀 공통 ─────────────────────────────────────── */
+/* ── 브랜드 "Wilson" — /usage의 파란 테마에 휩쓸리지 않는 고정 아이덴티티 색 ─
+ *   Beige/White 테마: 원본 crimson(#8B1A1A)
+ *   Dark 테마: 톤 올린 #c0524b (대비 확보)
+ *   페이지(agent/usage) 변경과 무관하게 유지
+ */
+header .brand-wilson {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 700;
+  font-size: 1.25rem;
+  color: #8B1A1A;
+  letter-spacing: -0.015em;
+  user-select: none;
+  cursor: default;
+}
+body[data-theme="dark"] header .brand-wilson {
+  color: #c0524b;
+}
+
+/* ── 타이틀 공통: 클릭 가능 힌트 (화살표 ↔만, 밑줄 없음) ──── */
 header h1.page-nav-title {
   cursor: pointer;
-  transition: text-decoration-color var(--duration-fast, 0.15s),
+  position: relative;
+  /* 헤더 중앙 정렬 — flex space-between으로 Wilson/theme-switch 사이 가운데 */
+  font-size: 1.14rem;
+  margin: 0 auto;
+  transition: color var(--duration-fast, 0.15s),
               opacity var(--duration-fast, 0.15s),
               transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  text-decoration: underline;
-  text-decoration-color: transparent;
-  text-underline-offset: 4px;
+  text-decoration: none;
   -webkit-user-select: none;
   user-select: none;
 }
 
-header h1.page-nav-title:hover {
-  text-decoration-color: currentColor;
-  opacity: 0.85;
+/* 타이틀 뒤에 전환 아이콘 — 항상 보이고 hover 시 또렷해짐 */
+header h1.page-nav-title::after {
+  content: ' \2194';              /* ↔ 양방향 전환 */
+  margin-left: 0.35em;
+  font-size: 0.72em;
+  opacity: 0.55;
+  color: var(--text-dim);
+  vertical-align: 2px;
+  transition: opacity var(--duration-fast, 0.15s),
+              color var(--duration-fast, 0.15s),
+              transform var(--duration-fast, 0.15s);
+  display: inline-block;
 }
 
-header h1.page-nav-title:active {
-  opacity: 0.7;
+header h1.page-nav-title:hover { color: var(--accent); }
+header h1.page-nav-title:hover::after {
+  opacity: 1;
+  color: var(--accent);
+  transform: translateX(2px);
 }
+
+header h1.page-nav-title:active { opacity: 0.7; }
 
 /* 전환 중 연속 클릭 방어 (§4c) */
 header h1.page-nav-title.is-navigating {

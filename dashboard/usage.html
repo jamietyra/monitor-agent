@@ -20,17 +20,10 @@
 <body data-page="usage">
 
 <header>
-  <div class="header-title">
-    <!-- 타이틀 클릭 → monitor-agent('/')로 이동. Step 5에서 애니메이션 교체 -->
-    <h1 class="page-nav-title" id="page-nav-title" title="monitor-agent 페이지로 전환">monitor-usage</h1>
-  </div>
-  <!-- monitor-agent 헤더와 동일한 stats 영역 (connection.js가 업데이트) -->
-  <div class="stats">
-    <span class="stat-running" id="stat-running">Running: 0</span>
-    <span class="stat-done" id="stat-done">Done: 0</span>
-    <span class="stat-error" id="stat-error">Errors: 0</span>
-    <span class="stat-time" id="stat-time">Elapsed: --:--</span>
-  </div>
+  <span class="brand-wilson">Wilson</span>
+  <!-- 타이틀 클릭 → monitor-agent('/')로 이동 (page-nav.js). 헤더 flex space-between으로 가운데 정렬됨 -->
+  <h1 class="page-nav-title" id="page-nav-title" title="monitor-agent 페이지로 전환 — 클릭">monitor-usage</h1>
+  <button class="theme-switch" id="theme-switch" title="테마 전환 (Beige / White / Dark)">Beige</button>
 </header>
 
 <main class="usage-layout">

@@ -34,7 +34,7 @@
   background: var(--accent);
 }
 
-/* 테마 전환 버튼 */
+/* 테마 전환 버튼 — 라벨 변경(Beige/White/Dark) 시 헤더 레이아웃이 흔들리지 않도록 폭 고정 */
 .theme-switch {
   background: transparent;
   border: 1px solid var(--border);
@@ -49,6 +49,10 @@
   margin-left: var(--space-lg);
   transition: all var(--duration-fast) var(--ease-out);
   line-height: 1.5;
+  width: 84px;           /* 폭 고정 — Beige/White/Dark 모두 수용, 제목 흔들림 없음 */
+  text-align: center;
+  box-sizing: border-box;
+  flex-shrink: 0;
 }
 .theme-switch:hover {
   color: var(--text);
@@ -193,7 +197,7 @@ body.wilson-state-thinking .activity-panel {
 }
 .wilson-recent-header {
   font-family: var(--font-display);
-  font-size: 1.05rem;
+  font-size: 0.8rem;
   font-style: italic;
   letter-spacing: -0.01em;
   color: var(--accent);

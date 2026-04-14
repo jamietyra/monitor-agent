@@ -3,9 +3,6 @@
   var connectionDot = document.getElementById('connection-dot');
   var connectionStatus = document.getElementById('connection-status');
 
-  var sessionStart = null;
-  var elapsedTimer = null;
-
   // ─── 패널 리사이즈 (monitor-agent 페이지에만 존재) ──────
   (function() {
     var handle = document.getElementById('resize-activity');
@@ -37,31 +34,22 @@
     });
   })();
 
-  // ─── Stats ────────────────────────────────────────
+  // 모델 이름 정규화: "claude-opus-4-6" → "Opus 4.6", "claude-haiku-4-5-20251001" → "Haiku 4.5"
+  function formatModelName(raw) {
+    if (!raw) return '';
+    var m = String(raw).match(/claude-(opus|sonnet|haiku)-(\d+)-(\d+)/);
+    if (!m) return raw;
+    var fam = m[1].charAt(0).toUpperCase() + m[1].slice(1);
+    return fam + ' ' + m[2] + '.' + m[3];
+  }
+
+  // ─── Stats 핸들러 ───────────────────────────────────
+  // Running/Done/Errors/Elapsed 카운터는 제거됨. 활성 모델만 footer에 표시.
   function updateStats(stats) {
-    document.getElementById('stat-running').textContent = 'Running: ' + (stats.running || 0);
-    document.getElementById('stat-done').textContent = 'Done: ' + (stats.completed || 0);
-    var errorEl = document.getElementById('stat-error');
-    var prevErrors = parseInt(errorEl.textContent.replace(/\D/g, '')) || 0;
-    var newErrors = stats.errors || 0;
-    errorEl.textContent = 'Errors: ' + newErrors;
-    if (newErrors > prevErrors) {
-      errorEl.classList.add('flash');
-      setTimeout(function() { errorEl.classList.remove('flash'); }, 2000);
-    }
-
-    var total = (stats.completed || 0) + (stats.errors || 0) + (stats.running || 0);
-    document.getElementById('event-count').textContent = 'Actions: ' + total.toLocaleString();
-
-    if (stats.sessionStart && !sessionStart) {
-      sessionStart = new Date(stats.sessionStart);
-      if (!elapsedTimer) {
-        elapsedTimer = setInterval(function() {
-          var elapsed = Date.now() - sessionStart.getTime();
-          document.getElementById('stat-time').textContent = 'Elapsed: ' + window.formatElapsed(elapsed);
-        }, 1000);
-      }
-    }
+    var modelEl = document.getElementById('event-count');
+    if (!modelEl) return;
+    var raw = stats && stats.currentModel;
+    modelEl.textContent = raw ? 'Model: ' + formatModelName(raw) : '';
   }
 
   // ─── SSE 연결 ─────────────────────────────────────
