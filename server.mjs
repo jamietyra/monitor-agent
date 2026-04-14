@@ -44,7 +44,7 @@ function cwdToProjectDir(cwd) {
 }
 
 // 프로젝트 디렉토리명에서 짧은 이름 추출
-// 마지막 2개 경로 세그먼트를 사용 (예: Jamie-IT → IT, IT-aika → aika)
+// 마지막 2개 경로 세그먼트를 사용 (예: root-parent → parent, parent-child → child)
 function extractProjectName(dirName, baseName) {
   if (!baseName) {
     // baseName 없으면 마지막 세그먼트 반환

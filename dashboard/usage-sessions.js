@@ -26,17 +26,13 @@
   };
 
   // ── 공통 헬퍼 (calendar.js와 중복되는 일부는 재정의) ──
-  const PROJECT_COLORS = {
-    IT: '#2563eb',
-    TYDEV: '#0ea5e9',
-    DEEP: '#7c3aed',
-    aika: '#059669',
-    tyint: '#ea580c',
-    yt: '#d946ef',
-    _fallback: '#6b7280',
-  };
+  // 프로젝트 색상은 session-tag.js 팔레트(localStorage 슬롯)에 위임 — 하드코딩 금지
   function projectColor(name) {
-    return PROJECT_COLORS[name] || PROJECT_COLORS._fallback;
+    if (window.sessionTag && typeof window.sessionTag.assign === 'function') {
+      const pal = window.sessionTag.assign(name);
+      return (pal && pal.bg) || '#6b7280';
+    }
+    return '#6b7280';
   }
 
   // 공유 모듈(session-tag.js)로 위임 — feed.js와 동일 슬롯 배정 + localStorage 동기화

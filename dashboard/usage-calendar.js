@@ -17,24 +17,19 @@
 (function () {
   'use strict';
 
-  // ── 색상 팔레트 (스펙 §8b) ───────────────────────────
-  // 0은 투명, 나머지는 파란 계열 5단계.
-  // CSS 변수는 런타임에 해석되므로 var(...) 문자열 그대로 반환해도 OK.
+  // ── 색상 팔레트 ────────────────────────────────────
+  // 비용 기반 3단계: <$100 초록, $100~$500 노랑, $500+ 빨강.
   const COLOR_NONE = 'transparent';
-  const COLOR_L1 = 'var(--accent-soft)'; // 1 ~ 100K
-  const COLOR_L2 = '#60a5fa';             // 100K ~ 500K
-  const COLOR_L3 = '#3b82f6';             // 500K ~ 1M
-  const COLOR_L4 = 'var(--accent)';       // 1M ~ 3M
-  const COLOR_L5 = 'var(--accent-deep)';  // 3M+
+  const COLOR_LOW = '#22c55e';   // <$100
+  const COLOR_MID = '#eab308';   // $100 ~ $500
+  const COLOR_HIGH = '#ef4444';  // $500+
 
-  /** 총 토큰 수 기반 5단계 색상. */
-  function colorForTokens(total) {
-    if (!total || total <= 0) return COLOR_NONE;
-    if (total < 100_000) return COLOR_L1;
-    if (total < 500_000) return COLOR_L2;
-    if (total < 1_000_000) return COLOR_L3;
-    if (total < 3_000_000) return COLOR_L4;
-    return COLOR_L5;
+  /** 일 비용(USD) 기반 3단계 색상. */
+  function colorForCost(cost) {
+    if (!cost || cost <= 0) return COLOR_NONE;
+    if (cost < 100) return COLOR_LOW;
+    if (cost < 500) return COLOR_MID;
+    return COLOR_HIGH;
   }
 
   // ── 포맷 헬퍼 ───────────────────────────────────────
@@ -247,10 +242,10 @@
         metaEl.appendChild(document.createTextNode(' · ' + formatDuration(entry.activeMs)));
         cell.appendChild(metaEl);
 
-        // 하단 색상 막대
+        // 하단 색상 막대 (비용 기반)
         const bar = document.createElement('div');
         bar.className = 'cell-bar';
-        bar.style.backgroundColor = colorForTokens(total);
+        bar.style.backgroundColor = colorForCost(entry.costUSD);
         cell.appendChild(bar);
 
         // 클릭 → 이벤트 emit
@@ -304,7 +299,7 @@
     _lastUsageData = _lastUsageData || (window.usageData || null);
 
     const total = totalTokensOf(dayData);
-    const color = colorForTokens(total);
+    const color = colorForCost(dayData && dayData.costUSD);
     const costTxt = formatCost(dayData && dayData.costUSD);
     const tokTxt = formatTokens(total);
     const durTxt = formatDuration(dayData && dayData.activeMs);
@@ -395,6 +390,6 @@
     _formatTokens: formatTokens,
     _formatCost: formatCost,
     _formatDuration: formatDuration,
-    _colorForTokens: colorForTokens,
+    _colorForCost: colorForCost,
   };
 })();
