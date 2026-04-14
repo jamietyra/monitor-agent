@@ -1171,17 +1171,19 @@ const server = http.createServer((req, res) => {
   // Dashboard static files
   const dashDir = path.join(__dirname, 'dashboard');
   const mimeTypes = { '.html': 'text/html', '.css': 'text/css', '.js': 'application/javascript', '.svg': 'image/svg+xml' };
+  // dev dashboard — 캐시 금지 (VS Code Simple Browser 등 공격적 캐시 방지)
+  const NO_CACHE = 'no-store, no-cache, must-revalidate, max-age=0';
 
   if (url.pathname === '/' || url.pathname === '/index.html') {
     const htmlPath = path.join(dashDir, 'index.html');
     if (fs.existsSync(htmlPath)) {
-      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': NO_CACHE });
       fs.createReadStream(htmlPath).pipe(res);
     } else {
       // fallback to legacy single file
       const legacyPath = path.join(__dirname, 'dashboard.html');
       if (fs.existsSync(legacyPath)) {
-        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': NO_CACHE });
         fs.createReadStream(legacyPath).pipe(res);
       } else {
         res.writeHead(500);
@@ -1195,7 +1197,7 @@ const server = http.createServer((req, res) => {
   if (url.pathname === '/usage' || url.pathname === '/usage.html') {
     const htmlPath = path.join(dashDir, 'usage.html');
     if (fs.existsSync(htmlPath)) {
-      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': NO_CACHE });
       fs.createReadStream(htmlPath).pipe(res);
     } else {
       res.writeHead(404);
@@ -1208,7 +1210,7 @@ const server = http.createServer((req, res) => {
   if (url.pathname === '/favicon.ico') {
     const svgPath = path.join(dashDir, 'favicon.svg');
     if (fs.existsSync(svgPath)) {
-      res.writeHead(200, { 'Content-Type': 'image/svg+xml; charset=utf-8' });
+      res.writeHead(200, { 'Content-Type': 'image/svg+xml; charset=utf-8', 'Cache-Control': NO_CACHE });
       fs.createReadStream(svgPath).pipe(res);
       return;
     }
@@ -1219,7 +1221,7 @@ const server = http.createServer((req, res) => {
   if (mimeTypes[ext]) {
     const filePath = path.join(dashDir, path.basename(url.pathname));
     if (fs.existsSync(filePath)) {
-      res.writeHead(200, { 'Content-Type': mimeTypes[ext] + '; charset=utf-8' });
+      res.writeHead(200, { 'Content-Type': mimeTypes[ext] + '; charset=utf-8', 'Cache-Control': NO_CACHE });
       fs.createReadStream(filePath).pipe(res);
       return;
     }

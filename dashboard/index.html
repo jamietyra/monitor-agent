@@ -10,9 +10,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="wilson.css">
-  <link rel="stylesheet" href="page-nav.css">
+  <link rel="stylesheet" href="style.css?v=5">
+  <link rel="stylesheet" href="wilson.css?v=5">
+  <link rel="stylesheet" href="tool-timeline.css?v=5">
+  <link rel="stylesheet" href="page-nav.css?v=5">
 </head>
 <body data-page="agent">
 
@@ -27,6 +28,17 @@
     <div class="wilson-character">
       <div class="wilson-svg-wrap" id="wilson-svg-wrap"></div>
       <div class="wilson-bubble" id="wilson-bubble"></div>
+    </div>
+    <div class="wilson-tool-timeline" id="wilson-tool-timeline">
+      <div class="timeline-header">
+        <span class="timeline-title">Tool Timeline</span>
+        <span class="timeline-count" id="timeline-count" title="running / total">0/0</span>
+        <button class="timeline-clear" id="timeline-clear" title="Clear all icons">✕</button>
+      </div>
+      <div class="timeline-track" id="timeline-track"></div>
+      <div class="timeline-axis">
+        <span>now</span><span>-1m</span><span>-2m</span><span>-5m</span><span>-10m</span>
+      </div>
     </div>
     <div class="wilson-recent">
       <div class="wilson-recent-header">Recent Files</div>
@@ -106,13 +118,14 @@
 <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-go.min.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-rust.min.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-powershell.min.js" defer></script>
-<script src="session-tag.js"></script>
-<script src="feed.js"></script>
-<script src="viewer.js"></script>
-<script src="wilson.js"></script>
-<script src="connection.js"></script>
+<script src="session-tag.js?v=5"></script>
+<script src="feed.js?v=5"></script>
+<script src="viewer.js?v=5"></script>
+<script src="wilson.js?v=5"></script>
+<script src="tool-timeline.js?v=5"></script>
+<script src="connection.js?v=5"></script>
 <!-- 타이틀 클릭 B 애니메이션 + 페이지 전환 (양쪽 페이지 공통) -->
-<script src="page-nav.js"></script>
+<script src="page-nav.js?v=5"></script>
 
 </body>
 </html>

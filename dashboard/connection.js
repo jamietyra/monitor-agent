@@ -113,7 +113,9 @@
             loadMoreBtn.disabled = false;
           });
       };
-      window.activityList.insertBefore(loadMoreBtn, window.activityList.firstChild);
+      if (window.activityList) {
+        window.activityList.insertBefore(loadMoreBtn, window.activityList.firstChild);
+      }
     }
 
     // 초기 데이터
@@ -145,6 +147,7 @@
       var ev = JSON.parse(e.data);
       if (window.addActivityItem) window.addActivityItem(ev);
       if (window.wilson) window.wilson.onEvent(ev);
+      if (window.toolTimeline) window.toolTimeline.onEvent(ev);
     });
 
     // 파일 콘텐츠 (viewer.js 로드된 페이지에서만)

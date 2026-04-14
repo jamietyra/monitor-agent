@@ -1,0 +1,161 @@
+/* ── Wilson 하단 Tool Timeline v4 — rAF 기반 위치 계산, CSS keyframe 없음 ── */
+
+.wilson-tool-timeline {
+  position: relative;
+  flex-shrink: 0;
+  height: 220px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-panel);
+}
+
+.timeline-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px var(--space-md);
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  font-style: italic;
+  color: var(--accent);
+  border-bottom: 1px solid var(--border);
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.timeline-header .timeline-title { flex: 0 0 auto; }
+.timeline-count {
+  margin-left: auto;
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 10px;
+  font-style: normal;
+  color: var(--text-dim);
+  background: var(--bg-hover);
+  padding: 1px 6px;
+  border-radius: 8px;
+}
+
+.timeline-clear {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  width: 20px;
+  height: 20px;
+  line-height: 1;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 11px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.timeline-clear:hover { background: var(--bg-hover); color: var(--text); }
+
+.timeline-track {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+  padding: 0;
+  min-height: 160px;
+}
+
+/* 레인 구분선 (6개) */
+.timeline-track::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent calc(100% / 6 - 1px),
+    var(--border) calc(100% / 6 - 1px),
+    var(--border) calc(100% / 6)
+  );
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.timeline-axis {
+  display: block;
+  font-size: 11px;
+  color: var(--text-dim);
+  border-top: 1px solid var(--border);
+  padding: 3px 0 4px;
+  position: relative;
+  height: 22px;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+.timeline-axis span {
+  position: absolute;
+  transform: translateX(-50%);
+  padding-top: 2px;
+}
+/* 5 labels: now / -1m / -2m / -5m / -10m — 5%~95% 가시 영역에 분포 */
+.timeline-axis span:nth-child(1) { left: 5%; }   /* now  (logical 0 → visual 5) */
+.timeline-axis span:nth-child(2) { left: 14%; }  /* -1m  (logical 10 → 5+10*0.9) */
+.timeline-axis span:nth-child(3) { left: 23%; }  /* -2m  (logical 20 → 5+20*0.9) */
+.timeline-axis span:nth-child(4) { left: 50%; }  /* -5m  (logical 50 → 50) */
+.timeline-axis span:nth-child(5) { left: 95%; }  /* -10m (logical 100 → 95) */
+
+/* ── 아이콘 (v4: CSS 애니메이션 없음, JS 가 left 직접 설정) ── */
+.timeline-icon {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  padding: 2px;
+  border: 1.5px solid var(--accent);
+  border-radius: 5px;
+  background: var(--bg-hover);
+  color: var(--text);
+  box-sizing: border-box;
+  cursor: help;
+  transition: opacity 150ms ease-out, background 150ms;
+}
+.timeline-icon svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* ── tool 종류별 컬러 ── */
+.timeline-icon[data-tool="Read"]     { color: #3b82f6; background: rgba( 59, 130, 246, 0.22); }
+.timeline-icon[data-tool="Write"]    { color: #10b981; background: rgba( 16, 185, 129, 0.22); }
+.timeline-icon[data-tool="Edit"]     { color: #f59e0b; background: rgba(245, 158,  11, 0.24); }
+.timeline-icon[data-tool="Bash"]     { color: #a855f7; background: rgba(168,  85, 247, 0.22); }
+.timeline-icon[data-tool="Task"]     { color: #ec4899; background: rgba(236,  72, 153, 0.22); }
+.timeline-icon[data-tool="Glob"]     { color: #06b6d4; background: rgba(  6, 182, 212, 0.22); }
+.timeline-icon[data-tool="Web"]      { color: #6366f1; background: rgba( 99, 102, 241, 0.22); }
+.timeline-icon[data-tool="_default"] { color: #94a3b8; background: rgba(148, 163, 184, 0.22); }
+
+/* running = pulse halo (::before 가상 요소) */
+.timeline-icon[data-status="running"]::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: 6px;
+  pointer-events: none;
+  animation: timeline-pulse 1.4s ease-out infinite;
+}
+@keyframes timeline-pulse {
+  0%   { box-shadow: 0 0 0 0 currentColor; opacity: 0.8; }
+  100% { box-shadow: 0 0 0 7px transparent; opacity: 0; }
+}
+
+.timeline-icon[data-status="done"]  { opacity: 0.9; }
+.timeline-icon[data-status="error"] {
+  border-color: #ef4444;
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.22);
+}
+.timeline-icon[data-status="error"]::after {
+  content: '✗';
+  position: absolute;
+  right: -5px;
+  top: -7px;
+  font-size: 10px;
+  color: #ef4444;
+  font-weight: 700;
+  line-height: 1;
+}

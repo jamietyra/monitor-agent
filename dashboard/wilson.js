@@ -109,8 +109,8 @@
           svgWrap.style.transform = 'rotate(' + r + 'deg)';
           svgWrap.style.opacity = '';
           break;
-        case 'working':   // Y축 자전 (속도 30%, 뒷면 빈 공)
-          r = (t % 1700) / 1700 * 360;
+        case 'working':   // Y축 자전 (3.0s/cycle — 뒷면 빈 공)
+          r = (t % 3000) / 3000 * 360;
           var showBack = (r > 90 && r < 270);
           var needed = showBack ? 'back' : 'front';
           if (svgWrap._face !== needed) {
@@ -714,13 +714,15 @@
     document.body.classList.add('wilson-state-' + newState);
     // Reset dot
     dotCount = 0;
+    // 텍스트 즉시 갱신 (setInterval 다음 tick까지 기다리지 않음)
+    if (window._wilsonUpdateStatusText) window._wilsonUpdateStatusText();
   }
 
   // Status text — 차분한 효과 (긴 사용 시간 피로 감소)
   var RAINBOW = ['var(--accent)', 'var(--cyan)', 'var(--green)', 'var(--magenta)'];
   var colorIdx = 0;
 
-  dotTimer = setInterval(function() {
+  function updateStatusText() {
     if (!statusEl) return;
     dotCount = (dotCount % 3) + 1;
 
@@ -753,7 +755,13 @@
         break;
     }
     if (currentState !== 'solving') statusEl.style.opacity = '1';
-  }, 2500);  // 1.5s → 2.5s (느리게, 덜 정신없게)
+  }
+
+  dotTimer = setInterval(updateStatusText, 2500);  // 점 애니메이션 주기
+  // setState 에서도 즉시 호출 (텍스트 지연 제거)
+  window._wilsonUpdateStatusText = updateStatusText;
+  // 초기 1회 즉시 호출 (첫 tick 2.5s 대기 제거)
+  updateStatusText();
 
   function resetTimers() {
     clearTimeout(sleepTimer);

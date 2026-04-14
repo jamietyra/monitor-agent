@@ -132,6 +132,10 @@ body.wilson-state-thinking .activity-panel {
   color: var(--text-dim);
   letter-spacing: 0.3px;
   min-width: 160px;
+  min-height: 1.6em;         /* 빈 상태에서도 공간 예약 — 배구공 위치 불변 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
   text-align: center;
   line-height: 1;
   position: relative;
@@ -189,7 +193,8 @@ body.wilson-state-thinking .activity-panel {
 
 /* ── Recent Files List ────────────────────────────────── */
 .wilson-recent {
-  flex: 1;
+  flex: 1 1 auto;
+  min-height: 0;
   overflow: hidden;
   border-top: 1px solid var(--border);
   display: flex;
@@ -304,7 +309,7 @@ body.wilson-state-thinking .activity-panel {
 
 /* working — fast ball spin */
 .wilson-state-working .wilson-svg-wrap {
-  animation: wilson-spin 0.5s linear infinite;
+  animation: wilson-spin 1s linear infinite;
 }
 @keyframes wilson-spin {
   0% { transform: rotate(0deg); }
