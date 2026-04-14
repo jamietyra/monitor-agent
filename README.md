@@ -12,23 +12,18 @@
 
 ## 🏝️ The Story
 
-Tom Hanks, stranded on a deserted island. No voice to talk to, no teammate, no signal.
-His only friend was a volleyball he picked up on the beach, a face drawn on it with his own blood — **Wilson**.
+**Wilson is your visualization companion, stranded with you on the deserted island called Claude.**
 
-Coding with Claude Code feels the same way.
-The AI reads dozens of files, edits them, runs commands.
-But what's it doing right now? Why? Is it actually doing the right thing? — **You can't see**.
-
-**monitor-agent's Wilson** is your visualization companion on that island.
-A volleyball character tells you the AI's mood through facial expressions, shows what it read and wrote, which errors happened, and how hard it's been working — all at a glance.
+While the AI reads dozens of files, edits them, and runs commands, Wilson watches every move on your behalf.
+A volleyball-faced character shows the AI's mood through expressions, what it read and wrote, which errors happened, and how hard it's been working, all at a glance.
 
 ---
 
 ## 🙋‍♂️ Why I built this
 
-Honest truth: this was built by **a beginner developer who barely knows how to code**.
+Built by **a developer who started coding through vibe coding**, who wanted to see exactly what the AI is doing in detail.
 
-AI writing code feels like a miracle, but I wanted to **see with my own eyes what it's actually doing**.
+AI writing code feels like a miracle, but I wanted to see with my own eyes what it's actually doing.
 
 - Which file did it read?
 - What did it change? Why did it change it?
@@ -36,7 +31,7 @@ AI writing code feels like a miracle, but I wanted to **see with my own eyes wha
 - Did an error happen? How is it solving it?
 
 That curiosity was the starting point for monitor-agent.
-**"I trust it, but I still want to see."** — that's all there is to it.
+**"I trust it, but I still want to see."** That's all there is to it.
 
 ---
 
@@ -53,6 +48,10 @@ A volleyball-faced character named Wilson communicates AI status through **5 exp
 | `working` | Ball spinning (Y-axis; back is blank) | Tool done, integrating result |
 | `solving` | Golden aura + crimson pulse | **Error — solving it** |
 | `sleeping` | Eyes closed, breathing | 10 minutes idle |
+
+### ⏱️ Tool Timeline
+
+A 6-lane horizontal timeline below Wilson, showing every tool call from the last 10 minutes as colored icons. See at a glance when and how heavily each tool was used.
 
 ### 📂 Recent Files
 
@@ -76,14 +75,6 @@ Side-by-side file content (PrismJS syntax highlighting) and change tracking.
 - **Dark** — developer classic
 
 Cycle with the `[Beige]` button in the header (fixed 84px). Choice is saved to `localStorage`.
-
-### 🏷️ Shared Session Tags
-
-Every project gets a consistent color slot (10-color palette, assigned via `localStorage`) so the same project's tag looks identical across `/agent` Feeds, `/usage` Sessions tree, and Top Projects. Spot a project at a glance, anywhere.
-
-### 🧭 Header identity
-
-The left-side **`Wilson`** brand stays warm red across both pages and all themes — it's the identity anchor. The centered title (`monitor-agent ↔` / `monitor-usage ↔`) is clickable and flips you between the two pages. The active model (e.g. `Model: Opus 4.6`) lives in the right side of the footer.
 
 ### 🌍 Multi-session + Remote Access
 
@@ -174,6 +165,21 @@ Claude Code → transcript.jsonl → monitor-agent (server.mjs)
 
 New sessions (and new subagent transcripts) are detected instantly via directory watchers, with a 60-second fallback scan. The `/api/usage` endpoint reuses its disk cache for fast reloads — only new events since the last scanCursor are parsed.
 
+### 💸 Resource Footprint — **Zero** Claude Token Usage
+
+monitor-agent makes **no Anthropic API calls at all**. It only reads JSONL transcripts that Claude Code has already written to disk and visualizes them:
+
+| Resource | Usage |
+|----------|-------|
+| **Claude tokens / API cost** | **0** (no outbound calls, local file reads only) |
+| **Network** | localhost SSE only; zero internet traffic |
+| **CPU** | <0.1% at idle, brief JSONL parsing only on new events (avg 10–30ms) |
+| **Memory** | ~50–80MB (Node.js baseline + offset cache + usage-index.json) |
+| **Disk** | `cache/usage-index.json` a few MB (30-day cumulative) + tiny offsets.json |
+| **Dependencies** | Zero (no `npm install` — Node built-ins only) |
+
+Leave the dashboard running all day and it won't move the needle on your Claude usage stats or rack up any cloud cost.
+
 ---
 
 ## 🌐 Remote Access
@@ -212,7 +218,7 @@ MIT
 
 ## 💬 Credits
 
-- Character inspiration: the film **Cast Away (2000)** — Tom Hanks and the volleyball Wilson
+- Character inspiration: the volleyball Wilson from the film **Cast Away (2000)**
 - Fonts: [Fraunces](https://fonts.google.com/specimen/Fraunces) (titles/sections), [Caveat](https://fonts.google.com/specimen/Caveat) (Wilson status)
 - Syntax highlighting: [PrismJS](https://prismjs.com/)
 - Theme inspiration: VSCode, and analog notebooks
