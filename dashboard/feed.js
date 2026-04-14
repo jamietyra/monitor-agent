@@ -12,7 +12,10 @@
     var btn = document.createElement('button');
     btn.className = 'session-filter-btn active';
     btn.textContent = name;
-    var color = getSessionColor(name);
+    // 공유 session-tag 모듈 사용 (monitor-usage와 색 동기화)
+    var color = (window.sessionTag && window.sessionTag.assign)
+      ? window.sessionTag.assign(name)
+      : getSessionColor(name);
     btn.style.color = color.fg;
     btn.style.background = color.bg;
     btn.dataset.session = name;
@@ -126,6 +129,11 @@
 
   function makeSessionTag(project) {
     var name = project || 'IT';
+    // 공유 모듈 우선 — monitor-usage와 색상 동기화 (session-tag.js, localStorage 슬롯 배정)
+    if (window.sessionTag && typeof window.sessionTag.render === 'function') {
+      return window.sessionTag.render(name);
+    }
+    // 로드 실패 시 폴백 (기존 hash 팔레트)
     var color = getSessionColor(name);
     return '<span class="session-tag" style="background:' + color.bg + ';color:' + color.fg + '">' + escapeHtml(name) + '</span>';
   }
@@ -297,22 +305,21 @@
       return;
     }
 
-    // assistant 텍스트 → 현재 그룹에 추가
+    // assistant 텍스트 → 현재 그룹에 추가 (CSS line-clamp 3으로 자동 3줄 미리보기)
     if (ev.type === 'assistant_text') {
       ensurePromptGroup(ev);
       var item = document.createElement('div');
       item.className = 'assistant-text-item';
-      var preview = ev.text.replace(/\n/g, ' ').slice(0, 150);
-      item.innerHTML = '<span class="assistant-icon">\u25CF</span><span class="assistant-text">' + escapeHtml(preview) + '</span>';
-      if (ev.text && ev.text.length > 150) {
-        item.style.cursor = 'pointer';
-        item.title = '클릭하여 전체 내용 보기';
-        item._outputData = { name: 'Assistant', target: '', output: ev.text, time: ev.time };
-        item.onclick = function() {
-          window.displayCode._clickedEl = this;
-          if (window.displayOutput) window.displayOutput(this._outputData);
-        };
-      }
+      var fullText = ev.text || '';
+      item.innerHTML = '<span class="assistant-icon">\u25CF</span><span class="assistant-text">' + escapeHtml(fullText) + '</span>';
+      // 모든 메시지 길이 무관하게 클릭 가능 — 코드뷰어에 전체 내용
+      item.style.cursor = 'pointer';
+      item.title = '클릭하여 전체 내용 보기';
+      item._outputData = { name: 'Assistant', target: '', output: fullText, time: ev.time };
+      item.onclick = function() {
+        window.displayCode._clickedEl = this;
+        if (window.displayOutput) window.displayOutput(this._outputData);
+      };
       var sAt = getSessionState(getSessionKey(ev));
       sAt.toolsContainer.appendChild(item);
       notifyGroupActivity(sAt, ev);
@@ -411,6 +418,17 @@
       '<span class="activity-duration"></span>',
     ].join('');
 
+    // filePath 클릭이 없으면 명령/target 내용을 코드뷰어에 표시하는 클릭 부착
+    // tool_done에 output이 오면 그때 output으로 교체됨 (기존 로직 유지)
+    if (!ev.filePath) {
+      item.style.cursor = 'pointer';
+      item._outputData = { name: ev.name, target: target, output: target || '(no content)', time: ev.time };
+      item.onclick = function() {
+        window.displayCode._clickedEl = this;
+        if (window.displayOutput) window.displayOutput(this._outputData);
+      };
+    }
+
     var s = getSessionState(getSessionKey(ev));
     s.toolsContainer.appendChild(item);
     s.toolCount++;
@@ -463,12 +481,13 @@
       if (!prevToolsContainer) return;
       var aItem = document.createElement('div');
       aItem.className = 'assistant-text-item';
-      var preview = ev.text.replace(/\n/g, ' ').slice(0, 150);
-      aItem.innerHTML = '<span class="assistant-icon">\u25CF</span><span class="assistant-text">' + escapeHtml(preview) + '</span>';
-      if (ev.text && ev.text.length > 150) {
+      var aFull = ev.text || '';
+      aItem.innerHTML = '<span class="assistant-icon">\u25CF</span><span class="assistant-text">' + escapeHtml(aFull) + '</span>';
+      // Load-more 경로도 동일하게 항상 클릭 가능 + 전체 원본 전달
+      {
         aItem.style.cursor = 'pointer';
         aItem.title = '클릭하여 전체 내용 보기';
-        aItem._outputData = { name: 'Assistant', target: '', output: ev.text, time: ev.time };
+        aItem._outputData = { name: 'Assistant', target: '', output: aFull, time: ev.time };
         aItem.onclick = function() {
           window.displayCode._clickedEl = this;
           if (window.displayOutput) window.displayOutput(this._outputData);
@@ -526,6 +545,15 @@
       '<span class="activity-end-time"></span>',
       '<span class="activity-duration"></span>',
     ].join('');
+    // Load-more 경로도 filePath 없으면 command/target을 코드뷰어에 표시하도록 클릭 부착
+    if (!ev.filePath) {
+      item.style.cursor = 'pointer';
+      item._outputData = { name: ev.name, target: target, output: target || '(no content)', time: ev.time };
+      item.onclick = function() {
+        window.displayCode._clickedEl = this;
+        if (window.displayOutput) window.displayOutput(this._outputData);
+      };
+    }
     prevToolsContainer.appendChild(item);
     prevToolCount++;
     var countEl = prevGroup.querySelector('.prompt-count');

@@ -803,8 +803,8 @@
     clearTimeout(bubbleTimer);
     bubbleMode = mode;
     var isAction = (mode === 'action');
-    bubbleEl.innerHTML = (isAction ? '<span class="action-dot"></span>' : '') +
-                         escHtml(text);
+    // action/tip 구분 dot 제거 — 텍스트만 표시 (사용자 요청)
+    bubbleEl.innerHTML = escHtml(text);
     bubbleEl.classList.add('visible');
   }
 

@@ -11,6 +11,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import { fileURLToPath } from 'node:url';
+import { aggregateAll } from './lib/aggregator.mjs';
+import { parseUsageEvent } from './lib/usage-parser.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = parseInt(process.env.MONITOR_PORT || '3141');
@@ -563,6 +565,9 @@ function watchTranscript(transcriptPath, state, projectName, subagentInfo) {
   let lineBuf = '';
   let debounceTimer = null;
 
+  // 이 감시자 호출 중 누적된 usage delta들 (processAndBroadcast가 비움)
+  const pendingUsageDeltas = [];
+
   function readNewLines() {
     let stat;
     try { stat = fs.statSync(transcriptPath); } catch { return []; }
@@ -586,6 +591,23 @@ function watchTranscript(transcriptPath, state, projectName, subagentInfo) {
       if (!line.trim()) continue;
       try {
         const entry = JSON.parse(line);
+
+        // ── usage delta 추출 (Step 5 — monitor-usage 실시간 갱신) ──
+        // 서브에이전트 파일이면 agentId를 주입해야 parser가 인지
+        if (subagentInfo) entry.__agentId = subagentInfo.agentId;
+        const usageParsed = parseUsageEvent(entry);
+        if (usageParsed) {
+          // slug: transcript 최상위 필드 (세션 레이블용) — SSE 실시간 delta에도 전파
+          const slug = (typeof entry.slug === 'string' && entry.slug) ? entry.slug : null;
+          pendingUsageDeltas.push({
+            project: projectName,
+            isSubagent: !!subagentInfo,
+            subagentInfo,
+            parsed: usageParsed,
+            slug,
+          });
+        }
+
         const events = processEntry(entry, state);
         // 프로젝트 태그 + 서브에이전트 마커
         for (const ev of events) {
@@ -606,6 +628,9 @@ function watchTranscript(transcriptPath, state, projectName, subagentInfo) {
   // 초기 로드 — 최근 이벤트
   const initialEvents = readNewLines();
   const recentEvents = initialEvents.slice(-MAX_EVENTS);
+  // 초기 로드 시 누적된 usage delta는 "히스토리"이므로 브로드캐스트하지 않고 비운다.
+  // (클라이언트는 /api/usage로 초기 상태를 받는다.)
+  pendingUsageDeltas.length = 0;
 
   // 초기 로드 후 offset 저장
   offsetCache[cacheKey] = byteOffset;
@@ -650,6 +675,39 @@ function watchTranscript(transcriptPath, state, projectName, subagentInfo) {
       errors: state.errorCount,
       sessionStart: state.sessionStart?.toISOString(),
     });
+
+    // ── usage_delta 브로드캐스트 (Step 5) ─────────────────
+    // readNewLines 중 누적된 usage 이벤트를 1건씩 broadcast.
+    // 메모리 캐시(usageCache.data)도 함께 patch하여 /api/usage TTL 이내에도 정합 유지.
+    if (pendingUsageDeltas.length > 0) {
+      const snapshot = pendingUsageDeltas.splice(0, pendingUsageDeltas.length);
+      for (const item of snapshot) {
+        const p = item.parsed;
+        const payload = {
+          date: isoDateFromTs(p.timestamp),
+          sessionId: p.sessionId || null,
+          isSidechain: p.isSidechain === true,
+          agentId: p.agentId || null,
+          agentType: item.subagentInfo ? item.subagentInfo.agentType : null,
+          parentSessionId: item.subagentInfo ? item.subagentInfo.parentSessionId || null : null,
+          project: item.project || 'unknown',
+          tokens: p.tokens,
+          costUSD: p.costUSD,
+          timestamp: p.timestamp,
+          slug: item.slug || null,  // 세션 레이블(Claude Code slug)
+          model: p.normalizedModel || p.model || null,  // byModel 집계용 (모델 도넛 차트)
+        };
+        if (!payload.date) continue;
+
+        // 메모리 캐시 patch (있을 때만) — 연결 재개 시 API가 최신을 주도록
+        try { patchUsageCache(payload); } catch { /* skip */ }
+
+        // SSE 구독자가 있을 때만 실제 전송 (약간의 최적화)
+        if (clients.size > 0) {
+          broadcast('usage_delta', payload);
+        }
+      }
+    }
   }
 
   setInterval(processAndBroadcast, 1000);
@@ -684,6 +742,160 @@ function checkForNewScreenshot() {
       broadcast('screenshot', { fileName: files[0].name, time: new Date().toISOString() });
     }
   } catch { /* ignore */ }
+}
+
+// ─── Usage API 핸들러 (monitor-usage 페이지용) ───────────
+// 5초 메모리 캐시 — 여러 클라이언트/연타 호출 대비
+const USAGE_CACHE_TTL_MS = 5000;
+let usageCache = { ts: 0, data: null, inflight: null };
+
+// ─── Usage 실시간 patch 유틸 (Step 5 SSE usage_delta) ────
+
+/** ISO timestamp → 'YYYY-MM-DD' (UTC 기준, aggregator.isoDateOnly와 동일 규칙). */
+function isoDateFromTs(ts) {
+  if (!ts) return null;
+  const d = new Date(ts);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toISOString().slice(0, 10);
+}
+
+function _emptyUsageTokens() {
+  return { input: 0, cacheWrite1h: 0, cacheWrite5m: 0, cacheRead: 0, output: 0 };
+}
+
+function _addUsageTokens(dst, src) {
+  if (!src) return;
+  dst.input        += src.input        || 0;
+  dst.cacheWrite1h += src.cacheWrite1h || 0;
+  dst.cacheWrite5m += src.cacheWrite5m || 0;
+  dst.cacheRead    += src.cacheRead    || 0;
+  dst.output       += src.output       || 0;
+}
+
+/**
+ * in-memory usageCache.data에 delta를 적용.
+ * usageCache.data가 없으면 (첫 /api/usage 호출 전) 아무 것도 안 함 — 다음 호출이 풀 스캔.
+ * 여기서 activeMs는 재계산하지 않는다 (풀 스캔에서만 정합). 다음 /api/usage 호출 시 5초 TTL 만료 후
+ * aggregator가 자동으로 증분 병합하며 갱신된다.
+ */
+function patchUsageCache(delta) {
+  const data = usageCache.data;
+  if (!data || !data.byDate) return;
+
+  let day = data.byDate[delta.date];
+  if (!day) {
+    day = {
+      tokens: _emptyUsageTokens(),
+      costUSD: 0,
+      activeMs: 0,
+      prompts: 0,
+      byProject: {},
+      bySession: {},
+      bySubagent: {},
+      byModel: {},  // 모델 도넛 차트용
+    };
+    data.byDate[delta.date] = day;
+  }
+  // 기존 캐시 호환: byModel 누락 시 초기화
+  if (!day.byModel) day.byModel = {};
+
+  _addUsageTokens(day.tokens, delta.tokens);
+  day.costUSD += delta.costUSD || 0;
+
+  // byModel 누적 (aggregator.mergeEvent와 동일 규칙)
+  const modelKey = delta.model || 'unknown';
+  if (!day.byModel[modelKey]) {
+    day.byModel[modelKey] = {
+      tokens: _emptyUsageTokens(),
+      costUSD: 0,
+      prompts: 0,
+    };
+  }
+  _addUsageTokens(day.byModel[modelKey].tokens, delta.tokens);
+  day.byModel[modelKey].costUSD += delta.costUSD || 0;
+  // 메인 세션 흐름과 동일 정책: subagent(sidechain) 이벤트는 prompts 카운트에서 제외
+  if (!delta.isSidechain) day.byModel[modelKey].prompts += 1;
+
+  const project = delta.project || 'unknown';
+  if (!day.byProject[project]) {
+    day.byProject[project] = { tokens: _emptyUsageTokens(), costUSD: 0, prompts: 0 };
+  }
+  _addUsageTokens(day.byProject[project].tokens, delta.tokens);
+  day.byProject[project].costUSD += delta.costUSD || 0;
+
+  if (delta.isSidechain && delta.agentId) {
+    const aid = delta.agentId;
+    if (!day.bySubagent[aid]) {
+      day.bySubagent[aid] = {
+        parentSessionId: delta.parentSessionId || null,
+        agentType: delta.agentType || 'Agent',
+        tokens: _emptyUsageTokens(),
+        costUSD: 0,
+        prompts: 0,
+      };
+    }
+    _addUsageTokens(day.bySubagent[aid].tokens, delta.tokens);
+    day.bySubagent[aid].costUSD += delta.costUSD || 0;
+    day.bySubagent[aid].prompts += 1;
+  } else if (delta.sessionId) {
+    const sid = delta.sessionId;
+    if (!day.bySession[sid]) {
+      day.bySession[sid] = {
+        project,
+        startTime: delta.timestamp,
+        endTime: delta.timestamp,
+        activeMs: 0,
+        prompts: 0,
+        tokens: _emptyUsageTokens(),
+        costUSD: 0,
+        slug: delta.slug || null,
+      };
+    }
+    const s = day.bySession[sid];
+    _addUsageTokens(s.tokens, delta.tokens);
+    s.costUSD += delta.costUSD || 0;
+    s.prompts += 1;
+    // slug: 첫 non-null 값만 채움 (같은 세션의 모든 라인 slug는 동일)
+    if (!s.slug && delta.slug) s.slug = delta.slug;
+    if (delta.timestamp && delta.timestamp < s.startTime) s.startTime = delta.timestamp;
+    if (delta.timestamp && delta.timestamp > s.endTime) s.endTime = delta.timestamp;
+
+    day.byProject[project].prompts += 1;
+    day.prompts += 1;
+  }
+}
+
+async function handleUsageRequest(req, res) {
+  const now = Date.now();
+
+  // TTL 내이면 캐시 즉시 반환
+  if (usageCache.data && (now - usageCache.ts) < USAGE_CACHE_TTL_MS) {
+    res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end(JSON.stringify(usageCache.data));
+    return;
+  }
+
+  // 동시에 여러 요청이 들어와도 aggregateAll은 한 번만
+  if (!usageCache.inflight) {
+    const workDir = process.argv[2] || process.cwd();
+    const projectsDir = path.join(os.homedir(), '.claude', 'projects');
+    const baseDirName = cwdToProjectDir(workDir);
+    const cachePath = path.join(__dirname, 'cache', 'usage-index.json');
+
+    usageCache.inflight = aggregateAll({ projectsDir, baseDirName, cachePath })
+      .then(data => {
+        usageCache = { ts: Date.now(), data, inflight: null };
+        return data;
+      })
+      .catch(err => {
+        usageCache.inflight = null;
+        throw err;
+      });
+  }
+
+  const data = await usageCache.inflight;
+  res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+  res.end(JSON.stringify(data));
 }
 
 // ─── HTTP 서버 ──────────────────────────────────────────
@@ -929,6 +1141,19 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // 사용량(Usage) 집계 API — monitor-usage 페이지 전용
+  // 5초 메모리 캐시로 연속 호출 대응 (IIFE로 state 캡슐화)
+  if (url.pathname === '/api/usage') {
+    handleUsageRequest(req, res).catch(err => {
+      console.warn('[usage] handler 오류:', err.message);
+      try {
+        res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ error: 'usage aggregation failed', message: err.message }));
+      } catch { /* already written */ }
+    });
+    return;
+  }
+
   // 이벤트 페이지네이션 API (프롬프트 단위)
   if (url.pathname === '/api/events') {
     const beforeIdx = parseInt(url.searchParams.get('before') || allRecentEvents.length);
@@ -974,6 +1199,19 @@ const server = http.createServer((req, res) => {
         res.writeHead(500);
         res.end('dashboard not found');
       }
+    }
+    return;
+  }
+
+  // monitor-usage 페이지 라우트
+  if (url.pathname === '/usage' || url.pathname === '/usage.html') {
+    const htmlPath = path.join(dashDir, 'usage.html');
+    if (fs.existsSync(htmlPath)) {
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      fs.createReadStream(htmlPath).pipe(res);
+    } else {
+      res.writeHead(404);
+      res.end('usage page not found');
     }
     return;
   }

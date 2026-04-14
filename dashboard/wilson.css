@@ -138,7 +138,7 @@ body.wilson-state-thinking .activity-panel {
 /* ── Speech Bubble — clean card ──────────────────────── */
 .wilson-bubble {
   margin-top: 4px;
-  padding: 10px 14px;
+  padding: 10px 14px;   /* action-dot 제거 — 일반 패딩 복구 */
   width: 240px;
   min-height: 56px;
   box-sizing: border-box;
@@ -169,15 +169,17 @@ body.wilson-state-thinking .activity-panel {
   pointer-events: auto;
 }
 
-/* Action indicator dot */
+/* Action indicator dot — 버블 좌측 고정 (text-align: center 영향 배제) */
 .action-dot {
-  display: inline-block;
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
   width: 6px;
   height: 6px;
   border-radius: 50%;
   background: var(--accent-deep);
-  margin-right: var(--space-xs);
-  vertical-align: middle;
+  margin: 0;
   animation: wilson-pulse 1s ease-in-out infinite;
 }
 

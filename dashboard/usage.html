@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>monitor-usage</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet">
+  <!-- monitor-agent의 base 스타일은 그대로 재사용 (변수/타이포/헤더/footer) -->
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="wilson.css">
+  <!-- usage 페이지 전용 덮어쓰기 + 공유 네비 -->
+  <link rel="stylesheet" href="page-nav.css">
+  <link rel="stylesheet" href="usage.css">
+  <!-- Phase 3+4 — Chart.js 4.4.1 UMD (도넛/스택바/수평바 렌더용) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
+</head>
+<body data-page="usage">
+
+<header>
+  <div class="header-title">
+    <!-- 타이틀 클릭 → monitor-agent('/')로 이동. Step 5에서 애니메이션 교체 -->
+    <h1 class="page-nav-title" id="page-nav-title" title="monitor-agent 페이지로 전환">monitor-usage</h1>
+  </div>
+  <!-- monitor-agent 헤더와 동일한 stats 영역 (connection.js가 업데이트) -->
+  <div class="stats">
+    <span class="stat-running" id="stat-running">Running: 0</span>
+    <span class="stat-done" id="stat-done">Done: 0</span>
+    <span class="stat-error" id="stat-error">Errors: 0</span>
+    <span class="stat-time" id="stat-time">Elapsed: --:--</span>
+  </div>
+</header>
+
+<main class="usage-layout">
+  <!-- ── 왼쪽 컬럼 (35%): Wilson 위 + Sessions 아래 ── -->
+  <div class="usage-left">
+    <!-- Wilson 패널: /usage 페이지에선 Recent Files 제거, 캐릭터 영역만 유지 -->
+    <div id="wilson-panel" class="wilson-state-waiting">
+      <div class="wilson-character">
+        <div class="wilson-svg-wrap" id="wilson-svg-wrap"></div>
+        <div class="wilson-bubble" id="wilson-bubble"></div>
+      </div>
+    </div>
+
+    <!-- Sessions 패널: Step 4 — 2-level 접기 트리 (usage-sessions.js가 채움) -->
+    <div id="sessions-panel">
+      <div class="panel-title">Sessions</div>
+    </div>
+  </div>
+
+  <!-- ── 오른쪽 컬럼 (65%): Main content ── -->
+  <div id="usage-main">
+    <!-- 오른쪽 영역 타이틀 + 새로고침 컨트롤 -->
+    <div class="page-section-head">
+      <h2 class="page-section-title">Usage</h2>
+      <div class="usage-refresh">
+        <span class="last-refreshed" id="last-refreshed" title="마지막 갱신 시각">—</span>
+        <button type="button" id="refresh-usage" class="refresh-btn" title="지금 바로 새로고침 (15분마다 자동 갱신)">
+          <span class="refresh-icon">↻</span>
+          <span>Refresh</span>
+        </button>
+      </div>
+    </div>
+    <!-- Summary cards: Month/Week/Day 토글 + 5장 (Cost / Tokens / Active Time / Sessions / Prompts)
+         Phase 2 — 정적 5개 카드 DOM으로 선 배치 → usage-sessions.js가 값·델타만 채움 -->
+    <div id="summary-cards">
+      <!-- period-toggle 및 summary-cards-row는 JS가 주입 (기존 구조 유지) -->
+    </div>
+
+    <!-- Phase 3: Daily Usage 단일 총합 바 -->
+    <section id="daily-usage-chart" class="chart-panel">
+      <div class="chart-header">
+        <h3>Daily Usage</h3>
+      </div>
+      <div class="chart-body"><canvas></canvas></div>
+    </section>
+
+    <!-- Phase 4: Model Breakdown + Top Projects 2열 -->
+    <section id="charts-row">
+      <section id="model-breakdown-chart" class="chart-panel">
+        <div class="chart-header">
+          <h3>Model Breakdown</h3>
+          <div class="chart-toggle">
+            <button class="chart-mode-btn active" data-mode="tokens">Tokens</button>
+            <button class="chart-mode-btn" data-mode="cost">Cost</button>
+          </div>
+        </div>
+        <div class="chart-body"><canvas></canvas></div>
+      </section>
+
+      <section id="top-projects-chart" class="chart-panel">
+        <div class="chart-header">
+          <h3>Top Projects</h3>
+        </div>
+        <div class="chart-body"><canvas></canvas></div>
+      </section>
+    </section>
+
+    <!-- 캘린더 영역: 월 격자 (연간 히트맵은 사용자 요청으로 2026-04-13 제거됨) -->
+    <!-- Step 3: usage-calendar.js가 month-grid 컨테이너 내부를 동적으로 채움 -->
+    <div class="usage-calendar">
+      <div id="month-grid"></div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div>
+    <span class="connection-dot disconnected" id="connection-dot"></span>
+    <span id="connection-status">Connecting...</span>
+  </div>
+  <span id="event-count" style="color: var(--text-dim); font-size: var(--text-xs);"></span>
+</footer>
+
+<!-- Wilson 캐릭터 동작 (index.html과 동일) -->
+<script src="session-tag.js"></script>
+<script src="wilson.js"></script>
+<!-- SSE 연결 + stats/connection-dot 업데이트 (재사용) -->
+<script src="connection.js"></script>
+<!-- usage 캘린더 모듈 (히트맵 + 월 격자) — usage.js보다 먼저 로드 -->
+<script src="usage-calendar.js"></script>
+<!-- Step 4 — Summary / Sessions / Day Drilldown 모달 — usage.js보다 먼저 로드 -->
+<script src="usage-sessions.js"></script>
+<!-- Phase 3+4 — Chart.js 기반 3개 차트 렌더 (usage.js보다 먼저 로드) -->
+<script src="usage-charts.js" defer></script>
+<!-- 타이틀 클릭 B 애니메이션 + 페이지 전환 (양쪽 페이지 공통, usage.js보다 먼저 로드) -->
+<script src="page-nav.js"></script>
+<!-- usage 페이지 로직 (/api/usage fetch + 실시간 SSE usage_delta) -->
+<script src="usage.js"></script>
+
+<!-- Day Drilldown 모달 컨테이너 (Step 4 — usage-sessions.js가 콘텐츠 채움) -->
+<div id="day-modal" class="modal-backdrop hidden"></div>
+
+</body>
+</html>

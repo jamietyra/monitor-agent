@@ -1,0 +1,846 @@
+/* ─── monitor-usage 페이지 전용 스타일 ────────────────────
+ * 파란 테마 변수 swap + 2컬럼 그리드(왼쪽 35% 세로 스택 / 오른쪽 65%)
+ * style.css의 base 변수/타이포그래피는 그대로 상속, 여기선 덮어쓰기만.
+ */
+
+/* ─── 8a. 파란 테마: --accent 계열만 swap ─── */
+body[data-page="usage"] {
+  --accent:      #2563eb;   /* 진한 파랑 — 타이틀, 활성 버튼 */
+  --accent-deep: #1e3a8a;   /* 더 진한 파랑 — 선택 셀, hover 강조 */
+  --accent-soft: #93c5fd;   /* 연한 파랑 — 히트맵 최약 셀 */
+}
+
+/* ─── 메인 그리드 레이아웃 — monitor-agent와 좌측 폭 동일(600px) ─── */
+.usage-layout {
+  display: grid;
+  grid-template-columns: 600px 1fr;  /* Wilson 600px 고정 = /agent 페이지와 정확히 동일 */
+  flex: 1;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* ─── 왼쪽 컬럼 (Wilson 위 + Sessions 아래 세로 스택) ─── */
+.usage-left {
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border);
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* Wilson 패널 — /usage 전용 override
+ *   - monitor-agent 페이지의 width: 600px 고정값을 덮어써 왼쪽 컬럼(35%)을 100% 채움
+ *   - Recent Files 제거됨 → 고정 높이도 축소 (캐릭터+말풍선만)
+ *   - border-right 제거 (usage-left가 컬럼 전체 보더를 담당)
+ */
+body[data-page="usage"] #wilson-panel {
+  width: 100%;
+  flex-shrink: 0;
+  height: auto;
+  overflow: visible;
+  border-right: none;
+}
+
+/* Sessions 패널 — flex로 남는 공간 채움, 왼쪽 컬럼 폭 100% */
+#sessions-panel {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  overflow: auto;
+  border-top: 1px solid var(--border);
+  padding: var(--space-md);
+  background: var(--bg-panel);
+  contain: layout style;       /* 트리 전체 재렌더가 페이지 전체 리플로우로 번지지 않음 */
+}
+
+/* ─── 오른쪽 영역 타이틀 (Summary cards 위) ─── */
+body[data-page="usage"] .page-section-title {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--accent);
+  margin: 0;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+/* 타이틀 + 새로고침 바 래퍼 */
+body[data-page="usage"] .page-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  margin-bottom: var(--space-sm);
+}
+body[data-page="usage"] .usage-refresh {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+body[data-page="usage"] .last-refreshed {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+  transition: opacity 0.2s ease;
+}
+body[data-page="usage"] .last-refreshed.is-loading {
+  animation: last-refresh-pulse 1.2s ease-in-out infinite;
+}
+@keyframes last-refresh-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+body[data-page="usage"] .refresh-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-out);
+}
+body[data-page="usage"] .refresh-btn:hover:not(:disabled) {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+body[data-page="usage"] .refresh-btn:disabled {
+  opacity: 0.5;
+  cursor: progress;
+}
+body[data-page="usage"] .refresh-icon {
+  display: inline-block;
+  font-size: 0.95rem;
+  line-height: 1;
+}
+body[data-page="usage"] .refresh-btn:disabled .refresh-icon {
+  animation: refresh-spin 2.4s linear infinite;
+}
+@keyframes refresh-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ─── Top Projects — HTML 리스트 (Chart.js 대체) ─── */
+.top-projects-list {
+  display: flex; flex-direction: column;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-xs);
+}
+.tp-row {
+  display: grid;
+  grid-template-columns: minmax(72px, auto) 1fr auto;
+  align-items: center;
+  gap: 10px;
+  font-size: var(--text-xs);
+}
+.tp-tag { display: flex; justify-content: flex-start; }
+.tp-bar {
+  position: relative; height: 10px;
+  background: var(--bg-hover);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.tp-bar-fill {
+  position: absolute; left: 0; top: 0; bottom: 0;
+  background: var(--accent);
+  border-radius: 3px;
+  transition: width 0.35s var(--ease-out, ease);
+}
+.tp-stats {
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+}
+.tp-empty {
+  color: var(--text-dim);
+  font-style: italic;
+  text-align: center;
+  padding: var(--space-md);
+  font-size: var(--text-xs);
+}
+
+#sessions-panel .panel-title {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-style: italic;
+  color: var(--accent);
+  font-weight: 600;
+  margin-bottom: var(--space-sm);
+  letter-spacing: -0.01em;
+}
+
+/* ─── 오른쪽 컬럼 (Main content) ─── */
+#usage-main {
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+  padding: var(--space-lg);
+  gap: var(--space-lg);
+  min-width: 0;
+}
+
+/* Summary cards 영역 */
+#summary-cards {
+  flex-shrink: 0;
+  min-height: 140px;
+  padding: var(--space-md);
+  contain: layout style;       /* 내부 재렌더가 외부 레이아웃 흔들지 않게 격리 */
+}
+
+/* Calendar 영역 컨테이너 (month grid만 — year heatmap은 2026-04-13 제거) */
+.usage-calendar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  flex: 1;
+  min-height: 0;
+}
+
+#month-grid {
+  flex: 1;
+  min-height: 320px;
+  padding: var(--space-md);
+  contain: layout style;       /* 셀 patch가 주변 레이아웃으로 번지지 않음 */
+}
+
+/* ─── Step 3: Month grid 컨테이너 스타일 ─── */
+.monthgrid-root {
+  border: 1px solid var(--border);
+  background: var(--bg-panel);
+  border-radius: 4px;
+  padding: var(--space-md);
+}
+
+/* 데이터 없음 텍스트 */
+.usage-empty {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  padding: var(--space-lg);
+  text-align: center;
+}
+
+/* ─── Step 3: Month grid ─── */
+.monthgrid-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-lg);
+  margin-bottom: var(--space-md);
+}
+
+.monthgrid-nav {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--accent);
+  font-size: 1rem;
+  padding: 4px 12px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  transition: background 0.15s ease;
+}
+
+.monthgrid-nav:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+.monthgrid-nav:disabled,
+.monthgrid-nav.is-disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.monthgrid-label {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+  min-width: 100px;
+  text-align: center;
+}
+
+.monthgrid-dow {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+.monthgrid-dow-cell {
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  padding: 4px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.monthgrid-body {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.monthgrid-cell {
+  min-height: 80px;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  border-radius: 3px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  position: relative;
+  font-family: var(--font-mono);
+  transition: box-shadow 0.12s ease, transform 0.12s ease;
+}
+
+.monthgrid-cell.is-empty {
+  background: transparent;
+  border-color: transparent;
+}
+
+.monthgrid-cell.is-blank {
+  opacity: 0.4;
+}
+
+.monthgrid-cell.is-future {
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+.monthgrid-cell.is-today {
+  border: 2px solid var(--accent);
+  padding: 5px 7px; /* 보더 +1로 인한 오프셋 보정 */
+}
+
+.monthgrid-cell:not(.is-empty):not(.is-blank):not(.is-future) {
+  cursor: pointer;
+}
+
+.monthgrid-cell:not(.is-empty):not(.is-blank):not(.is-future):hover {
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.18);
+  transform: translateY(-1px);
+  z-index: 2;
+}
+
+.cell-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.cell-date {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.cell-subagent {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+}
+
+.cell-tokens {
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-top: 2px;
+}
+
+.cell-meta {
+  font-size: 11px;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.cell-meta strong {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.cell-bar {
+  height: 4px;
+  border-radius: 2px;
+  margin-top: auto;
+}
+
+/* ─── Placeholder 시각화 (Step 3/4에서 채울 자리 표시) ─── */
+.usage-placeholder {
+  border: 1px dashed var(--border);
+  background: color-mix(in srgb, var(--text-muted) 8%, transparent);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  line-height: var(--leading-relaxed);
+  text-align: center;
+  padding: var(--space-lg);
+  min-height: inherit;
+}
+
+.usage-placeholder strong {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* ─── Step 4: Summary Cards + 토글 ─── */
+#summary-cards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  border: 1px solid var(--border);
+  background: var(--bg-panel);
+  border-radius: 4px;
+}
+
+.period-toggle {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.period-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 4px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.period-btn:hover {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  color: var(--accent);
+}
+
+.period-btn.is-active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+/* Phase 2 — Metric Cards 3장 → 5장 확장.
+ *  breakpoint: 1000px 미만에서 3열, 640px 미만에서 2열로 폴딩. */
+.summary-cards-row {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: var(--space-md);
+}
+
+@media (max-width: 1000px) {
+  .summary-cards-row { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 640px) {
+  .summary-cards-row { grid-template-columns: repeat(2, 1fr); }
+}
+
+.summary-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: var(--space-md) var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.summary-card-label,
+.summary-label {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+.summary-card-value,
+.summary-value {
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+/* Phase 2 — 이전 기간 대비 델타 표시 */
+.summary-delta {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+  margin-top: 2px;
+  min-height: 1em; /* 값 없는 카드에서도 공간 유지 */
+}
+
+.delta-positive { color: var(--green); }
+.delta-negative { color: var(--red); }
+.delta-neutral  { color: var(--text-dim); }
+
+/* ─── Phase 3+4: 차트 패널 (Daily / Model / Top Projects) ─── */
+.chart-panel {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  contain: layout style;       /* 차트 내부 리렌더가 페이지 전체 레이아웃 흔들지 않음 */
+}
+
+.chart-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+}
+
+.chart-header h3 {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--accent);
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.chart-hint {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-dim);
+}
+
+.chart-body {
+  position: relative;
+  min-height: 180px;
+}
+
+#daily-usage-chart .chart-body {
+  min-height: 220px;
+}
+
+#charts-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-lg);
+}
+
+@media (max-width: 900px) {
+  #charts-row { grid-template-columns: 1fr; }
+}
+
+.chart-toggle {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.chart-mode-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 3px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.chart-mode-btn:hover {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  color: var(--accent);
+}
+
+.chart-mode-btn.active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+/* ─── Step 4: Sessions Panel (2-level 트리) ─── */
+.sessions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+}
+
+.sess-row {
+  display: grid;
+  grid-template-columns: 16px 1fr auto;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.sess-row:hover {
+  background: var(--bg-hover);
+}
+
+.sess-caret {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 10px;
+  user-select: none;
+  transition: transform 0.18s var(--ease-out), color 0.15s ease;
+}
+.sess-row:hover .sess-caret {
+  color: var(--text-dim);
+}
+
+.sess-label {
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sess-stats {
+  color: var(--text-dim);
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.sess-project .sess-label {
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: 0.02em;
+  font-size: var(--text-base);
+}
+
+.sess-session {
+  padding-left: 18px;
+}
+.sess-session .sess-label {
+  color: var(--text);
+}
+
+.sess-subagent {
+  padding-left: 36px;
+  cursor: default;
+}
+.sess-subagent:hover {
+  background: transparent;
+}
+.sess-subagent .sess-label {
+  color: var(--text-dim);
+  font-style: italic;
+}
+
+/* ─── Step 4: Day Drilldown 모달 ─── */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-lg);
+}
+
+.modal-backdrop.hidden {
+  display: none;
+}
+
+.modal-card {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  width: 100%;
+  max-width: 720px;
+  max-height: 85vh;
+  overflow-y: auto;
+  padding: var(--space-lg);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+  font-family: var(--font-mono);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: var(--space-sm);
+}
+
+.modal-title {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.modal-close {
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  font-size: 1.5rem;
+  cursor: pointer;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.modal-close:hover {
+  background: var(--bg-hover);
+  color: var(--accent);
+}
+
+.modal-summary {
+  font-size: var(--text-base);
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.modal-section-title {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: var(--space-sm);
+}
+
+.modal-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  font-size: var(--text-xs);
+  color: var(--text-dim);
+}
+
+.legend-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.legend-swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+.modal-stack-bar {
+  display: flex;
+  width: 100%;
+  height: 18px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--bg);
+  border: 1px solid var(--border);
+}
+
+.modal-stack-seg {
+  height: 100%;
+  transition: opacity 0.15s ease;
+}
+.modal-stack-seg:hover {
+  opacity: 0.85;
+}
+
+.modal-sessions {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: var(--text-sm);
+}
+
+.modal-session-row {
+  display: grid;
+  grid-template-columns: 60px auto 1fr;
+  gap: 8px;
+  align-items: center;
+  padding: 4px 6px;
+  border-radius: 3px;
+}
+.modal-session-row:hover {
+  background: var(--bg-hover);
+}
+
+.modal-sess-time {
+  color: var(--text);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.modal-proj-tag {
+  font-size: var(--text-xs);
+  font-weight: 700;
+}
+
+.modal-sess-stats {
+  color: var(--text-dim);
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.modal-subagent-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 2px 6px 2px 80px;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.modal-empty {
+  padding: var(--space-lg);
+  text-align: center;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}

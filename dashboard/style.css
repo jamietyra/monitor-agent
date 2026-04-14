@@ -235,11 +235,16 @@ main { display: flex; flex-direction: row; flex: 1; overflow: hidden; }
   line-height: var(--leading-relaxed); color: var(--text-dim);
 }
 .assistant-icon { color: var(--green); flex-shrink: 0; font-size: var(--text-xs); }
-.assistant-text { flex: 1; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.assistant-text {
+  flex: 1; overflow: hidden;
+  display: -webkit-box; -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3; line-clamp: 3;
+  white-space: pre-wrap; word-break: break-word;
+}
 
 /* ─── Activity Items ─── */
 .activity-item {
-  display: flex; align-items: center; gap: 8px;
+  display: flex; align-items: flex-start; gap: 8px;
   padding: 4px var(--space-md) 4px 24px; font-size: var(--text-sm);
   cursor: pointer; transition: background var(--duration-fast); line-height: var(--leading-tight);
 }
@@ -253,7 +258,13 @@ main { display: flex; flex-direction: row; flex: 1; overflow: hidden; }
 .activity-time { color: var(--text-dim); font-size: var(--text-xs); flex-shrink: 0; font-variant-numeric: tabular-nums; }
 .activity-project { color: var(--magenta); font-size: var(--text-xs); flex-shrink: 0; background: var(--badge-bg); padding: 0 var(--space-xs); border-radius: 3px; }
 .activity-name { color: var(--cyan); font-weight: 500; flex-shrink: 0; font-size: var(--text-sm); }
-.activity-target { color: var(--text-dim); flex: 1; font-size: var(--text-xs); word-break: break-all; }
+.activity-target {
+  color: var(--text-dim); flex: 1; font-size: var(--text-xs);
+  word-break: break-word;
+  display: -webkit-box; -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3; line-clamp: 3;
+  overflow: hidden; white-space: pre-wrap;
+}
 .activity-end-time { color: var(--text-dim); font-size: var(--text-xs); flex-shrink: 0; margin-left: auto; font-variant-numeric: tabular-nums; }
 .activity-duration { color: var(--magenta); font-size: var(--text-xs); flex-shrink: 0; margin-left: var(--space-xs); font-variant-numeric: tabular-nums; }
 

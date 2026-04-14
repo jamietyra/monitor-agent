@@ -6,10 +6,12 @@
   var sessionStart = null;
   var elapsedTimer = null;
 
-  // ─── 패널 리사이즈 ────────────────────────────────
+  // ─── 패널 리사이즈 (monitor-agent 페이지에만 존재) ──────
   (function() {
     var handle = document.getElementById('resize-activity');
     var panel = document.querySelector('.activity-panel');
+    // /usage 등 이 요소가 없는 페이지에서는 스킵 (이후 connect() 실행이 안 끊기도록)
+    if (!handle || !panel) return;
     var dragging = false;
     handle.addEventListener('mousedown', function(e) {
       dragging = true;
@@ -21,6 +23,7 @@
     document.addEventListener('mousemove', function(e) {
       if (!dragging) return;
       var main = document.querySelector('.main-content');
+      if (!main) return;
       var rect = main.getBoundingClientRect();
       var pct = ((e.clientY - rect.top) / rect.height) * 100;
       panel.style.height = Math.max(10, Math.min(70, pct)) + '%';
@@ -133,47 +136,47 @@
         if (window.wilson) window.wilson.startBatch();
         if (window.feed) window.feed.startBatch();
         for (var i = 0; i < data.recentEvents.length; i++) {
-          window.addActivityItem(data.recentEvents[i]);
+          if (window.addActivityItem) window.addActivityItem(data.recentEvents[i]);
           if (window.wilson) window.wilson.onEvent(data.recentEvents[i]);
         }
         if (window.feed) window.feed.endBatch();
         if (window.wilson) window.wilson.endBatch();
       }
 
-      // 페이지네이션 상태 설정
+      // 페이지네이션 상태 설정 (feed.js 로드된 페이지에서만)
       loadedStartIdx = data.startIdx;
       hasMoreEvents = data.hasMore;
-      if (hasMoreEvents) insertLoadMoreBtn();
+      if (hasMoreEvents && typeof insertLoadMoreBtn === 'function') insertLoadMoreBtn();
 
-      if (data.stats) updateStats(data.stats);
-      window.activityList.scrollTop = window.activityList.scrollHeight;
+      if (data.stats && typeof updateStats === 'function') updateStats(data.stats);
+      if (window.activityList) window.activityList.scrollTop = window.activityList.scrollHeight;
     });
 
     // 실시간 활동
     es.addEventListener('activity', function(e) {
       var ev = JSON.parse(e.data);
-      window.addActivityItem(ev);
+      if (window.addActivityItem) window.addActivityItem(ev);
       if (window.wilson) window.wilson.onEvent(ev);
     });
 
-    // 파일 콘텐츠
+    // 파일 콘텐츠 (viewer.js 로드된 페이지에서만)
     es.addEventListener('file_content', function(e) {
       var fileData = JSON.parse(e.data);
-      window.fileCache.set(fileData.filePath, fileData);
-      window.displayCode(fileData);
+      if (window.fileCache) window.fileCache.set(fileData.filePath, fileData);
+      if (window.displayCode) window.displayCode(fileData);
     });
 
-    // Diff
+    // Diff (viewer.js 로드된 페이지에서만)
     es.addEventListener('file_diff', function(e) {
       var data = JSON.parse(e.data);
-      window.displayDiff(data);
+      if (window.displayDiff) window.displayDiff(data);
       if (window.wilson) window.wilson.onFileDiff(data);
     });
 
-    // 스크린샷
+    // 스크린샷 (viewer.js 로드된 페이지에서만)
     es.addEventListener('screenshot', function(e) {
       var data = JSON.parse(e.data);
-      window.displayScreenshot(data);
+      if (window.displayScreenshot) window.displayScreenshot(data);
     });
 
     // 통계

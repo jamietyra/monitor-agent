@@ -1,0 +1,118 @@
+/* ─── Page Navigation (monitor-agent ↔ monitor-usage) ───
+ * 두 페이지에서 공유하는 헤더 타이틀 클릭 네비게이션 스타일.
+ *
+ * Step 5: B 애니메이션 (가로 슬라이드 + 배경색 페이드).
+ *   - .page-leaving : 떠나는 애니메이션 (0.4s)
+ *   - .page-entering : 진입 직전 상태 (다음 frame에 해제되어 정상 상태로 transition)
+ *
+ * 설계 스펙: docs/specs/2026-04-13-monitor-usage-design.md §4b, §4c
+ */
+
+/* ── 타이틀 공통 ─────────────────────────────────────── */
+header h1.page-nav-title {
+  cursor: pointer;
+  transition: text-decoration-color var(--duration-fast, 0.15s),
+              opacity var(--duration-fast, 0.15s),
+              transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 4px;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+header h1.page-nav-title:hover {
+  text-decoration-color: currentColor;
+  opacity: 0.85;
+}
+
+header h1.page-nav-title:active {
+  opacity: 0.7;
+}
+
+/* 전환 중 연속 클릭 방어 (§4c) */
+header h1.page-nav-title.is-navigating {
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+/* ── 배경/테마 색 페이드 (body 레벨) ──────────────────── */
+/* body 자체가 베이지↔파랑으로 전환될 때 부드럽게. */
+body {
+  transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+              color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ── 나가는 애니메이션 (.page-leaving) ─────────────────── */
+/* monitor-agent (/) 페이지: 오른쪽 .main-content가 메인 영역 */
+body.page-leaving main .main-content,
+body.page-leaving #usage-main {
+  transform: translateX(-30px);
+  opacity: 0;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 타이틀: 좌로 슬라이드 + 페이드 */
+body.page-leaving header h1.page-nav-title {
+  transform: translateX(-30px);
+  opacity: 0;
+}
+
+/* 왼쪽 Sessions 패널 (monitor-usage 전용) — slideUp 페이드 */
+body.page-leaving #sessions-panel {
+  transform: translateY(-12px);
+  opacity: 0;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ── 들어오는 애니메이션 (.page-entering) ───────────────── */
+/* 처음 .page-entering 상태에서는 시작 위치, 다음 frame에 클래스 제거되어 normal로 transition */
+body.page-entering main .main-content,
+body.page-entering #usage-main {
+  transform: translateX(30px);
+  opacity: 0;
+}
+
+/* 클래스가 제거된 직후 자연스레 돌아오도록 transition 속성 상시 부여 */
+main .main-content,
+#usage-main {
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body.page-entering header h1.page-nav-title {
+  transform: translateX(30px);
+  opacity: 0;
+}
+
+body.page-entering #sessions-panel {
+  transform: translateY(12px);
+  opacity: 0;
+}
+
+#sessions-panel {
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ── Reduced motion 사용자 존중 ────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  body,
+  header h1.page-nav-title,
+  body.page-leaving main .main-content,
+  body.page-leaving #usage-main,
+  body.page-leaving header h1.page-nav-title,
+  body.page-leaving #sessions-panel,
+  body.page-entering main .main-content,
+  body.page-entering #usage-main,
+  body.page-entering header h1.page-nav-title,
+  body.page-entering #sessions-panel,
+  main .main-content,
+  #usage-main,
+  #sessions-panel {
+    transition: none !important;
+    transform: none !important;
+  }
+}
