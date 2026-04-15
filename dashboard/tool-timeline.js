@@ -9,13 +9,18 @@
 (function () {
   'use strict';
 
-  var WINDOW_MS = 600000; // 10분
+  var ALLOWED_WINDOWS = [60000, 300000, 600000];
+  var DEFAULT_WINDOW_MS = 600000;
+  var WINDOW_MS = DEFAULT_WINDOW_MS;
   var LANES = 6;
   var STORAGE_KEY = 'toolTimeline.state.v1';
+  var RANGE_STORAGE_KEY = 'toolTimeline.range.v1';
 
   var track = null;
   var clearBtn = null;
   var countEl = null;
+  var axisEl = null;
+  var rangeGroupEl = null;
   var ready = false;
   var rafHandle = 0;
 
@@ -57,15 +62,64 @@
     return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">' + inner + '</svg>';
   }
 
-  // ── 로그 스케일: 0→0%, 30s→5%, 1m→10%, 2m→20%, 5m→50%, 10m→100% ──
+  // ── 로그 스케일(윈도우 비례): 0→0%, W/20→5%, W/10→10%, W/5→20%, W/2→50%, W→100% ──
   function elapsedToPercent(elapsedMs) {
-    var s = elapsedMs / 1000;
-    if (s <= 30)  return s / 30 * 5;
-    if (s <= 60)  return 5  + (s - 30)  / 30  * 5;
-    if (s <= 120) return 10 + (s - 60)  / 60  * 10;
-    if (s <= 300) return 20 + (s - 120) / 180 * 30;
-    if (s <= 600) return 50 + (s - 300) / 300 * 50;
+    var r = elapsedMs / WINDOW_MS;
+    if (r <= 0.05) return r / 0.05 * 5;
+    if (r <= 0.10) return 5  + (r - 0.05) / 0.05 * 5;
+    if (r <= 0.20) return 10 + (r - 0.10) / 0.10 * 10;
+    if (r <= 0.50) return 20 + (r - 0.20) / 0.30 * 30;
+    if (r <= 1.00) return 50 + (r - 0.50) / 0.50 * 50;
     return 100;
+  }
+
+  function fmtSec(s) {
+    if (s < 60) return '-' + Math.round(s) + 's';
+    var m = s / 60;
+    if (m === Math.floor(m)) return '-' + m + 'm';
+    return '-' + m.toFixed(1) + 'm';
+  }
+
+  function renderAxis() {
+    if (!axisEl) return;
+    var w = WINDOW_MS / 1000;
+    var labels = ['now', fmtSec(w / 10), fmtSec(w / 5), fmtSec(w / 2), fmtSec(w)];
+    var spans = axisEl.querySelectorAll('span');
+    for (var i = 0; i < spans.length && i < labels.length; i++) {
+      spans[i].textContent = labels[i];
+    }
+  }
+
+  function renderRangeButtons() {
+    if (!rangeGroupEl) return;
+    var btns = rangeGroupEl.querySelectorAll('.timeline-range');
+    for (var i = 0; i < btns.length; i++) {
+      var ms = parseInt(btns[i].dataset.range, 10);
+      if (ms === WINDOW_MS) btns[i].classList.add('active');
+      else btns[i].classList.remove('active');
+    }
+  }
+
+  function setRange(ms) {
+    if (ALLOWED_WINDOWS.indexOf(ms) < 0) return;
+    if (ms === WINDOW_MS) return;
+    WINDOW_MS = ms;
+    try { sessionStorage.setItem(RANGE_STORAGE_KEY, String(ms)); } catch (e) {}
+    // 새 윈도우 밖의 아이콘 즉시 제거
+    var now = Date.now();
+    var alive = [];
+    for (var i = 0; i < icons.length; i++) {
+      var it = icons[i];
+      if (now - it.ts >= WINDOW_MS) {
+        if (it.el.parentNode) it.el.parentNode.removeChild(it.el);
+      } else {
+        alive.push(it);
+      }
+    }
+    icons = alive;
+    renderAxis();
+    renderRangeButtons();
+    updateCount();
   }
 
   // ── 세션/레인 분배 ─────────────────────────────────────
@@ -136,9 +190,11 @@
 
     el.innerHTML = svgFor(ev.name);
 
-    var target = ev.target ? String(ev.target) : '';
-    if (target.length > 60) target = target.slice(0, 57) + '…';
-    el.title = (ev.name || '?') + (target ? ' · ' + target : '') + (ev.project ? '  [' + ev.project + ']' : '');
+    var targetFull = ev.target ? String(ev.target) : '';
+    var lines = [ev.name || '?'];
+    if (targetFull) lines.push(targetFull);
+    if (ev.project) lines.push('[' + ev.project + ']');
+    el.dataset.tooltip = lines.join('\n');
 
     return el;
   }
@@ -277,8 +333,35 @@
     track = document.getElementById('timeline-track');
     clearBtn = document.getElementById('timeline-clear');
     countEl = document.getElementById('timeline-count');
+    axisEl = document.getElementById('timeline-axis');
+    rangeGroupEl = document.getElementById('timeline-ranges');
     if (!track) { console.warn('[toolTimeline] #timeline-track not found'); return; }
     if (clearBtn) clearBtn.addEventListener('click', clear);
+
+    // 저장된 range 복원
+    try {
+      var savedRange = parseInt(sessionStorage.getItem(RANGE_STORAGE_KEY), 10);
+      if (ALLOWED_WINDOWS.indexOf(savedRange) >= 0) WINDOW_MS = savedRange;
+    } catch (e) {}
+
+    // range 버튼 이벤트 위임
+    if (rangeGroupEl) {
+      rangeGroupEl.addEventListener('click', function (e) {
+        var btn = e.target.closest('.timeline-range');
+        if (!btn) return;
+        var ms = parseInt(btn.dataset.range, 10);
+        if (ms) setRange(ms);
+      });
+    }
+
+    renderAxis();
+    renderRangeButtons();
+
+    // 공용 툴팁 바인딩 (빠른 지연 150ms) — feed.js의 window.hoverTooltip 사용
+    if (window.hoverTooltip && typeof window.hoverTooltip.bind === 'function') {
+      window.hoverTooltip.bind(track, 150);
+    }
+
     ready = true;
     restoreState();
     updateCount();
@@ -289,7 +372,7 @@
     document.addEventListener('visibilitychange', function () {
       if (document.visibilityState === 'hidden') saveState();
     });
-    console.info('[toolTimeline] v5 initialized (sessionStorage persistence enabled)');
+    console.info('[toolTimeline] v6 initialized (range selector ' + (WINDOW_MS / 60000) + 'm)');
   }
 
   if (document.readyState === 'loading') {
@@ -301,8 +384,9 @@
   window.toolTimeline = {
     onEvent: onEvent,
     clear: clear,
+    setRange: setRange,
     _debug: function () {
-      return { ready: ready, icons: icons.length, running: icons.filter(function(i){return i.status==='running';}).length, track: !!track };
+      return { ready: ready, windowMs: WINDOW_MS, icons: icons.length, running: icons.filter(function(i){return i.status==='running';}).length, track: !!track };
     }
   };
 })();

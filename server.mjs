@@ -63,6 +63,9 @@ function extractProjectName(dirName, baseName) {
 }
 
 const MAX_EVENTS = 25555;
+// 서버 부팅 시각 기반 토큰 — HTML 서빙 시 `?v=숫자` 를 자동 치환해 캐시 무효화.
+// 수동으로 v 번호를 올릴 필요 없음 (서버 재시작이 새 토큰을 발급).
+const BOOT_VER = String(Date.now());
 const RETENTION_DAYS = 7;
 
 // ─── Byte-offset 캐시 (빠른 재시작용) ─────────────────────
@@ -313,7 +316,7 @@ function processEntry(entry, state) {
       state.promptId = (state.promptId || 0) + 1;
       events.push({
         type: 'prompt',
-        text: text.slice(0, 200),
+        text: text.slice(0, 5000),
         time: timestamp.toISOString(),
         promptId: state.promptId,
       });
@@ -1174,18 +1177,27 @@ const server = http.createServer((req, res) => {
   // dev dashboard — 캐시 금지 (VS Code Simple Browser 등 공격적 캐시 방지)
   const NO_CACHE = 'no-store, no-cache, must-revalidate, max-age=0';
 
+  // HTML 을 서빙하며 `?v=숫자` 를 서버 부팅 토큰으로 일괄 치환 — 수동 v 번호 증가 불필요
+  const serveHtml = (filePath) => {
+    try {
+      const raw = fs.readFileSync(filePath, 'utf8');
+      const rewritten = raw.replace(/\?v=\d+/g, '?v=' + BOOT_VER);
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': NO_CACHE });
+      res.end(rewritten);
+    } catch (e) {
+      res.writeHead(500);
+      res.end('html read failed');
+    }
+  };
+
   if (url.pathname === '/' || url.pathname === '/index.html') {
     const htmlPath = path.join(dashDir, 'index.html');
     if (fs.existsSync(htmlPath)) {
-      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': NO_CACHE });
-      fs.createReadStream(htmlPath).pipe(res);
+      serveHtml(htmlPath);
     } else {
-      // fallback to legacy single file
       const legacyPath = path.join(__dirname, 'dashboard.html');
-      if (fs.existsSync(legacyPath)) {
-        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': NO_CACHE });
-        fs.createReadStream(legacyPath).pipe(res);
-      } else {
+      if (fs.existsSync(legacyPath)) serveHtml(legacyPath);
+      else {
         res.writeHead(500);
         res.end('dashboard not found');
       }
@@ -1197,8 +1209,7 @@ const server = http.createServer((req, res) => {
   if (url.pathname === '/usage' || url.pathname === '/usage.html') {
     const htmlPath = path.join(dashDir, 'usage.html');
     if (fs.existsSync(htmlPath)) {
-      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': NO_CACHE });
-      fs.createReadStream(htmlPath).pipe(res);
+      serveHtml(htmlPath);
     } else {
       res.writeHead(404);
       res.end('usage page not found');

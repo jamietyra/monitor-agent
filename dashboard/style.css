@@ -359,3 +359,34 @@ footer {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
+
+/* ─── Custom Feed Tooltip (네이티브 title 대체) ─── */
+.feed-tooltip {
+  position: fixed;
+  z-index: 10000;
+  left: 0;
+  top: 0;
+  max-width: 640px;
+  max-height: 60vh;
+  overflow: auto;
+  background: var(--bg-deep, #1a1816);
+  color: var(--text, #e0d8cc);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 11px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+  pointer-events: auto;
+  overscroll-behavior: contain;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 80ms ease-out;
+}
+.feed-tooltip.visible {
+  opacity: 1;
+  visibility: visible;
+}

@@ -219,12 +219,13 @@
       subBadge = '<span class="sub-badge" title="' + escapeHtml(ev.agentDescription || '') + '">SUB: ' + escapeHtml(label) + '</span>';
     }
 
+    var fullPromptText = (ev && ev.text) ? ev.text : text;
     header.innerHTML = [
       '<span class="prompt-toggle">▼</span>',
       makeSessionTag(project),
       subBadge,
       '<span class="prompt-time">' + timeStr + '</span>',
-      '<span class="prompt-text">' + escapeHtml(text) + '</span>',
+      '<span class="prompt-text" data-tooltip="' + escapeHtml(fullPromptText) + '">' + escapeHtml(text) + '</span>',
       '<span class="prompt-count">0</span>',
     ].join('');
 
@@ -311,10 +312,9 @@
       var item = document.createElement('div');
       item.className = 'assistant-text-item';
       var fullText = ev.text || '';
-      item.innerHTML = '<span class="assistant-icon">\u25CF</span><span class="assistant-text">' + escapeHtml(fullText) + '</span>';
+      item.innerHTML = '<span class="assistant-icon">\u25CF</span><span class="assistant-text" data-tooltip="' + escapeHtml(fullText) + '">' + escapeHtml(fullText) + '</span>';
       // 모든 메시지 길이 무관하게 클릭 가능 — 코드뷰어에 전체 내용
       item.style.cursor = 'pointer';
-      item.title = '클릭하여 전체 내용 보기';
       item._outputData = { name: 'Assistant', target: '', output: fullText, time: ev.time };
       item.onclick = function() {
         window.displayCode._clickedEl = this;
@@ -413,7 +413,7 @@
       '<span class="activity-time">' + timeStr + '</span>',
       '<span class="activity-icon icon-start">\u25b6</span>',
       '<span class="activity-name">' + escapeHtml(ev.name) + '</span>',
-      '<span class="activity-target">' + escapeHtml(target) + '</span>',
+      '<span class="activity-target" data-tooltip="' + escapeHtml(target) + '">' + escapeHtml(target) + '</span>',
       '<span class="activity-end-time"></span>',
       '<span class="activity-duration"></span>',
     ].join('');
@@ -453,12 +453,13 @@
       var header = document.createElement('div');
       header.className = 'prompt-header';
       var timeStr = ev.time ? formatTime(ev.time) : '';
-      var previewText = ev.text.replace(/\n/g, ' ').slice(0, 160) || '(prompt)';
+      var fullPromptText = ev.text || '';
+      var previewText = fullPromptText.replace(/\n/g, ' ').slice(0, 160) || '(prompt)';
       header.innerHTML = [
         '<span class="prompt-toggle collapsed">▼</span>',
         makeSessionTag(ev.project),
         '<span class="prompt-time">' + timeStr + '</span>',
-        '<span class="prompt-text">' + escapeHtml(previewText) + '</span>',
+        '<span class="prompt-text" data-tooltip="' + escapeHtml(fullPromptText) + '">' + escapeHtml(previewText) + '</span>',
         '<span class="prompt-count">0</span>',
       ].join('');
       var tools = document.createElement('div');
@@ -482,11 +483,10 @@
       var aItem = document.createElement('div');
       aItem.className = 'assistant-text-item';
       var aFull = ev.text || '';
-      aItem.innerHTML = '<span class="assistant-icon">\u25CF</span><span class="assistant-text">' + escapeHtml(aFull) + '</span>';
+      aItem.innerHTML = '<span class="assistant-icon">\u25CF</span><span class="assistant-text" data-tooltip="' + escapeHtml(aFull) + '">' + escapeHtml(aFull) + '</span>';
       // Load-more 경로도 동일하게 항상 클릭 가능 + 전체 원본 전달
       {
         aItem.style.cursor = 'pointer';
-        aItem.title = '클릭하여 전체 내용 보기';
         aItem._outputData = { name: 'Assistant', target: '', output: aFull, time: ev.time };
         aItem.onclick = function() {
           window.displayCode._clickedEl = this;
@@ -541,7 +541,7 @@
       '<span class="activity-time">' + timeStr + '</span>',
       '<span class="activity-icon icon-start">\u25b6</span>',
       '<span class="activity-name">' + escapeHtml(ev.name) + '</span>',
-      '<span class="activity-target">' + escapeHtml(target) + '</span>',
+      '<span class="activity-target" data-tooltip="' + escapeHtml(target) + '">' + escapeHtml(target) + '</span>',
       '<span class="activity-end-time"></span>',
       '<span class="activity-duration"></span>',
     ].join('');
@@ -558,6 +558,11 @@
     prevToolCount++;
     var countEl = prevGroup.querySelector('.prompt-count');
     if (countEl) countEl.textContent = prevToolCount;
+  }
+
+  // 공용 툴팁 모듈 (tooltip.js)에 활동 리스트 바인딩 — 느린 지연 1500ms
+  if (window.hoverTooltip && typeof window.hoverTooltip.bind === 'function') {
+    window.hoverTooltip.bind(activityList, 1500);
   }
 
   window.addActivityItem = addActivityItem;
