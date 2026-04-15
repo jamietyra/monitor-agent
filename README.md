@@ -1,11 +1,11 @@
-# monitor-agent
+# wilson
 
 > **🏐 Developing on the deserted island called Claude? Wilson keeps you company.**
 
 [한국어](README.ko.md)
 
 <p align="center">
-  <img src="preview.svg?v=3" alt="monitor-agent dashboard preview" width="100%">
+  <img src="preview.svg?v=3" alt="wilson dashboard preview" width="100%">
 </p>
 
 ---
@@ -30,7 +30,7 @@ AI writing code feels like a miracle, but I wanted to see with my own eyes what 
 - What Bash command is running right now?
 - Did an error happen? How is it solving it?
 
-That curiosity was the starting point for monitor-agent.
+That curiosity was the starting point for wilson.
 **"I trust it, but I still want to see."** That's all there is to it.
 
 ---
@@ -108,8 +108,8 @@ Token cost is computed from Anthropic's public API rates (Opus 4.6 $15/$75 per M
 ## 🚀 Quick Start
 
 ```bash
-git clone https://github.com/jamietyra/monitor-agent.git
-cd monitor-agent
+git clone https://github.com/jamietyra/wilson.git
+cd wilson
 node server.mjs
 ```
 
@@ -140,10 +140,10 @@ Defaults to the current working directory.
 ## ⚙️ How It Works
 
 Claude Code writes all activity to transcript JSONL files in `~/.claude/projects/`.
-monitor-agent watches these files in real-time and branches to two surfaces — a live SSE stream for the main dashboard, and a persistent aggregator for the `/usage` analytics page.
+wilson watches these files in real-time and branches to two surfaces — a live SSE stream for the main dashboard, and a persistent aggregator for the `/usage` analytics page.
 
 ```
-Claude Code → transcript.jsonl → monitor-agent (server.mjs)
+Claude Code → transcript.jsonl → wilson (server.mjs)
                                        │
                                        ├─► SSE /events ─► /agent page
                                        │                  ├─► Wilson (5 states)
@@ -167,7 +167,7 @@ New sessions (and new subagent transcripts) are detected instantly via directory
 
 ### 💸 Resource Footprint — **Zero** Claude Token Usage
 
-monitor-agent makes **no Anthropic API calls at all**. It only reads JSONL transcripts that Claude Code has already written to disk and visualizes them:
+wilson makes **no Anthropic API calls at all**. It only reads JSONL transcripts that Claude Code has already written to disk and visualizes them:
 
 | Resource | Usage |
 |----------|-------|

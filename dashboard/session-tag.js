@@ -28,11 +28,20 @@
     { bg: '#2a1a3c', fg: '#b48ead' }  // 자주
   ];
 
-  var STORAGE_KEY = 'monitor-agent.projectColors.v1';
+  var STORAGE_KEY = 'wilson.projectColors.v1';
+  var LEGACY_STORAGE_KEY = 'monitor-agent.projectColors.v1';
 
   function loadMap() {
     try {
       var raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) {
+        var legacy = localStorage.getItem(LEGACY_STORAGE_KEY);
+        if (legacy) {
+          localStorage.setItem(STORAGE_KEY, legacy);
+          localStorage.removeItem(LEGACY_STORAGE_KEY);
+          raw = legacy;
+        }
+      }
       return raw ? (JSON.parse(raw) || {}) : {};
     } catch (_) { return {}; }
   }

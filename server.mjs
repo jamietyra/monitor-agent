@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * monitor-agent Server
+ * wilson Server
  * Real-time activity dashboard for Claude Code — http://localhost:3141
  *
  * Usage: node server.mjs
@@ -1246,7 +1246,7 @@ server.requestTimeout = 0;
 
 server.listen(PORT, HOST, () => {
   console.log('');
-  console.log('  monitor-agent');
+  console.log('  wilson');
   console.log(`  http://${HOST}:${PORT}`);
   if (REMOTE) {
     console.log('  ⚠ Remote access: ON');
@@ -1262,7 +1262,7 @@ server.listen(PORT, HOST, () => {
 
 // 연결 수 추적
 setInterval(() => {
-  process.title = `monitor-agent (${clients.size} clients)`;
+  process.title = `wilson (${clients.size} clients)`;
 }, 5000);
 
 process.on('SIGINT', () => {

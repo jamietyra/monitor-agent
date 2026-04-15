@@ -1,11 +1,11 @@
 {
-  "name": "monitor-agent",
+  "name": "wilson",
   "version": "2.0.0",
   "description": "Real-time activity dashboard for Claude Code — watch tool calls, file changes, and browser actions as they happen",
   "type": "module",
   "main": "server.mjs",
   "bin": {
-    "monitor-agent": "server.mjs"
+    "wilson": "server.mjs"
   },
   "scripts": {
     "start": "node server.mjs"
@@ -22,11 +22,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/jamietyra/monitor-agent.git"
+    "url": "git+https://github.com/jamietyra/wilson.git"
   },
-  "homepage": "https://github.com/jamietyra/monitor-agent",
+  "homepage": "https://github.com/jamietyra/wilson",
   "bugs": {
-    "url": "https://github.com/jamietyra/monitor-agent/issues"
+    "url": "https://github.com/jamietyra/wilson/issues"
   },
   "engines": {
     "node": ">=18.0.0"
