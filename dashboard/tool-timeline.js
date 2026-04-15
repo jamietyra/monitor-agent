@@ -10,6 +10,7 @@
   'use strict';
 
   var ALLOWED_WINDOWS = [60000, 300000, 600000];
+  var MAX_WINDOW_MS = 600000; // 메모리 유지 한계 (=가장 큰 윈도우). 1m/5m로 좁혀도 이 범위 안 아이콘은 보관 → 10m 재선택 시 복원
   var DEFAULT_WINDOW_MS = 600000;
   var WINDOW_MS = DEFAULT_WINDOW_MS;
   var LANES = 6;
@@ -105,18 +106,8 @@
     if (ms === WINDOW_MS) return;
     WINDOW_MS = ms;
     try { sessionStorage.setItem(RANGE_STORAGE_KEY, String(ms)); } catch (e) {}
-    // 새 윈도우 밖의 아이콘 즉시 제거
-    var now = Date.now();
-    var alive = [];
-    for (var i = 0; i < icons.length; i++) {
-      var it = icons[i];
-      if (now - it.ts >= WINDOW_MS) {
-        if (it.el.parentNode) it.el.parentNode.removeChild(it.el);
-      } else {
-        alive.push(it);
-      }
-    }
-    icons = alive;
+    // 아이콘 제거하지 않음 — tick() 루프가 현재 윈도우 밖이면 숨기고, MAX_WINDOW_MS 초과 시에만 제거.
+    // 더 큰 윈도우로 재선택하면 숨겨졌던 아이콘이 다시 보임.
     renderAxis();
     renderRangeButtons();
     updateCount();
@@ -142,7 +133,7 @@
 
   function updateActiveSessions(sid, nowMs) {
     activeSessions.set(sid, nowMs);
-    var cutoff = nowMs - WINDOW_MS;
+    var cutoff = nowMs - MAX_WINDOW_MS;
     activeSessions.forEach(function (last, s) {
       if (last < cutoff) activeSessions.delete(s);
     });
@@ -215,10 +206,18 @@
     for (var i = 0; i < icons.length; i++) {
       var it = icons[i];
       var elapsed = now - it.ts;
-      if (elapsed >= WINDOW_MS) {
+      // 최대 윈도우(10m) 초과 시에만 실제 제거 — 더 작은 윈도우로 좁혔다가 다시 넓혔을 때 복원 가능하도록
+      if (elapsed >= MAX_WINDOW_MS) {
         if (it.el.parentNode) it.el.parentNode.removeChild(it.el);
         continue;
       }
+      // 현재 선택 윈도우 밖 — DOM 은 유지한 채 숨김 (재선택 시 복귀)
+      if (elapsed >= WINDOW_MS) {
+        if (it.el.style.display !== 'none') it.el.style.display = 'none';
+        alive.push(it);
+        continue;
+      }
+      if (it.el.style.display === 'none') it.el.style.display = '';
       var pct = elapsedToPercent(elapsed);
       // 양쪽 5% 마진 (아이콘이 끝 clipping 없이 완전히 보임)
       var visualPct = 5 + pct * 0.90; // 0%→5%, 100%→95%
@@ -288,7 +287,7 @@
     try {
       var now = Date.now();
       var data = icons
-        .filter(function (it) { return now - it.ts < WINDOW_MS; })
+        .filter(function (it) { return now - it.ts < MAX_WINDOW_MS; })
         .map(function (it) {
           return {
             ts: it.ts, id: it.id, status: it.status, lane: it.lane,
@@ -307,7 +306,7 @@
       var now = Date.now();
       var restored = 0;
       data.forEach(function (rec) {
-        if (now - rec.ts >= WINDOW_MS) return; // stale
+        if (now - rec.ts >= MAX_WINDOW_MS) return; // stale
         var sid = rec.project || '_shared';
         updateActiveSessions(sid, rec.ts);
         var lane = (rec.lane != null && rec.lane >= 0 && rec.lane < LANES) ? rec.lane : pickLane(sid);
