@@ -71,15 +71,11 @@
     return isoDate(new Date());
   }
 
-  /** byDate[dateStr] → 총 토큰 합계 */
+  /** byDate[dateStr] → 토큰 합계 (input + output, Claude Desktop /code 규칙) */
   function totalTokensOf(dayEntry) {
     if (!dayEntry || !dayEntry.tokens) return 0;
     const t = dayEntry.tokens;
-    return (t.input || 0)
-      + (t.cacheWrite1h || 0)
-      + (t.cacheWrite5m || 0)
-      + (t.cacheRead || 0)
-      + (t.output || 0);
+    return (t.input || 0) + (t.output || 0);
   }
 
   /** 해당 날짜 셀의 서브에이전트 활동 존재 여부 */

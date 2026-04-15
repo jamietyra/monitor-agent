@@ -77,8 +77,9 @@
   }
   function sumTokenObj(t) {
     if (!t) return 0;
-    return (t.input || 0) + (t.cacheWrite1h || 0) + (t.cacheWrite5m || 0)
-      + (t.cacheRead || 0) + (t.output || 0);
+    // Claude Desktop /code 규칙과 일치: input + output 만 집계
+    // (cacheRead/cacheWrite 는 Daily Usage 상세 차트에서만 표시)
+    return (t.input || 0) + (t.output || 0);
   }
   function mergeTokens(target, src) {
     if (!src) return target;

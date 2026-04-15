@@ -110,7 +110,8 @@
 
   // ── Phase 3: Daily Usage 단일 총합 바 (분해 제거, 사용자 요청 2026-04-14) ──
   /**
-   * period 내 날짜별 전체 토큰 총합 (input + cacheRead + cacheWrite + output).
+   * period 내 날짜별 토큰 (input + output).
+   * Claude Desktop /code 와 동일 규칙 — cacheRead/cacheWrite 제외.
    * Day 뷰는 일 단위 데이터 특성상 시간대 분할 불가 → 최근 7일로 대체 표시.
    */
   function buildDailySeries(usageData, period) {
@@ -126,9 +127,7 @@
       const day = byDate[k];
       if (!day || !day.tokens) { totals.push(0); costs.push(0); return; }
       const t = day.tokens;
-      const sum = (t.input || 0) + (t.cacheRead || 0)
-                + (t.cacheWrite1h || 0) + (t.cacheWrite5m || 0)
-                + (t.output || 0);
+      const sum = (t.input || 0) + (t.output || 0);
       totals.push(sum);
       costs.push(day.costUSD || 0);
     });
@@ -220,8 +219,8 @@
         if (!m) return;
         if (!agg[mkey]) agg[mkey] = { tokens: 0, cost: 0 };
         const t = m.tokens || {};
-        agg[mkey].tokens += (t.input || 0) + (t.cacheWrite1h || 0)
-          + (t.cacheWrite5m || 0) + (t.cacheRead || 0) + (t.output || 0);
+        // input + output 만 집계 (Claude Desktop /code 규칙)
+        agg[mkey].tokens += (t.input || 0) + (t.output || 0);
         agg[mkey].cost += m.costUSD || 0;
       });
     });
@@ -329,8 +328,8 @@
         if (!p) return;
         if (!agg[name]) agg[name] = { tokens: 0, cost: 0 };
         const t = p.tokens || {};
-        agg[name].tokens += (t.input || 0) + (t.cacheWrite1h || 0)
-          + (t.cacheWrite5m || 0) + (t.cacheRead || 0) + (t.output || 0);
+        // input + output 만 집계 (Claude Desktop /code 규칙)
+        agg[name].tokens += (t.input || 0) + (t.output || 0);
         agg[name].cost += p.costUSD || 0;
       });
     });
