@@ -37,7 +37,11 @@ That curiosity was the starting point for wilson.
 
 ## ✨ Features
 
-### 🏐 Wilson — Your visualization agent
+### 📺 monitor-agent — Real-time activity dashboard
+
+The main dashboard at `/` streams every Claude Code action — prompts, tool calls, file edits, and errors — through Wilson's expressions and the timeline widgets.
+
+#### 🏐 Wilson — Your visualization agent
 
 A volleyball-faced character named Wilson communicates AI status through **5 expressions**.
 
@@ -49,40 +53,38 @@ A volleyball-faced character named Wilson communicates AI status through **5 exp
 | `solving` | Golden aura + crimson pulse | **Error — solving it** |
 | `sleeping` | Eyes closed, breathing | 10 minutes idle |
 
-### ⏱️ Tool Timeline
+#### ⏱️ Tool Timeline
 
 A 6-lane horizontal timeline below Wilson, showing every tool call from the last 10 minutes as colored icons. See at a glance when and how heavily each tool was used.
 
-### 📂 Recent Files
+#### 📂 Recent Files
 
 Timeline of recent Read / Write / Edit operations.
 Click to load the file into the code viewer — with diff highlights if it was an Edit.
 
-### 📡 Real-time Feeds
+#### 📡 Real-time Feeds
 
 Every prompt, tool call, and response grouped in collapsible sections.
 Search and session filter supported.
 
-### 👀 Code + Diff Viewer
+#### 👀 Code + Diff Viewer
 
 Side-by-side file content (PrismJS syntax highlighting) and change tracking.
 **Bash / Glob output** is also viewable — click any completed tool to see its result.
 
-### 🎨 Three Themes
+#### 🎨 Three Themes
 
 - **Beige** (default) — warm analog paper feel
 - **White** — clean light
 - **Dark** — developer classic
 
-Cycle with the `[Beige]` button in the header (fixed 84px). Choice is saved to `localStorage`.
+Cycle with the `[Beige]` button in the header (fixed 84px).
 
-### 🌍 Multi-session + Remote Access
+#### 🌍 Multi-session + Remote Access
 
-Monitors all Claude Code sessions across sub-projects simultaneously. Token-based authentication for remote access from other machines.
+Monitors all Claude Code sessions across sub-projects simultaneously.
 
----
-
-## 📊 monitor-usage — Cost & Token Analytics
+### 📊 monitor-usage — Cost & Token Analytics
 
 A second page at `/usage` gives you long-term visibility into Claude's token and dollar usage.
 
@@ -90,16 +92,16 @@ A second page at `/usage` gives you long-term visibility into Claude's token and
   <img src="preview.usage.svg?v=1" alt="monitor-usage dashboard preview" width="100%">
 </p>
 
-Click the **`monitor-agent`** title in the header to switch to `monitor-usage`; click **`monitor-usage`** to go back. The right-side panel swaps with a smooth slide-and-fade transition and the accent color shifts from the warm red to calm blue.
+Click the **`monitor-agent`** title in the header to switch to `monitor-usage`; click **`monitor-usage`** to go back.
 
-### What you can see
+#### What you can see
 
-- **5 metric cards** — Cost / Tokens / Active Time / Sessions / Prompts with uniform delta colors (increase = red, decrease = green, same = gray).
+- **5 metric cards** — Cost / Tokens / Active Time / Sessions / Prompts.
 - **Charts** — Daily Usage bar, Model Breakdown donut (Opus blue / Sonnet green / Haiku yellow), Top Projects list.
 - **Month Grid** calendar — per-day tokens and cost, click a cell for the day drill-down modal.
 - **Sessions tree** (left, below Wilson) — 2-level tree per project tag, labeled `[MM/DD | first prompt summary]`, with inline subagent breakdown.
 
-### Accuracy note
+#### Accuracy note
 
 Token cost is computed from Anthropic's public API rates (Opus 4.6 $15/$75 per M, Sonnet 4.6 $3/$15, Haiku 4.5 $1/$5) with proper cache-write/cache-read adjustments and per-event model resolution. **If you're on a Claude subscription plan this number is a theoretical "what-if" for pay-as-you-go API** — use it as a usage-intensity proxy, not an invoice.
 
@@ -108,8 +110,8 @@ Token cost is computed from Anthropic's public API rates (Opus 4.6 $15/$75 per M
 ## 🚀 Quick Start
 
 ```bash
-git clone https://github.com/jamietyra/wilson.git
-cd wilson
+git clone https://github.com/jamietyra/Wilson.git
+cd Wilson
 node server.mjs
 ```
 
@@ -163,7 +165,7 @@ Claude Code → transcript.jsonl → wilson (server.mjs)
                                                                               └─► Sessions tree
 ```
 
-New sessions (and new subagent transcripts) are detected instantly via directory watchers, with a 60-second fallback scan. The `/api/usage` endpoint reuses its disk cache for fast reloads — only new events since the last scanCursor are parsed.
+New sessions (and new subagent transcripts) are detected instantly via directory watchers, with a 60-second fallback scan.
 
 ### 💸 Resource Footprint — **Zero** Claude Token Usage
 

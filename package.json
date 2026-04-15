@@ -22,11 +22,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/jamietyra/wilson.git"
+    "url": "git+https://github.com/jamietyra/Wilson.git"
   },
-  "homepage": "https://github.com/jamietyra/wilson",
+  "homepage": "https://github.com/jamietyra/Wilson",
   "bugs": {
-    "url": "https://github.com/jamietyra/wilson/issues"
+    "url": "https://github.com/jamietyra/Wilson/issues"
   },
   "engines": {
     "node": ">=18.0.0"
