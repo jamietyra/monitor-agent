@@ -45,11 +45,23 @@
 
   // ─── Stats 핸들러 ───────────────────────────────────
   // Running/Done/Errors/Elapsed 카운터는 제거됨. 활성 모델만 footer에 표시.
+  var loadInfo = { totalEvents: 0, totalBytes: 0 };
+
+  function formatBytes(bytes) {
+    if (bytes < 1024) return bytes + 'B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + 'KB';
+    return (bytes / 1024 / 1024).toFixed(2) + 'MB';
+  }
+
   function updateStats(stats) {
     var modelEl = document.getElementById('event-count');
     if (!modelEl) return;
+    var parts = [];
     var raw = stats && stats.currentModel;
-    modelEl.textContent = raw ? 'Model: ' + formatModelName(raw) : '';
+    if (raw) parts.push('Model: ' + formatModelName(raw));
+    if (loadInfo.totalEvents > 0) parts.push(loadInfo.totalEvents + ' events');
+    if (loadInfo.totalBytes > 0) parts.push(formatBytes(loadInfo.totalBytes));
+    modelEl.textContent = parts.join(' · ');
   }
 
   // ─── SSE 연결 ─────────────────────────────────────
@@ -138,6 +150,8 @@
       hasMoreEvents = data.hasMore;
       if (hasMoreEvents && typeof insertLoadMoreBtn === 'function') insertLoadMoreBtn();
 
+      if (data.totalEvents) loadInfo.totalEvents = data.totalEvents;
+      if (data.totalTranscriptBytes) loadInfo.totalBytes = data.totalTranscriptBytes;
       if (data.stats && typeof updateStats === 'function') updateStats(data.stats);
       if (window.activityList) window.activityList.scrollTop = window.activityList.scrollHeight;
     });

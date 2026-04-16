@@ -306,12 +306,17 @@ main { display: flex; flex-direction: row; flex: 1; overflow: hidden; }
   line-height: var(--leading-normal); font-family: var(--font-mono);
 }
 .diff-line-old {
-  color: var(--red); background: rgba(244, 71, 71, 0.1);
+  background: rgba(244, 71, 71, 0.1);
   padding: 1px var(--space-xs); white-space: pre-wrap; word-break: break-all;
 }
 .diff-line-new {
-  color: var(--green); background: rgba(106, 153, 85, 0.1);
+  background: rgba(106, 153, 85, 0.1);
   padding: 1px var(--space-xs); white-space: pre-wrap; word-break: break-all;
+}
+.diff-line-old .diff-prefix { color: var(--red); }
+.diff-line-new .diff-prefix { color: var(--green); }
+.diff-line-old > code, .diff-line-new > code {
+  background: none; padding: 0; white-space: pre-wrap; word-break: break-all;
 }
 .diff-separator { border: none; border-top: 1px solid var(--border); margin: var(--space-xs) 0; }
 

@@ -388,7 +388,7 @@
       toolItemMap.set(ev.id, item);
     }
 
-    if (ev.diff) item._diffData = { filePath: ev.filePath, fileName: ev.target, diff: ev.diff, time: ev.time };
+    if (ev.diff) item._diffData = { filePath: ev.filePath, fileName: ev.target, diff: ev.diff, time: ev.time, language: ev.language };
 
     if (ev.filePath) {
       item.dataset.filePath = ev.filePath;
@@ -523,7 +523,7 @@
       item.dataset.toolId = ev.id;
       toolItemMap.set(ev.id, item);
     }
-    if (ev.diff) item._diffData = { filePath: ev.filePath, fileName: ev.target, diff: ev.diff, time: ev.time };
+    if (ev.diff) item._diffData = { filePath: ev.filePath, fileName: ev.target, diff: ev.diff, time: ev.time, language: ev.language };
     if (ev.filePath) {
       item.dataset.filePath = ev.filePath;
       item.style.cursor = 'pointer';

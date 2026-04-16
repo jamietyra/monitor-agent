@@ -14,6 +14,27 @@
   // ─── Code Viewer ──────────────────────────────────
   var pendingHighlight = null;
 
+  function formatSize(bytes) {
+    if (bytes == null) return '';
+    if (bytes < 1024) return bytes + 'B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + 'KB';
+    return (bytes / 1024 / 1024).toFixed(2) + 'MB';
+  }
+
+  function formatAge(mtimeMs) {
+    if (!mtimeMs) return '';
+    var diff = Date.now() - mtimeMs;
+    if (diff < 0) return 'just now';
+    var s = Math.floor(diff / 1000);
+    if (s < 60) return s + 's ago';
+    var m = Math.floor(s / 60);
+    if (m < 60) return m + 'm ago';
+    var h = Math.floor(m / 60);
+    if (h < 24) return h + 'h ago';
+    var d = Math.floor(h / 24);
+    return d + 'd ago';
+  }
+
   function clearDiff() {
     diffFilename.textContent = 'Diff';
     diffTime.textContent = '';
@@ -22,9 +43,11 @@
 
   function displayCode(fileData) {
     codeFilename.textContent = fileData.fileName;
-    var info = fileData.totalLines + ' lines';
-    if (fileData.truncated) info += ' (showing first 1500)';
-    codeInfo.textContent = info;
+    var parts = [fileData.totalLines + ' lines'];
+    if (fileData.truncated) parts[0] += ' (showing first 1500)';
+    if (fileData.size != null) parts.push(formatSize(fileData.size));
+    if (fileData.mtimeMs) parts.push('modified ' + formatAge(fileData.mtimeMs));
+    codeInfo.textContent = parts.join(' · ');
 
     var pre = document.createElement('pre');
     var code = document.createElement('code');
@@ -133,14 +156,21 @@
   // ─── Diff Viewer ──────────────────────────────────
   function displayDiff(data) {
     diffPanel.classList.add('visible');
-    diffFilename.textContent = 'Edit: ' + (data.fileName || '');
+    var oldLines = data.diff.oldString ? data.diff.oldString.split('\n').length : 0;
+    var newLines = data.diff.newString ? data.diff.newString.split('\n').length : 0;
+    var fname = window.escapeHtml('Edit: ' + (data.fileName || ''));
+    var badge = ' <span style="color:var(--text-dim);font-weight:400">'
+      + '<span style="color:#6ee7b7">+' + newLines + '</span> / '
+      + '<span style="color:#fca5a5">-' + oldLines + '</span></span>';
+    diffFilename.innerHTML = fname + badge;
     diffTime.textContent = data.time ? window.formatTime(data.time) : '';
 
+    var lang = data.language || 'plaintext';
     var lines = [];
     // 삭제된 줄
     if (data.diff.oldString) {
       data.diff.oldString.split('\n').forEach(function(line) {
-        lines.push('<div class="diff-line-old">- ' + window.escapeHtml(line) + '</div>');
+        lines.push('<div class="diff-line-old"><span class="diff-prefix">- </span><code class="language-' + lang + '">' + window.escapeHtml(line) + '</code></div>');
       });
     }
     // 구분선
@@ -148,11 +178,21 @@
     // 추가된 줄
     if (data.diff.newString) {
       data.diff.newString.split('\n').forEach(function(line) {
-        lines.push('<div class="diff-line-new">+ ' + window.escapeHtml(line) + '</div>');
+        lines.push('<div class="diff-line-new"><span class="diff-prefix">+ </span><code class="language-' + lang + '">' + window.escapeHtml(line) + '</code></div>');
       });
     }
 
     diffContent.innerHTML = lines.join('');
+
+    var totalDiffLines = (data.diff.oldString ? data.diff.oldString.split('\n').length : 0)
+      + (data.diff.newString ? data.diff.newString.split('\n').length : 0);
+    if (typeof Prism !== 'undefined' && lang !== 'plaintext' && totalDiffLines <= 1000) {
+      requestAnimationFrame(function() {
+        diffContent.querySelectorAll('code[class^="language-"]').forEach(function(el) {
+          Prism.highlightElement(el);
+        });
+      });
+    }
   }
 
   // ─── Browser Viewer ───────────────────────────────

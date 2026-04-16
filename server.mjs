@@ -386,6 +386,7 @@ function processEntry(entry, state) {
             newString: block.input.new_string || '',
             replaceAll: block.input.replace_all || false,
           };
+          ev.language = LANG_MAP[path.extname(ev.filePath || '').toLowerCase()] || 'plaintext';
         }
 
         events.push(ev);
@@ -465,6 +466,21 @@ function processEntry(entry, state) {
 
 // ─── 파일 콘텐츠 읽기 ───────────────────────────────────
 
+const LANG_MAP = {
+  '.js': 'javascript', '.mjs': 'javascript', '.cjs': 'javascript',
+  '.ts': 'typescript', '.tsx': 'tsx', '.jsx': 'jsx',
+  '.py': 'python', '.rb': 'ruby', '.go': 'go', '.rs': 'rust',
+  '.java': 'java', '.kt': 'kotlin', '.swift': 'swift',
+  '.cs': 'csharp', '.cpp': 'cpp', '.c': 'c', '.h': 'c',
+  '.html': 'html', '.css': 'css', '.scss': 'scss',
+  '.json': 'json', '.yaml': 'yaml', '.yml': 'yaml',
+  '.md': 'markdown', '.xml': 'xml', '.sql': 'sql',
+  '.sh': 'bash', '.bash': 'bash', '.zsh': 'bash',
+  '.bat': 'batch', '.cmd': 'batch', '.ps1': 'powershell',
+  '.toml': 'toml', '.ini': 'ini', '.cfg': 'ini',
+  '.vue': 'html', '.svelte': 'html',
+};
+
 function readFileContent(filePath) {
   try {
     if (!fs.existsSync(filePath)) return null;
@@ -482,29 +498,15 @@ function readFileContent(filePath) {
     const truncated = lines.length > MAX_FILE_LINES;
     const content = truncated ? lines.slice(0, MAX_FILE_LINES).join('\n') : raw;
 
-    // 확장자 → Prism 언어 매핑
-    const langMap = {
-      '.js': 'javascript', '.mjs': 'javascript', '.cjs': 'javascript',
-      '.ts': 'typescript', '.tsx': 'tsx', '.jsx': 'jsx',
-      '.py': 'python', '.rb': 'ruby', '.go': 'go', '.rs': 'rust',
-      '.java': 'java', '.kt': 'kotlin', '.swift': 'swift',
-      '.cs': 'csharp', '.cpp': 'cpp', '.c': 'c', '.h': 'c',
-      '.html': 'html', '.css': 'css', '.scss': 'scss',
-      '.json': 'json', '.yaml': 'yaml', '.yml': 'yaml',
-      '.md': 'markdown', '.xml': 'xml', '.sql': 'sql',
-      '.sh': 'bash', '.bash': 'bash', '.zsh': 'bash',
-      '.bat': 'batch', '.cmd': 'batch', '.ps1': 'powershell',
-      '.toml': 'toml', '.ini': 'ini', '.cfg': 'ini',
-      '.vue': 'html', '.svelte': 'html',
-    };
-
     return {
       content,
-      language: langMap[ext] || 'plaintext',
+      language: LANG_MAP[ext] || 'plaintext',
       totalLines: lines.length,
       truncated,
       fileName: path.basename(filePath),
       filePath,
+      size: stat.size,
+      mtimeMs: stat.mtimeMs,
     };
   } catch {
     return null;
@@ -665,6 +667,7 @@ function watchTranscript(transcriptPath, state, projectName, subagentInfo) {
           fileName: ev.target,
           diff: ev.diff,
           time: ev.time,
+          language: LANG_MAP[path.extname(ev.filePath || '').toLowerCase()] || 'plaintext',
         });
       }
 
@@ -1092,9 +1095,14 @@ const server = http.createServer((req, res) => {
     // 초기 데이터 전송 (최근 200 프롬프트)
     const PROMPT_PAGE = 200;
     const initEvents = sliceByPrompts(allRecentEvents.length, PROMPT_PAGE);
+    let totalTranscriptBytes = 0;
+    for (const tp of watchedTranscripts) {
+      try { totalTranscriptBytes += fs.statSync(tp).size; } catch {}
+    }
     const initData = {
       recentEvents: initEvents.events,
       totalEvents: allRecentEvents.length,
+      totalTranscriptBytes,
       startIdx: initEvents.startIdx,
       hasMore: initEvents.hasMore,
       stats: { currentModel: state.currentModel || null },
