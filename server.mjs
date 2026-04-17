@@ -1452,15 +1452,10 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // monitor-usage 페이지 라우트
+  // #13 SPA — /usage 는 /#/usage 로 302 리다이렉트 (북마크 호환)
   if (url.pathname === '/usage' || url.pathname === '/usage.html') {
-    const htmlPath = path.join(dashDir, 'usage.html');
-    if (fs.existsSync(htmlPath)) {
-      serveHtml(htmlPath);
-    } else {
-      res.writeHead(404);
-      res.end('usage page not found');
-    }
+    res.writeHead(302, { Location: '/#/usage' + (url.search || '') });
+    res.end();
     return;
   }
 

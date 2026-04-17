@@ -1,4 +1,5 @@
-(function() {
+// connection.js — SSE 연결 + 이벤트 라우팅 (ES Module)
+
   // ─── DOM 요소 ─────────────────────────────────────
   var connectionDot = document.getElementById('connection-dot');
   var connectionStatus = document.getElementById('connection-status');
@@ -226,4 +227,3 @@
   }
 
   connect();
-})();

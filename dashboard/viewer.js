@@ -1,5 +1,5 @@
-(function() {
-  // ─── DOM 요소 ─────────────────────────────────────
+// viewer.js — 코드/Diff/Screenshot 뷰어 (ES Module)
+// ─── DOM 요소 ─────────────────────────────────────
   var codeFilename = document.getElementById('code-filename');
   var codeInfo = document.getElementById('code-info');
   var codeContent = document.getElementById('code-content');
@@ -304,9 +304,13 @@
   window.requestFileContent = requestFileContent;
   window.fileCache = fileCache;
 
-  // pendingHighlight를 feed.js에서 설정할 수 있도록 노출
-  Object.defineProperty(window, 'pendingHighlight', {
-    get: function() { return pendingHighlight; },
-    set: function(v) { pendingHighlight = v; }
-  });
-})();
+// pendingHighlight를 feed.js / wilson.js에서 설정할 수 있도록 노출
+Object.defineProperty(window, 'pendingHighlight', {
+  get: function() { return pendingHighlight; },
+  set: function(v) { pendingHighlight = v; }
+});
+
+// ─── ES Module exports (신규 consumer용, 내부는 window.* 유지) ─
+export { displayCode, displayDiff, displayScreenshot, displayOutput, requestFileContent, fileCache };
+export function setPendingHighlight(v) { pendingHighlight = v; }
+export function getPendingHighlight() { return pendingHighlight; }

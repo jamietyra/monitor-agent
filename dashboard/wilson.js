@@ -1,6 +1,4 @@
-// ─── Wilson — AI Companion Character ──────────────────
-(function() {
-  'use strict';
+// ─── Wilson — AI Companion Character (ES Module) ──────
 
   // ─── Constants ───────────────────────────────────────
   var _cfg = window.wilsonConfig || {};
@@ -597,10 +595,10 @@
   initTheme();
 
   // ─── Public API ──────────────────────────────────────
-  window.wilson = {
+  export const wilson = {
     onEvent: onEvent,
     onFileDiff: onFileDiff,
     startBatch: startBatch,
     endBatch: endBatch
   };
-})();
+  if (typeof window !== 'undefined') window.wilson = wilson;

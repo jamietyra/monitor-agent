@@ -14,8 +14,7 @@
  *   - 색상 함수는 inline style로 적용 (5단계 임계치 기반)
  */
 
-(function () {
-  'use strict';
+// usage-calendar.js — monitor-usage 캘린더 (ES Module)
 
   // ── 색상 팔레트 ────────────────────────────────────
   // 비용 기반 3단계: <$100 초록, $100~$500 노랑, $500+ 빨강.
@@ -349,16 +348,15 @@
   }
 
   // ── 전역 노출 ──────────────────────────────────────────
-  window.usageCalendar = {
+  export const usageCalendar = {
     renderHeatmap,
     renderMonthGrid,
     navigateMonth,
     patchCell,
     currentMonth,
-    // 테스트/디버그용 헬퍼도 같이 노출
     _formatTokens: formatTokens,
     _formatCost: formatCost,
     _formatDuration: formatDuration,
     _colorForCost: colorForCost,
   };
-})();
+  if (typeof window !== 'undefined') window.usageCalendar = usageCalendar;

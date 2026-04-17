@@ -7,8 +7,7 @@
  * 타이틀 클릭 네비게이션은 page-nav.js가 담당 (Step 5 분리).
  */
 
-(function () {
-  'use strict';
+// usage.js — monitor-usage 페이지 로직 (ES Module)
 
   /**
    * /api/usage 호출해서 집계 데이터를 로드하고 window.usageData에 저장.
@@ -364,14 +363,19 @@
     }
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-  } else {
-    init();
+  // SPA #13 — init은 router가 usage route 진입 시 트리거. 자동 호출 제거.
+  // 직접 /usage.html 접근(레거시) 시에는 data-page="usage"가 세팅돼 있으면 init 자동 실행.
+  if (document.body && document.body.dataset.page === 'usage' && !document.body.dataset.route) {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
   }
 
   // 디버그/후속 Step에서 재호출 가능하도록 전역 노출
-  window.usagePage = {
+  export const usagePage = {
+    init,
     loadUsageData,
     renderAll,
     renderHeatmap,
@@ -381,4 +385,4 @@
     applyUsageDelta,
     handleUsageDelta,
   };
-})();
+  if (typeof window !== 'undefined') window.usagePage = usagePage;

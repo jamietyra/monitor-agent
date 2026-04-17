@@ -14,16 +14,31 @@
   <link rel="stylesheet" href="wilson.css?v=1">
   <link rel="stylesheet" href="tool-timeline.css?v=1">
   <link rel="stylesheet" href="page-nav.css?v=1">
+  <link rel="stylesheet" href="usage.css?v=1">
+  <!-- SPA: body[data-route]로 route 전환 가시성 제어 -->
+  <style>
+    body[data-route="agent"] [data-route-only="usage"] { display: none !important; }
+    body[data-route="usage"] [data-route-only="agent"] { display: none !important; }
+    /* 전환 시 짧은 페이드 */
+    main > * { transition: opacity 150ms ease; }
+    /* SPA override — usage.css가 old 레이아웃을 위해 wilson-panel width:100% 걸지만,
+       SPA shell에선 main이 flex row(600px + 1fr)라 100%면 usage-main이 밀려남 */
+    body[data-route="usage"] #wilson-panel { width: 600px; }
+    body[data-route="usage"] #usage-main { flex: 1; }
+  </style>
+  <!-- Chart.js는 usage route에만 필요 — defer로 load만 수행 -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
 </head>
-<body data-page="agent">
+<body data-route="agent" data-page="agent">
 
 <header>
   <span class="brand-wilson">Wilson</span>
-  <h1 class="page-nav-title" id="page-nav-title" title="monitor-usage 페이지로 전환 — 클릭">monitor-agent</h1>
+  <h1 class="page-nav-title" id="page-nav-title" title="클릭으로 페이지 전환">monitor-agent</h1>
   <button class="theme-switch" id="theme-switch" title="테마 전환 (Beige / White / Dark)">Beige</button>
 </header>
 
 <main>
+  <!-- ── 공유 Wilson 패널 (양 route 공통 — 캐릭터 상태 보존) ── -->
   <div id="wilson-panel" class="wilson-state-waiting">
     <div class="wilson-character">
       <div class="wilson-svg-wrap" id="wilson-svg-wrap"></div>
@@ -45,13 +60,19 @@
         <span>now</span><span>-1m</span><span>-2m</span><span>-5m</span><span>-10m</span>
       </div>
     </div>
-    <div class="wilson-recent">
+    <!-- Recent Files: agent route 전용 -->
+    <div class="wilson-recent" data-route-only="agent">
       <div class="wilson-recent-header">Recent Files</div>
       <div class="wilson-recent-list" id="wilson-recent-list"></div>
     </div>
+    <!-- Sessions: usage route 전용 -->
+    <div id="sessions-panel" data-route-only="usage">
+      <div class="panel-title">Sessions</div>
+    </div>
   </div>
 
-  <div class="main-content">
+  <!-- ── Agent route: Feed + Code/Diff/Browser ── -->
+  <div class="main-content" data-route-only="agent">
     <div class="activity-panel">
       <h2>Feeds</h2>
       <div class="activity-search"><input type="text" id="activity-search" placeholder="Search (prompts, files, commands...)"></div>
@@ -97,6 +118,48 @@
       </div>
     </div>
   </div>
+
+  <!-- ── Usage route: Summary + Charts + Calendar ── -->
+  <div id="usage-main" data-route-only="usage">
+    <div class="page-section-head">
+      <h2 class="page-section-title">Usage</h2>
+      <div class="usage-refresh">
+        <span class="last-refreshed" id="last-refreshed" title="마지막 갱신 시각">—</span>
+        <button type="button" id="refresh-usage" class="refresh-btn" title="지금 바로 새로고침 (15분마다 자동 갱신)">
+          <span class="refresh-icon">↻</span>
+          <span>Refresh</span>
+        </button>
+      </div>
+    </div>
+    <div id="summary-cards"></div>
+
+    <section id="daily-usage-chart" class="chart-panel">
+      <div class="chart-header"><h3>Daily Usage</h3></div>
+      <div class="chart-body"><canvas></canvas></div>
+    </section>
+
+    <section id="charts-row">
+      <section id="model-breakdown-chart" class="chart-panel">
+        <div class="chart-header">
+          <h3>Model Breakdown</h3>
+          <div class="chart-toggle">
+            <button class="chart-mode-btn active" data-mode="tokens">Tokens</button>
+            <button class="chart-mode-btn" data-mode="cost">Cost</button>
+          </div>
+        </div>
+        <div class="chart-body"><canvas></canvas></div>
+      </section>
+
+      <section id="top-projects-chart" class="chart-panel">
+        <div class="chart-header"><h3>Top Projects</h3></div>
+        <div class="chart-body"><canvas></canvas></div>
+      </section>
+    </section>
+
+    <div class="usage-calendar">
+      <div id="month-grid"></div>
+    </div>
+  </div>
 </main>
 
 <footer>
@@ -107,6 +170,10 @@
   <span id="event-count" style="color: var(--text-dim); font-size: var(--text-xs);"></span>
 </footer>
 
+<!-- Day Drilldown 모달 (usage route 전용) -->
+<div id="day-modal" class="modal-backdrop hidden" data-route-only="usage"></div>
+
+<!-- Prism syntax highlighting (agent route의 code viewer용) -->
 <script src="vendor/prism/prism.min.js" defer></script>
 <script src="vendor/prism/prism-javascript.min.js" defer></script>
 <script src="vendor/prism/prism-typescript.min.js" defer></script>
@@ -123,17 +190,30 @@
 <script src="vendor/prism/prism-go.min.js" defer></script>
 <script src="vendor/prism/prism-rust.min.js" defer></script>
 <script src="vendor/prism/prism-powershell.min.js" defer></script>
-<script src="config.js?v=1"></script>
-<script src="tooltip.js?v=1"></script>
-<script src="format.js?v=1"></script>
-<script src="session-tag.js?v=1"></script>
-<script src="feed.js?v=1"></script>
-<script src="viewer.js?v=1"></script>
-<script src="wilson.js?v=1"></script>
-<script src="tool-timeline.js?v=1"></script>
-<script src="connection.js?v=1"></script>
-<!-- 타이틀 클릭 B 애니메이션 + 페이지 전환 (양쪽 페이지 공통) -->
-<script src="page-nav.js?v=1"></script>
+
+<!-- 공통 모듈 (양 route 사용) -->
+<script type="module" src="config.js?v=3"></script>
+<script type="module" src="tooltip.js?v=3"></script>
+<script type="module" src="format.js?v=3"></script>
+<script type="module" src="session-tag.js?v=3"></script>
+<script type="module" src="wilson.js?v=3"></script>
+<script type="module" src="tool-timeline.js?v=3"></script>
+<script type="module" src="connection.js?v=3"></script>
+
+<!-- Agent route 전용 (feed/viewer) — 항상 로드, 이벤트 구독만 함 -->
+<script type="module" src="feed.js?v=3"></script>
+<script type="module" src="viewer.js?v=3"></script>
+
+<!-- Usage route 전용 — 로드하되 init은 router가 route 진입 시 트리거 -->
+<script type="module" src="usage-calendar.js?v=3"></script>
+<script type="module" src="usage-sessions.js?v=3"></script>
+<script type="module" src="usage-charts.js?v=3"></script>
+<script type="module" src="usage.js?v=3"></script>
+
+<!-- Router (마지막에 로드 — 모든 모듈 준비 후 route 적용) -->
+<script type="module" src="router.js?v=3"></script>
+<!-- Title 클릭 B 애니메이션 — hash router와 연동 -->
+<script type="module" src="page-nav.js?v=3"></script>
 
 </body>
 </html>

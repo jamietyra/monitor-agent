@@ -195,7 +195,13 @@ main { display: flex; flex-direction: row; flex: 1; overflow: hidden; }
 }
 
 /* ─── Prompt Group ─── */
-.prompt-group { border-bottom: 1px solid var(--border); margin-bottom: 4px; }
+.prompt-group {
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 4px;
+  /* Virtualization: 화면 밖 그룹의 layout/paint/hit-test 스킵 (브라우저 네이티브) */
+  content-visibility: auto;
+  contain-intrinsic-size: auto 120px;
+}
 .prompt-header {
   display: flex; align-items: center; gap: 6px; padding: var(--space-xs) var(--space-md);
   font-size: var(--text-sm); cursor: pointer; background: var(--bg-panel);

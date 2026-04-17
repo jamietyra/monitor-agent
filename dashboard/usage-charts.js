@@ -17,8 +17,7 @@
  *   - currentMode (getter/setter — Model Breakdown 토글 상태)
  */
 
-(function () {
-  'use strict';
+// usage-charts.js — monitor-usage 차트 (ES Module)
 
   // ── 모듈 상태 ──────────────────────────────────────────
   let dailyUsageChart = null;
@@ -408,7 +407,7 @@
   }
 
   // ── 전역 API 노출 ──────────────────────────────────────
-  window.usageCharts = {
+  export const usageCharts = {
     renderDailyUsageChart,
     renderModelBreakdown,
     renderTopProjects,
@@ -416,4 +415,4 @@
     get currentMode() { return currentMode; },
     set currentMode(v) { currentMode = v; },
   };
-})();
+  if (typeof window !== 'undefined') window.usageCharts = usageCharts;

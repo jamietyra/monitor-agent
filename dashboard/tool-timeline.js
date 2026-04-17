@@ -4,10 +4,8 @@
  * v4 변경: CSS keyframe 대신 requestAnimationFrame 으로 `left` 직접 계산.
  * calc(px ↔ %) 혼합 보간 이슈 제거, 진단 배지(ID='timeline-count') 추가.
  *
- * 노출 API: window.toolTimeline = { onEvent(ev), clear(), _debug() }
+ * ES Module — export { toolTimeline }
  */
-(function () {
-  'use strict';
 
   var ALLOWED_WINDOWS = [60000, 300000, 600000];
   var MAX_WINDOW_MS = 600000; // 메모리 유지 한계 (=가장 큰 윈도우). 1m/5m로 좁혀도 이 범위 안 아이콘은 보관 → 10m 재선택 시 복원
@@ -380,7 +378,7 @@
     init();
   }
 
-  window.toolTimeline = {
+  export const toolTimeline = {
     onEvent: onEvent,
     clear: clear,
     setRange: setRange,
@@ -388,4 +386,4 @@
       return { ready: ready, windowMs: WINDOW_MS, icons: icons.length, running: icons.filter(function(i){return i.status==='running';}).length, track: !!track };
     }
   };
-})();
+  if (typeof window !== 'undefined') window.toolTimeline = toolTimeline;

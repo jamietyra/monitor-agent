@@ -1,4 +1,5 @@
-(function() {
+// feed.js — 실시간 이벤트 피드 (ES Module)
+
   var activityList = document.getElementById('activity-list');
   var sessionFiltersEl = document.getElementById('session-filters');
   var knownSessions = new Set();
@@ -144,6 +145,32 @@
   var toolItemMap = new Map(); // tool_id → DOM element cache
   var isBatchLoading = false;
   var IDLE_CLOSE_MS = (window.wilsonConfig && window.wilsonConfig.IDLE_CLOSE_MS) || 10000; // 최종 메시지 후 10초 무활동 시 그룹 자동 접힘
+  var MAX_FEED_GROUPS = (window.wilsonConfig && window.wilsonConfig.MAX_FEED_GROUPS) || 500; // #5 virtualization — DOM 그룹 상한
+
+  // #5 — DOM 상한 초과 시 가장 오래된 그룹부터 FIFO 제거 (toolItemMap/sessionStates/close timer 정리)
+  function enforceGroupCap() {
+    var groups = activityList.querySelectorAll('.prompt-group');
+    if (groups.length <= MAX_FEED_GROUPS) return;
+    var toRemove = groups.length - MAX_FEED_GROUPS;
+    for (var i = 0; i < toRemove; i++) {
+      var g = groups[i];
+      // 이 그룹 안의 tool id 매핑 제거 (dangling DOM 참조 방지)
+      var items = g.querySelectorAll('[data-tool-id]');
+      for (var j = 0; j < items.length; j++) {
+        toolItemMap.delete(items[j].dataset.toolId);
+      }
+      // sessionStates가 이 그룹을 가리키면 초기화 → 다음 이벤트가 새 그룹 생성
+      for (var key in sessionStates) {
+        if (sessionStates[key].group === g) {
+          sessionStates[key].group = null;
+          sessionStates[key].toolsContainer = null;
+          sessionStates[key].toolCount = 0;
+        }
+      }
+      if (g._closeTimer) { clearTimeout(g._closeTimer); g._closeTimer = null; }
+      g.remove();
+    }
+  }
 
   function openGroup(group) {
     if (!group) return;
@@ -260,6 +287,7 @@
     group.appendChild(header);
     group.appendChild(tools);
     activityList.appendChild(group);
+    enforceGroupCap(); // #5 — 신규 그룹 추가 후 상한 체크
 
     // 모든 그룹 기본 접힘 (활동 발생 시 자동 펼침)
     header.querySelector('.prompt-toggle').classList.add('collapsed');
@@ -584,15 +612,21 @@
     window.hoverTooltip.bind(activityList, 1500);
   }
 
-  window.addActivityItem = addActivityItem;
-  window.addActivityItemBefore = addActivityItemBefore;
-  window.feed = {
+  // ─── ES Module exports ───────────────────────────
+  export { addActivityItem, addActivityItemBefore, escapeHtml, formatTime, formatDuration, formatElapsed, activityList };
+  export const feed = {
     startBatch: function() { isBatchLoading = true; },
     endBatch: function() { isBatchLoading = false; },
   };
-  window.escapeHtml = escapeHtml;
-  window.formatTime = formatTime;
-  window.formatDuration = formatDuration;
-  window.formatElapsed = formatElapsed;
-  window.activityList = activityList;
-})();
+
+  // COMPAT — 다른 모듈이 window.* 여전히 참조
+  if (typeof window !== 'undefined') {
+    window.addActivityItem = addActivityItem;
+    window.addActivityItemBefore = addActivityItemBefore;
+    window.feed = feed;
+    window.escapeHtml = escapeHtml;
+    window.formatTime = formatTime;
+    window.formatDuration = formatDuration;
+    window.formatElapsed = formatElapsed;
+    window.activityList = activityList;
+  }

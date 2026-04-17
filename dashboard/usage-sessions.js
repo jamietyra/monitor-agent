@@ -13,8 +13,7 @@
  *   - 모달 열려있는 동안 usageData 갱신 시 재렌더 (최근 열린 date 기준)
  */
 
-(function () {
-  'use strict';
+// usage-sessions.js — monitor-usage Sessions/Summary/Day Drilldown (ES Module)
 
   // ── 상태 ────────────────────────────────────────────
   // localStorage 키 — 세션간 사용자 UI 선호 보존
@@ -833,12 +832,12 @@
   }
 
   // ── 전역 노출 ──────────────────────────────────────
-  window.usageSessions = {
+  export const usageSessions = {
     renderSummaryCards,
     renderSessionsPanel,
     openDayModal,
     closeDayModal,
-    makeSessionTag,            // Top Projects 등에서 재사용
+    makeSessionTag,
     sessionTagColor,
     get currentPeriod() { return state.currentPeriod; },
     set currentPeriod(v) { state.currentPeriod = v; },
@@ -848,4 +847,4 @@
     _computePrevRange: computePrevRange,
     _formatDelta: formatDelta,
   };
-})();
+  if (typeof window !== 'undefined') window.usageSessions = usageSessions;
