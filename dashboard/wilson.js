@@ -36,6 +36,19 @@
     '<path d="M18 35 Q24 39 30 35" fill="none" stroke="white" stroke-width="1" opacity="0.35" stroke-linecap="round"/>' +
     '<circle cx="24" cy="24" r="22" fill="url(#wilsonLight)" opacity="0.55" pointer-events="none"/>' +
     '</svg>';
+  // Searching 전용 — 돋보기가 얼굴 위를 천천히 움직임 (눈동자는 집중 상태로 고정)
+  var SVG_END_SEARCHING = '<circle cx="24" cy="28" r="1" fill="white" opacity="0.25"/>' +
+    '<path d="M18 35 Q24 39 30 35" fill="none" stroke="white" stroke-width="1" opacity="0.35" stroke-linecap="round"/>' +
+    BALL_LIGHT_OVERLAY +
+    '<g id="wilsonMagnifier">' +
+      // 손잡이 (렌즈 우하단 방향으로)
+      '<line x1="29.5" y1="29.5" x2="36" y2="36" stroke="#3a2a1a" stroke-width="2.8" stroke-linecap="round"/>' +
+      // 렌즈 유리 (반투명 하늘색)
+      '<circle cx="24" cy="24" r="7.5" fill="#b4dcff" fill-opacity="0.22" stroke="#3a2a1a" stroke-width="1.5"/>' +
+      // 유리 하이라이트
+      '<path d="M 20 21 Q 22 19.5 25 21" fill="none" stroke="white" stroke-width="1" stroke-linecap="round" opacity="0.7"/>' +
+    '</g>' +
+    '</svg>';
 
   // Eyes: normal (centered pupils)
   var EYES_NORMAL =
@@ -66,7 +79,7 @@
     waiting:   SVG_START + EYES_NORMAL + SVG_END,
     thinking:  SVG_START + EYES_NORMAL + SVG_END,  // 동공 위치는 JS가 실시간 변경
     working:   SVG_START + EYES_NORMAL + SVG_END,  // 같은 3D 공, 애니메이션만 jitter
-    searching: SVG_START + EYES_NORMAL + SVG_END,  // 눈동자 좌우 scan + 공 기울임
+    searching: SVG_START + EYES_NORMAL + SVG_END_SEARCHING,  // 돋보기가 얼굴 위 느린 궤적, 눈동자 집중 고정
     solving:   SVG_START + EYES_SPARKLE + SVG_END_SOLVING,  // 내부 음영 약함 + 외부 aura 강함
     sleeping:  SVG_START + EYES_CLOSED + SVG_END
   };
@@ -136,17 +149,16 @@
           break;
         }
         case 'searching': {
-          // 탐색 — 공이 좌우로 천천히 기울이며 눈동자가 넓게 scan (돋보기 탐색)
-          var swayR = 6 * Math.sin(t * Math.PI * 2 / 1500);   // ±6° at 1.5s
-          var eyeDx = 3.5 * Math.sin(t * Math.PI * 2 / 900);  // 눈동자 수평 scan
-          var eyeDy = 0.8 * Math.sin(t * Math.PI * 2 / 2200); // 미세 수직 드리프트
-          if (svgWrap._pupils && svgWrap._pupils.length >= 2) {
-            svgWrap._pupils[0].setAttribute('cx', 16 + eyeDx);
-            svgWrap._pupils[0].setAttribute('cy', 20 + eyeDy);
-            svgWrap._pupils[1].setAttribute('cx', 32 + eyeDx);
-            svgWrap._pupils[1].setAttribute('cy', 20 + eyeDy);
+          // 탐색 — 눈동자는 집중한 듯 고정, 돋보기만 얼굴 위를 아주 천천히 타원 궤적으로 이동
+          if (!svgWrap._magnifier) svgWrap._magnifier = svgWrap.querySelector('#wilsonMagnifier');
+          if (svgWrap._magnifier) {
+            // 비정수비 주기로 자연스러운 탐색 느낌 (x: 8초, y: 11초)
+            var mx = 10 * Math.sin(t * Math.PI * 2 / 8000);
+            var my = 6 * Math.sin(t * Math.PI * 2 / 11000 + 1.5);
+            svgWrap._magnifier.setAttribute('transform', 'translate(' + mx.toFixed(2) + ', ' + my.toFixed(2) + ')');
           }
-          svgWrap.style.transform = 'rotate(' + swayR.toFixed(2) + 'deg)';
+          // 눈동자 기본 위치 유지 (EYES_NORMAL에서 이미 cx=16/32, cy=20)
+          svgWrap.style.transform = '';
           svgWrap.style.opacity = '';
           break;
         }
@@ -246,6 +258,8 @@
       svgWrap.innerHTML = SVGS[newState];
       // Cache pupil refs once per SVG swap (thinking 최적화)
       svgWrap._pupils = svgWrap.querySelectorAll('circle[fill="#1a1a2e"]');
+      // 돋보기 refresh — 이전 SVG의 stale 참조 방지 (searching 진입 시 querySelector로 재캐시)
+      svgWrap._magnifier = null;
     }
     // Start JS animation
     if (svgWrap) animate(newState);

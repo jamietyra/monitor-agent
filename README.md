@@ -49,7 +49,7 @@ A volleyball-faced character named Wilson communicates AI status through **6 exp
 |-------|------------|---------|
 | `waiting` | Slow breathing | Response done / idle |
 | `thinking` | Eye-rolling + gentle wobble | Prompt · Read |
-| `searching` | Sway + horizontal eye scan | Search tools (Grep · Glob · Web · Playwright) |
+| `searching` | Magnifying glass slowly traversing the face (eyes stay focused) | Search tools (Grep · Glob · Web, etc.) |
 | `working` | Irregular left-right jitter | Edit/exec tools (Write · Edit · Bash · Task, etc.) |
 | `solving` | Golden aura + crimson pulse | Error |
 | `sleeping` | Eyes closed, breathing | 10 minutes idle |
