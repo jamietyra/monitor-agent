@@ -76,8 +76,8 @@
   var SVGS = {
     waiting:   SVG_START + EYES_NORMAL + SVG_END,
     thinking:  SVG_START + EYES_NORMAL + SVG_END,  // 동공 위치는 JS가 실시간 변경
-    working:   SVG_START + EYES_NORMAL + SVG_END,  // 같은 3D 공, 애니메이션만 jitter
-    searching: SVG_START + EYES_NORMAL + SVG_END_SEARCHING,  // 돋보기가 얼굴 위 느린 궤적, 눈동자 집중 고정
+    working:   SVG_START + EYES_SPARKLE + SVG_END,  // 눈 반짝이 + jitter 애니메이션
+    searching: SVG_START + EYES_NORMAL + SVG_END_SEARCHING,  // 돋보기 궤적 + 눈동자 추적
     solving:   SVG_START + EYES_SPARKLE + SVG_END_SOLVING,  // 내부 음영 약함 + 외부 aura 강함
     sleeping:  SVG_START + EYES_CLOSED + SVG_END
   };
@@ -147,15 +147,27 @@
           break;
         }
         case 'searching': {
-          // 탐색 — 눈동자는 집중한 듯 고정, 돋보기만 얼굴 위를 아주 천천히 타원 궤적으로 이동
+          // 탐색 — 돋보기가 얼굴 위를 느린 궤적으로 이동, 눈동자가 돋보기를 따라 움직임
           if (!svgWrap._magnifier) svgWrap._magnifier = svgWrap.querySelector('#wilsonMagnifier');
+          // 비정수비 주기로 자연스러운 탐색 느낌 (x: 8초, y: 11초)
+          var mx = 10 * Math.sin(t * Math.PI * 2 / 8000);
+          var my = 6 * Math.sin(t * Math.PI * 2 / 11000 + 1.5);
           if (svgWrap._magnifier) {
-            // 비정수비 주기로 자연스러운 탐색 느낌 (x: 8초, y: 11초)
-            var mx = 10 * Math.sin(t * Math.PI * 2 / 8000);
-            var my = 6 * Math.sin(t * Math.PI * 2 / 11000 + 1.5);
             svgWrap._magnifier.setAttribute('transform', 'translate(' + mx.toFixed(2) + ', ' + my.toFixed(2) + ')');
           }
-          // 눈동자 기본 위치 유지 (EYES_NORMAL에서 이미 cx=16/32, cy=20)
+          // 눈동자가 돋보기 중심(24+mx, 24+my)을 바라봄 — 소켓 범위 ±2 클램프
+          if (svgWrap._pupils && svgWrap._pupils.length >= 2) {
+            var magX = 24 + mx, magY = 24 + my;
+            var clamp = function(v) { return v < -2 ? -2 : v > 2 ? 2 : v; };
+            var lx = clamp((magX - 16) * 0.2);
+            var ly = clamp((magY - 20) * 0.5);
+            var rx = clamp((magX - 32) * 0.2);
+            var ry = clamp((magY - 20) * 0.5);
+            svgWrap._pupils[0].setAttribute('cx', (16 + lx).toFixed(2));
+            svgWrap._pupils[0].setAttribute('cy', (20 + ly).toFixed(2));
+            svgWrap._pupils[1].setAttribute('cx', (32 + rx).toFixed(2));
+            svgWrap._pupils[1].setAttribute('cy', (20 + ry).toFixed(2));
+          }
           svgWrap.style.transform = '';
           svgWrap.style.opacity = '';
           break;

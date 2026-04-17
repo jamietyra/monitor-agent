@@ -1,8 +1,25 @@
 // Prism syntax highlighting Web Worker.
 // Main thread에서 큰 파일 하이라이팅 시 UI blocking 방지.
 
+// Prism 코어가 워커 컨텍스트에서 자동 등록하는 message 리스너를 차단.
+// Prism 기본 리스너는 JSON.parse(t.data)를 기대하는데 우리는 객체로 postMessage하므로
+// "[object Object]" is not valid JSON SyntaxError가 반복 발생함.
+// importScripts 중 addEventListener('message', ...) 1회 호출을 no-op으로 만들어 예방.
+(function() {
+  var orig = self.addEventListener;
+  var blocked = false;
+  self.addEventListener = function(type, listener, options) {
+    if (!blocked && type === 'message') { blocked = true; return; }
+    return orig.call(self, type, listener, options);
+  };
+  try {
+    importScripts('/vendor/prism/prism.min.js');
+  } finally {
+    self.addEventListener = orig;
+  }
+})();
+
 importScripts(
-  '/vendor/prism/prism.min.js',
   '/vendor/prism/prism-javascript.min.js',
   '/vendor/prism/prism-typescript.min.js',
   '/vendor/prism/prism-jsx.min.js',
