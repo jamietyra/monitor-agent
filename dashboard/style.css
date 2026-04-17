@@ -183,6 +183,10 @@ main { display: flex; flex-direction: row; flex: 1; overflow: hidden; }
 }
 .load-more-btn:hover { background: var(--bg-hover); color: var(--text); }
 .load-more-btn:disabled { color: var(--text-muted); cursor: wait; }
+.load-more-btn .load-count {
+  color: var(--text-dim); font-size: calc(var(--text-xs) - 1px);
+  font-weight: normal; margin-left: 4px;
+}
 
 /* ─── Session Tag ─── */
 .session-tag {

@@ -33,38 +33,11 @@
   }
 
   // ── 포맷 헬퍼 ───────────────────────────────────────
-  /** 1234 → "1.2K", 1234567 → "1.2M", 1234567890 → "1.2B" */
-  function formatTokens(n) {
-    if (!n || n <= 0) return '0';
-    if (n < 1000) return String(Math.round(n));
-    if (n < 1_000_000) return (n / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
-    if (n < 1_000_000_000) return (n / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';
-    return (n / 1_000_000_000).toFixed(1).replace(/\.0$/, '') + 'B';
-  }
-
-  /** $X.XX 소수 둘째 자리. */
-  function formatCost(usd) {
-    if (!usd || usd <= 0) return '$0.00';
-    return '$' + Number(usd).toFixed(2);
-  }
-
-  /** ms → "Xh Ym" 또는 "Ym", 0이면 "—" */
-  function formatDuration(ms) {
-    if (!ms || ms <= 0) return '—';
-    const totalMin = Math.round(ms / 60000);
-    const h = Math.floor(totalMin / 60);
-    const m = totalMin % 60;
-    if (h <= 0) return m + 'm';
-    return h + 'h ' + m + 'm';
-  }
-
-  /** Date → 'YYYY-MM-DD' (로컬 기준) */
-  function isoDate(d) {
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return y + '-' + m + '-' + day;
-  }
+  // dashboard/format.js의 공용 구현 재사용 (IIFE 내부로 끌어와서 기존 코드 변경 최소화)
+  const formatTokens = window.wilsonFormat.formatTokens;
+  const formatCost = window.wilsonFormat.formatCost;
+  const formatDuration = window.wilsonFormat.formatDuration;
+  const isoDate = window.wilsonFormat.isoDate;
 
   /** 'YYYY-MM-DD' 오늘 문자열 */
   function todayStr() {

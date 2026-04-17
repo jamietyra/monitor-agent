@@ -11,6 +11,33 @@
   var diffTime = document.getElementById('diff-time');
   var diffContent = document.getElementById('diff-content');
 
+  // ─── Prism Web Worker (백그라운드 하이라이트) ────────
+  var prismWorker = null;
+  var prismWorkerListener = false;
+  var pendingPrismJobs = {};
+  var nextPrismId = 0;
+
+  function highlightWithWorker(codeEl, code, language, done) {
+    if (!language || language === 'plaintext') { if (done) done(); return; }
+    if (!prismWorker) {
+      try { prismWorker = new Worker('/prism-worker.js'); } catch (e) { prismWorker = null; }
+      if (!prismWorker) { if (done) done(); return; }
+    }
+    if (!prismWorkerListener) {
+      prismWorker.addEventListener('message', function(e) {
+        var job = pendingPrismJobs[e.data.id];
+        if (!job) return;
+        delete pendingPrismJobs[e.data.id];
+        if (job.el && e.data.html != null) job.el.innerHTML = e.data.html;
+        if (job.done) job.done();
+      });
+      prismWorkerListener = true;
+    }
+    var id = ++nextPrismId;
+    pendingPrismJobs[id] = { el: codeEl, done: done };
+    prismWorker.postMessage({ id: id, code: code, language: language });
+  }
+
   // ─── Code Viewer ──────────────────────────────────
   var pendingHighlight = null;
 
@@ -64,14 +91,10 @@
     var savedHighlight = pendingHighlight;
     pendingHighlight = null;
 
-    if (fileData.totalLines <= 1000 && typeof Prism !== 'undefined') {
-      requestAnimationFrame(function() {
-        Prism.highlightElement(code);
-        if (savedHighlight) highlightChangedLines(code, savedHighlight);
-      });
-    } else if (savedHighlight) {
-      highlightChangedLines(code, savedHighlight);
-    }
+    // Web Worker 하이라이트 — 1000줄 컷오프 제거 (UI block 안 함)
+    highlightWithWorker(code, fileData.content, fileData.language || 'plaintext', function() {
+      if (savedHighlight) highlightChangedLines(code, savedHighlight);
+    });
 
     // 클릭된 항목만 강조 (clickedElement가 있을 때만)
     document.querySelectorAll('.activity-item.active').forEach(function(el) { el.classList.remove('active'); });
@@ -134,7 +157,29 @@
   }
 
   // ─── 파일 캐시 + 요청 ─────────────────────────────
-  var fileCache = new Map();
+  // LRU: 최근 사용 50개 유지. Map의 삽입 순서 보존을 활용.
+  var FILE_CACHE_MAX = (window.wilsonConfig && window.wilsonConfig.FILE_CACHE_MAX) || 50;
+  var fileCache = (function() {
+    var map = new Map();
+    return {
+      get: function(key) {
+        if (!map.has(key)) return undefined;
+        var value = map.get(key);
+        map.delete(key); map.set(key, value); // touch → move to end
+        return value;
+      },
+      set: function(key, value) {
+        if (map.has(key)) map.delete(key);
+        map.set(key, value);
+        if (map.size > FILE_CACHE_MAX) {
+          map.delete(map.keys().next().value); // evict oldest
+        }
+        return this;
+      },
+      delete: function(key) { return map.delete(key); },
+      has: function(key) { return map.has(key); },
+    };
+  })();
 
   function requestFileContent(filePath) {
     // 캐시에 있으면 즉시 표시
@@ -154,38 +199,64 @@
   }
 
   // ─── Diff Viewer ──────────────────────────────────
+  function makeDiffLine(kind, lang, line) {
+    var div = document.createElement('div');
+    div.className = 'diff-line-' + kind;
+    var prefix = document.createElement('span');
+    prefix.className = 'diff-prefix';
+    prefix.textContent = kind === 'old' ? '- ' : '+ ';
+    var code = document.createElement('code');
+    code.className = 'language-' + lang;
+    code.textContent = line;
+    div.appendChild(prefix);
+    div.appendChild(code);
+    return div;
+  }
+
   function displayDiff(data) {
     diffPanel.classList.add('visible');
     var oldLines = data.diff.oldString ? data.diff.oldString.split('\n').length : 0;
     var newLines = data.diff.newString ? data.diff.newString.split('\n').length : 0;
-    var fname = window.escapeHtml('Edit: ' + (data.fileName || ''));
-    var badge = ' <span style="color:var(--text-dim);font-weight:400">'
-      + '<span style="color:#6ee7b7">+' + newLines + '</span> / '
-      + '<span style="color:#fca5a5">-' + oldLines + '</span></span>';
-    diffFilename.innerHTML = fname + badge;
+
+    // Filename + 배지 — textContent + createElement로 재작성 (XSS 방지 + reflow 1회)
+    while (diffFilename.firstChild) diffFilename.removeChild(diffFilename.firstChild);
+    diffFilename.appendChild(document.createTextNode('Edit: ' + (data.fileName || '') + ' '));
+    var badge = document.createElement('span');
+    badge.style.cssText = 'color:var(--text-dim);font-weight:400';
+    var plus = document.createElement('span');
+    plus.style.color = '#6ee7b7';
+    plus.textContent = '+' + newLines;
+    var minus = document.createElement('span');
+    minus.style.color = '#fca5a5';
+    minus.textContent = '-' + oldLines;
+    badge.appendChild(plus);
+    badge.appendChild(document.createTextNode(' / '));
+    badge.appendChild(minus);
+    diffFilename.appendChild(badge);
+
     diffTime.textContent = data.time ? window.formatTime(data.time) : '';
 
     var lang = data.language || 'plaintext';
-    var lines = [];
-    // 삭제된 줄
+    var frag = document.createDocumentFragment();
+
     if (data.diff.oldString) {
       data.diff.oldString.split('\n').forEach(function(line) {
-        lines.push('<div class="diff-line-old"><span class="diff-prefix">- </span><code class="language-' + lang + '">' + window.escapeHtml(line) + '</code></div>');
+        frag.appendChild(makeDiffLine('old', lang, line));
       });
     }
-    // 구분선
-    lines.push('<hr class="diff-separator">');
-    // 추가된 줄
+    var hr = document.createElement('hr');
+    hr.className = 'diff-separator';
+    frag.appendChild(hr);
     if (data.diff.newString) {
       data.diff.newString.split('\n').forEach(function(line) {
-        lines.push('<div class="diff-line-new"><span class="diff-prefix">+ </span><code class="language-' + lang + '">' + window.escapeHtml(line) + '</code></div>');
+        frag.appendChild(makeDiffLine('new', lang, line));
       });
     }
 
-    diffContent.innerHTML = lines.join('');
+    diffContent.innerHTML = '';
+    diffContent.appendChild(frag);
 
-    var totalDiffLines = (data.diff.oldString ? data.diff.oldString.split('\n').length : 0)
-      + (data.diff.newString ? data.diff.newString.split('\n').length : 0);
+    var totalDiffLines = oldLines + newLines;
     if (typeof Prism !== 'undefined' && lang !== 'plaintext' && totalDiffLines <= 1000) {
       requestAnimationFrame(function() {
         diffContent.querySelectorAll('code[class^="language-"]').forEach(function(el) {

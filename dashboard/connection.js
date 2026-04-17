@@ -45,7 +45,7 @@
 
   // ─── Stats 핸들러 ───────────────────────────────────
   // Running/Done/Errors/Elapsed 카운터는 제거됨. 활성 모델만 footer에 표시.
-  var loadInfo = { totalEvents: 0, totalBytes: 0 };
+  var loadInfo = { totalEvents: 0, totalBytes: 0, totalPrompts: 0, loadedPrompts: 0 };
 
   function formatBytes(bytes) {
     if (bytes < 1024) return bytes + 'B';
@@ -83,11 +83,34 @@
     var hasMoreEvents = false;
     var loadMoreBtn = null;
 
+    // 숫자 포맷 (5000 → "5,000"). toLocaleString 실패 시 원본 반환.
+    function fmtNum(n) {
+      try { return Number(n).toLocaleString('en-US'); } catch (e) { return String(n); }
+    }
+
+    // Load more 버튼 라벨 갱신: "▲ Load 100 more prompts  (showing X of Y prompts)"
+    // totalPrompts 미제공 시 카운트 span 생략.
+    function setLoadMoreLabel(btn) {
+      if (!btn) return;
+      btn.textContent = '';
+      var main = document.createElement('span');
+      main.textContent = '▲ Load 100 more prompts';
+      btn.appendChild(main);
+      var total = loadInfo.totalPrompts || 0;
+      if (total > 0) {
+        var loaded = Math.min(total, loadInfo.loadedPrompts || 0);
+        var count = document.createElement('span');
+        count.className = 'load-count';
+        count.textContent = ' (showing ' + fmtNum(loaded) + ' of ' + fmtNum(total) + ' prompts)';
+        btn.appendChild(count);
+      }
+    }
+
     function insertLoadMoreBtn() {
       if (loadMoreBtn) loadMoreBtn.remove();
       loadMoreBtn = document.createElement('button');
       loadMoreBtn.className = 'load-more-btn';
-      loadMoreBtn.textContent = '▲ Load 100 more prompts';
+      setLoadMoreLabel(loadMoreBtn);
       loadMoreBtn.onclick = function() {
         loadMoreBtn.textContent = 'Loading...';
         loadMoreBtn.disabled = true;
@@ -108,12 +131,15 @@
               if (window.feed) window.feed.endBatch();
               loadedStartIdx = data.startIdx;
               hasMoreEvents = data.hasMore;
+              // Load More: 새 슬라이스의 prompt 수를 누적
+              if (typeof data.slicePrompts === 'number') loadInfo.loadedPrompts = (loadInfo.loadedPrompts || 0) + data.slicePrompts;
+              if (typeof data.totalPrompts === 'number') loadInfo.totalPrompts = data.totalPrompts;
               // 스크롤 위치 유지
               var newScrollH = window.activityList.scrollHeight;
               window.activityList.scrollTop = scrollT + (newScrollH - scrollH);
             }
             if (hasMoreEvents) {
-              loadMoreBtn.textContent = '▲ Load 100 more prompts';
+              setLoadMoreLabel(loadMoreBtn);
               loadMoreBtn.disabled = false;
             } else {
               loadMoreBtn.remove();
@@ -121,7 +147,7 @@
             }
           })
           .catch(function() {
-            loadMoreBtn.textContent = '▲ Load 100 more prompts';
+            setLoadMoreLabel(loadMoreBtn);
             loadMoreBtn.disabled = false;
           });
       };
@@ -148,10 +174,16 @@
       // 페이지네이션 상태 설정 (feed.js 로드된 페이지에서만)
       loadedStartIdx = data.startIdx;
       hasMoreEvents = data.hasMore;
+
+      // 버튼 라벨 카운트용 — 버튼 생성 전에 저장.
+      if (data.totalEvents) loadInfo.totalEvents = data.totalEvents;
+      if (typeof data.totalPrompts === 'number') loadInfo.totalPrompts = data.totalPrompts;
+      // init: 슬라이스 prompt 수가 곧 초기 로드된 개수
+      if (typeof data.slicePrompts === 'number') loadInfo.loadedPrompts = data.slicePrompts;
+      if (data.totalTranscriptBytes) loadInfo.totalBytes = data.totalTranscriptBytes;
+
       if (hasMoreEvents && typeof insertLoadMoreBtn === 'function') insertLoadMoreBtn();
 
-      if (data.totalEvents) loadInfo.totalEvents = data.totalEvents;
-      if (data.totalTranscriptBytes) loadInfo.totalBytes = data.totalTranscriptBytes;
       if (data.stats && typeof updateStats === 'function') updateStats(data.stats);
       if (window.activityList) window.activityList.scrollTop = window.activityList.scrollHeight;
     });

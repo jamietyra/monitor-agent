@@ -13,11 +13,19 @@ import os from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { aggregateAll } from './lib/aggregator.mjs';
 import { parseUsageEvent } from './lib/usage-parser.mjs';
+import { computeAllowedRoots, isPathAllowed } from './lib/path-guard.mjs';
+import { computeAllowedOrigins, matchOrigin } from './lib/cors-guard.mjs';
+import { createLogger } from './lib/logger.mjs';
+
+const log = createLogger('server');
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = parseInt(process.env.MONITOR_PORT || '3141');
 const MAX_FILE_LINES = 1500;
-const DEBOUNCE_MS = 100;
+const DEBOUNCE_MS = 100;                 // 기본값 (역호환)
+const DEBOUNCE_LOW_MS = 10;               // 저부하 (최근 1분 < 10 events)
+const DEBOUNCE_HIGH_MS = 500;             // 고부하 (최근 1분 > 100 events)
+const RATE_WINDOW_MS = 60_000;            // 이동 평균 윈도우
 const HEARTBEAT_MS = 30000;
 
 // ─── Remote access mode ────────────────────────────────────
@@ -25,12 +33,39 @@ const REMOTE = process.env.MONITOR_REMOTE === 'true';
 const TOKEN = process.env.MONITOR_TOKEN || '';
 const HOST = REMOTE ? '0.0.0.0' : '127.0.0.1';
 
+// /api/file에 허용할 파일 시스템 루트. 환경변수로 확장 가능.
+const ALLOWED_ROOTS = computeAllowedRoots();
+console.log(`[wilson] allowed file roots: ${ALLOWED_ROOTS.join(', ')}`);
+
+// CORS Origin 화이트리스트 — hostname 기준
+const ALLOWED_ORIGINS = computeAllowedOrigins();
+console.log(`[wilson] allowed CORS origins: ${ALLOWED_ORIGINS.join(', ')}`);
+
+// 쿼리 토큰 사용 client 기록 (deprecation 경고 중복 방지)
+const seenQueryTokenClients = new Set();
+const MAX_SEEN_CLIENTS = 500;
+
 function authenticate(req, res) {
   if (!TOKEN) return true; // no token = no auth required
   const url = new URL(req.url, `http://localhost:${PORT}`);
   const queryToken = url.searchParams.get('token');
   const headerToken = (req.headers.authorization || '').replace('Bearer ', '');
-  if (queryToken === TOKEN || headerToken === TOKEN) return true;
+
+  // Bearer 헤더 우선 — 가장 안전한 방식
+  if (headerToken && headerToken === TOKEN) return true;
+
+  // 쿼리 토큰 — 허용하되 deprecation 경고
+  if (queryToken && queryToken === TOKEN) {
+    res.setHeader('X-Auth-Deprecation', 'query-token; prefer Authorization: Bearer header');
+    const client = req.socket.remoteAddress || 'unknown';
+    if (!seenQueryTokenClients.has(client)) {
+      if (seenQueryTokenClients.size >= MAX_SEEN_CLIENTS) seenQueryTokenClients.clear();
+      seenQueryTokenClients.add(client);
+      log.warn('deprecated auth: query-token', { client, hint: 'prefer Authorization: Bearer header' });
+    }
+    return true;
+  }
+
   res.writeHead(401, { 'Content-Type': 'text/plain' });
   res.end('Unauthorized — token required');
   return false;
@@ -62,7 +97,30 @@ function extractProjectName(dirName, baseName) {
   return dirName.split('-').filter(Boolean).pop() || dirName.slice(0, 10);
 }
 
-const MAX_EVENTS = 25555;
+const MAX_EVENTS = 200000;
+// Array.shift()는 O(n). MAX * 1.25에 도달하면 한 번에 slice(-MAX)로 compaction.
+// 결과적으로 push당 평균 비용은 O(1) — 40000 push마다 1번 O(n) (20만 기준).
+// 메모리: 이벤트 1건 ~500B 가정 시 약 100MB peak — 데스크탑 환경 안전.
+const EVENTS_COMPACT_THRESHOLD = Math.floor(MAX_EVENTS * 1.25);
+
+// ─── 적응형 디바운스 — 부하 기반 ─────────────────────────
+// 최근 1분 이벤트 수에 따라 debounce 지연 조정.
+// 저부하: 10ms (거의 실시간), 고부하: 500ms (플러딩 방지).
+const recentEventTimestamps = [];
+function recordEventRate(count = 1) {
+  const now = Date.now();
+  for (let i = 0; i < count; i++) recentEventTimestamps.push(now);
+  // prune: O(n) but windowed (보통 <100 items)
+  while (recentEventTimestamps.length > 0 && now - recentEventTimestamps[0] > RATE_WINDOW_MS) {
+    recentEventTimestamps.shift();
+  }
+}
+function currentDebounceMs() {
+  const rate = recentEventTimestamps.length;
+  if (rate < 10) return DEBOUNCE_LOW_MS;
+  if (rate > 100) return DEBOUNCE_HIGH_MS;
+  return Math.round(DEBOUNCE_LOW_MS + (rate - 10) * (DEBOUNCE_HIGH_MS - DEBOUNCE_LOW_MS) / 90);
+}
 // 서버 부팅 시각 기반 토큰 — HTML 서빙 시 `?v=숫자` 를 자동 치환해 캐시 무효화.
 // 수동으로 v 번호를 올릴 필요 없음 (서버 재시작이 새 토큰을 발급).
 const BOOT_VER = String(Date.now());
@@ -92,9 +150,15 @@ function loadOffsets() {
 }
 
 function saveOffsets() {
+  // atomic write: tmp → rename (partial write 시 offsets.json 손상 방지)
+  const tmp = OFFSETS_PATH + '.tmp';
   try {
-    fs.writeFileSync(OFFSETS_PATH, JSON.stringify(offsetCache, null, 2), 'utf8');
-  } catch { /* 저장 실패 시 무시 — 다음 주기에 재시도 */ }
+    fs.writeFileSync(tmp, JSON.stringify(offsetCache, null, 2), 'utf8');
+    fs.renameSync(tmp, OFFSETS_PATH);
+  } catch {
+    // 저장 실패 시 무시 — 다음 주기에 재시도. tmp는 쓰레기로 남을 수 있음.
+    try { fs.unlinkSync(tmp); } catch { /* skip */ }
+  }
 }
 
 // 서버 시작 시 offset 로드
@@ -481,10 +545,10 @@ const LANG_MAP = {
   '.vue': 'html', '.svelte': 'html',
 };
 
-function readFileContent(filePath) {
+async function readFileContent(filePath) {
   try {
-    if (!fs.existsSync(filePath)) return null;
-    const stat = fs.statSync(filePath);
+    // stat으로 존재 + 크기 확인 (ENOENT 시 catch로 null 반환)
+    const stat = await fs.promises.stat(filePath);
 
     // 바이너리/이미지 파일 제외 (5MB 초과도 제외)
     if (stat.size > 5 * 1024 * 1024) return { truncated: true, reason: 'too_large', size: stat.size };
@@ -493,7 +557,7 @@ function readFileContent(filePath) {
     const binaryExts = ['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.ico', '.webp', '.mp3', '.mp4', '.zip', '.exe', '.dll', '.so', '.wasm'];
     if (binaryExts.includes(ext)) return { truncated: true, reason: 'binary', ext };
 
-    const raw = fs.readFileSync(filePath, 'utf8');
+    const raw = await fs.promises.readFile(filePath, 'utf8');
     const lines = raw.split('\n');
     const truncated = lines.length > MAX_FILE_LINES;
     const content = truncated ? lines.slice(0, MAX_FILE_LINES).join('\n') : raw;
@@ -537,10 +601,25 @@ function sliceByPrompts(beforeIdx, promptLimit) {
     startIdx = promptPositions[promptPositions.length - promptLimit];
   }
 
+  // 이 슬라이스[startIdx..end)에 포함된 prompt 수 — 클라이언트가 누적 계산에 사용
+  let slicePrompts = 0;
+  for (let i = promptPositions.length - 1; i >= 0; i--) {
+    if (promptPositions[i] >= startIdx) slicePrompts++;
+    else break;
+  }
+
+  // 전체 버퍼의 총 prompt 수 — beforeIdx 무관 (promptPositions는 end 기준이라 별도 계산)
+  let totalPrompts = 0;
+  for (let i = 0; i < allRecentEvents.length; i++) {
+    if (allRecentEvents[i].type === 'prompt') totalPrompts++;
+  }
+
   return {
     events: allRecentEvents.slice(startIdx, end),
     startIdx,
     hasMore: startIdx > 0,
+    totalPrompts,   // 버퍼 전체 prompt 수 (안정)
+    slicePrompts,   // 이 응답의 슬라이스에 속한 prompt 수 (클라이언트가 += 누적)
   };
 }
 
@@ -646,18 +725,22 @@ function watchTranscript(transcriptPath, state, projectName, subagentInfo) {
     const newEvents = readNewLines();
     if (newEvents.length === 0) return;
 
+    recordEventRate(newEvents.length);
+
     for (const ev of newEvents) {
       // 최근 이벤트 목록 갱신 (새로고침 시 최신 상태 유지)
       allRecentEvents.push(ev);
-      if (allRecentEvents.length > MAX_EVENTS) allRecentEvents.shift();
+      if (allRecentEvents.length > EVENTS_COMPACT_THRESHOLD) {
+        allRecentEvents = allRecentEvents.slice(-MAX_EVENTS);
+      }
 
       broadcast('activity', ev);
 
       if (ev.type === 'tool_start' && ev.filePath) {
-        const fileData = readFileContent(ev.filePath);
-        if (fileData && fileData.content) {
-          broadcast('file_content', fileData);
-        }
+        // fire-and-forget — 이벤트 루프를 블록하지 않음
+        readFileContent(ev.filePath).then(fileData => {
+          if (fileData && fileData.content) broadcast('file_content', fileData);
+        }).catch(() => { /* skip */ });
       }
 
       // Edit diff 전송
@@ -719,7 +802,7 @@ function watchTranscript(transcriptPath, state, projectName, subagentInfo) {
   try {
     watcher = fs.watch(transcriptPath, () => {
       if (debounceTimer) clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(processAndBroadcast, DEBOUNCE_MS);
+      debounceTimer = setTimeout(processAndBroadcast, currentDebounceMs());
     });
   } catch { /* 폴링이 백업 */ }
 
@@ -727,25 +810,91 @@ function watchTranscript(transcriptPath, state, projectName, subagentInfo) {
 }
 
 // ─── 스크린샷 감지 ──────────────────────────────────────
+// FSWatcher 단일 구독 + 최신 파일 캐시 유지.
+// tool_done 이벤트마다 전체 디렉토리 stat을 호출하지 않고 캐시를 그대로 사용한다.
+// fs.watch는 플랫폼별 신뢰성 차이가 있어 30초 주기 readdirSync 폴백을 함께 유지.
 
 const screenshotsDir = path.join(__dirname, 'screenshots');
+const SCREENSHOT_EXT_RE = /\.(png|jpg|jpeg)$/i;
+const SCREENSHOT_FALLBACK_INTERVAL_MS = 30_000;
 
-function checkForNewScreenshot() {
+/** @type {{ fileName: string, mtimeMs: number } | null} */
+let latestScreenshot = null;
+let screenshotWatcher = null;
+let screenshotFallbackTimer = null;
+
+/**
+ * 디렉토리 전체를 스캔해서 가장 최근 스크린샷으로 캐시를 초기화/보정한다.
+ * 서버 시작 시 1회 + 30초 폴백에서 호출.
+ */
+function rescanLatestScreenshot() {
   try {
     if (!fs.existsSync(screenshotsDir)) return;
-    const files = fs.readdirSync(screenshotsDir)
-      .filter(f => /\.(png|jpg|jpeg)$/i.test(f))
-      .map(f => ({
-        name: f,
-        mtime: fs.statSync(path.join(screenshotsDir, f)).mtimeMs,
-      }))
-      .sort((a, b) => b.mtime - a.mtime);
-
-    if (files.length > 0) {
-      broadcast('screenshot', { fileName: files[0].name, time: new Date().toISOString() });
+    const entries = fs.readdirSync(screenshotsDir);
+    let best = null;
+    for (const name of entries) {
+      if (!SCREENSHOT_EXT_RE.test(name)) continue;
+      try {
+        const mtimeMs = fs.statSync(path.join(screenshotsDir, name)).mtimeMs;
+        if (!best || mtimeMs > best.mtimeMs) best = { fileName: name, mtimeMs };
+      } catch { /* stat 실패한 파일은 스킵 */ }
+    }
+    if (best && (!latestScreenshot || best.mtimeMs > latestScreenshot.mtimeMs)) {
+      latestScreenshot = best;
     }
   } catch { /* ignore */ }
 }
+
+/**
+ * fs.watch 이벤트로 단일 파일만 stat → 캐시 갱신.
+ */
+function handleScreenshotEvent(filename) {
+  if (!filename || !SCREENSHOT_EXT_RE.test(filename)) return;
+  const full = path.join(screenshotsDir, filename);
+  try {
+    if (!fs.existsSync(full)) return;
+    const mtimeMs = fs.statSync(full).mtimeMs;
+    if (!latestScreenshot || mtimeMs >= latestScreenshot.mtimeMs) {
+      latestScreenshot = { fileName: filename, mtimeMs };
+    }
+  } catch { /* ignore */ }
+}
+
+/**
+ * 서버 기동 시 1회 호출: 초기 스캔 + FSWatcher 구독 + 폴백 타이머 설치.
+ */
+function initScreenshotWatcher() {
+  if (!fs.existsSync(screenshotsDir)) return;
+  rescanLatestScreenshot();
+
+  try {
+    screenshotWatcher = fs.watch(screenshotsDir, (_eventType, filename) => {
+      handleScreenshotEvent(filename);
+    });
+  } catch {
+    // fs.watch 실패 (NFS/권한 등) → 폴백 스캔이 커버
+  }
+
+  // 폴백: 30초마다 재스캔 (fs.watch가 놓친 이벤트 대비)
+  screenshotFallbackTimer = setInterval(rescanLatestScreenshot, SCREENSHOT_FALLBACK_INTERVAL_MS);
+  if (screenshotFallbackTimer.unref) screenshotFallbackTimer.unref();
+}
+
+/**
+ * tool_done(screenshot_taken) 이벤트 핸들러. 재스캔 없이 캐시된 최신 파일을 브로드캐스트.
+ * watcher가 아직 이벤트를 못 받았으면 1회 추가 rescan으로 보정.
+ */
+function checkForNewScreenshot() {
+  if (!latestScreenshot) rescanLatestScreenshot();
+  if (latestScreenshot) {
+    broadcast('screenshot', {
+      fileName: latestScreenshot.fileName,
+      time: new Date().toISOString(),
+    });
+  }
+}
+
+initScreenshotWatcher();
 
 // ─── Usage API 핸들러 (monitor-usage 페이지용) ───────────
 // 5초 메모리 캐시 — 여러 클라이언트/연타 호출 대비
@@ -935,7 +1084,32 @@ function startWatchingTranscript(t) {
 
 // ─── 디렉토리 감시 (fs.watch) + 폴백 스캔 ──────────────
 
-const dirWatchers = new Map(); // dirPath → fs.FSWatcher
+// dirPath → { watcher: fs.FSWatcher, lastActivityAt: ms epoch }
+const dirWatchers = new Map();
+const DIR_WATCHER_IDLE_MS = 7 * 24 * 60 * 60 * 1000;   // 7일 이상 무이벤트 시 evict
+const DIR_WATCHER_EVICTION_INTERVAL_MS = 30 * 60 * 1000; // 30분마다 점검
+
+function recordDirActivity(dirPath) {
+  const entry = dirWatchers.get(dirPath);
+  if (entry) entry.lastActivityAt = Date.now();
+}
+
+function evictIdleDirWatchers() {
+  const now = Date.now();
+  let evicted = 0;
+  for (const [dirPath, entry] of dirWatchers.entries()) {
+    if (now - entry.lastActivityAt > DIR_WATCHER_IDLE_MS) {
+      try { entry.watcher.close(); } catch { /* ignore */ }
+      dirWatchers.delete(dirPath);
+      evicted++;
+      log.info('evicted idle dir watcher', {
+        dirPath: path.basename(dirPath),
+        idleDays: Math.round((now - entry.lastActivityAt) / 86400000),
+      });
+    }
+  }
+  if (evicted > 0) log.info('dir watcher eviction pass', { evicted, remaining: dirWatchers.size });
+}
 
 /**
  * 프로젝트 디렉토리에 fs.watch를 설정하여 새 .jsonl 파일 감지
@@ -945,6 +1119,7 @@ function watchProjectDirectory(dirPath) {
 
   try {
     const watcher = fs.watch(dirPath, (eventType, filename) => {
+      recordDirActivity(dirPath);
       // 새 .jsonl 파일이 생겼을 때만 반응
       if (!filename || !filename.endsWith('.jsonl')) return;
 
@@ -961,7 +1136,7 @@ function watchProjectDirectory(dirPath) {
       }
     });
 
-    dirWatchers.set(dirPath, watcher);
+    dirWatchers.set(dirPath, { watcher, lastActivityAt: Date.now() });
     console.log(`  👁 Watching dir: ${path.basename(dirPath)}`);
   } catch {
     // fs.watch 실패 시 무시 — 폴백 스캔이 커버함
@@ -987,6 +1162,7 @@ function watchSubagentsDirectory(dirPath) {
   if (dirWatchers.has(dirPath)) return;
   try {
     const watcher = fs.watch(dirPath, (eventType, filename) => {
+      recordDirActivity(dirPath);
       if (!filename || !filename.endsWith('.jsonl')) return;
       const fullPath = path.join(dirPath, filename);
       if (!fs.existsSync(fullPath)) return;
@@ -998,7 +1174,7 @@ function watchSubagentsDirectory(dirPath) {
         }
       }
     });
-    dirWatchers.set(dirPath, watcher);
+    dirWatchers.set(dirPath, { watcher, lastActivityAt: Date.now() });
     console.log(`  👁 Watching subagents: ${path.basename(path.dirname(dirPath)).slice(0, 8)}`);
   } catch { /* fs.watch 실패 시 폴백 스캔이 커버 */ }
 }
@@ -1032,6 +1208,7 @@ function setupDirectoryWatchers() {
   if (!dirWatchers.has(projectsDir)) {
     try {
       const parentWatcher = fs.watch(projectsDir, (eventType, filename) => {
+        recordDirActivity(projectsDir);
         if (!filename) return;
         const newDir = path.join(projectsDir, filename);
         if (!filename.toLowerCase().startsWith(baseDirName.toLowerCase())) return;
@@ -1042,7 +1219,7 @@ function setupDirectoryWatchers() {
           }
         } catch { /* skip */ }
       });
-      dirWatchers.set(projectsDir, parentWatcher);
+      dirWatchers.set(projectsDir, { watcher: parentWatcher, lastActivityAt: Date.now() });
     } catch { /* skip */ }
   }
 }
@@ -1074,13 +1251,63 @@ if (allTranscripts.length === 0) {
 // 디렉토리 감시 시작
 setupDirectoryWatchers();
 
+// dirWatchers eviction (7일 idle) — 30분 주기
+setInterval(evictIdleDirWatchers, DIR_WATCHER_EVICTION_INTERVAL_MS).unref();
+
 // 초기 로드 후 offset 저장
 saveOffsets();
 
+// Security model (2026-04-16):
+//   - Wilson HTTP API는 **전부 읽기 전용** (GET /events, /api/file, /api/events, /api/usage).
+//   - 상태를 변경하는 엔드포인트가 존재하지 않으므로 CSRF 방어는 불필요.
+//   - 향후 state-changing endpoint 추가 시 X-CSRF-Token(double-submit) 도입 필수.
+//   - Path traversal: isPathAllowed(..., ALLOWED_ROOTS)로 /api/file 방어.
+//   - CORS: matchOrigin(..., ALLOWED_ORIGINS)로 Origin 화이트리스트.
+//   - Auth: authenticate() — Bearer 우선, 쿼리 토큰은 deprecated.
 const server = http.createServer((req, res) => {
+  // CORS: Origin 화이트리스트 매칭 시에만 헤더 세팅 (authenticate 이전에 해도 무방)
+  const originHeader = req.headers.origin;
+  const allowedOrigin = matchOrigin(originHeader, ALLOWED_ORIGINS);
+  if (allowedOrigin) {
+    res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
+    res.setHeader('Vary', 'Origin');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type');
+  }
+
+  // Preflight 처리 — 허용 Origin에만 204, 그 외 403
+  if (req.method === 'OPTIONS') {
+    res.writeHead(allowedOrigin ? 204 : 403);
+    res.end();
+    return;
+  }
+
   if (!authenticate(req, res)) return;
 
   const url = new URL(req.url, `http://localhost:${PORT}`);
+
+  // Health check — 모니터링/헬스체크 용도
+  if (url.pathname === '/healthz') {
+    const mem = process.memoryUsage();
+    const body = {
+      status: 'ok',
+      uptime: process.uptime(),
+      pid: process.pid,
+      memory: {
+        rss: mem.rss,
+        heapUsed: mem.heapUsed,
+        heapTotal: mem.heapTotal,
+        external: mem.external,
+      },
+      clients: clients.size,
+      watchedTranscripts: watchedTranscripts.size,
+      watchedDirs: dirWatchers.size,
+      recentEvents: allRecentEvents.length,
+    };
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(body));
+    return;
+  }
 
   // SSE 엔드포인트
   if (url.pathname === '/events') {
@@ -1088,7 +1315,6 @@ const server = http.createServer((req, res) => {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache',
       'Connection': 'keep-alive',
-      'Access-Control-Allow-Origin': '*',
     });
     res.req.socket.setTimeout(0);
 
@@ -1102,6 +1328,8 @@ const server = http.createServer((req, res) => {
     const initData = {
       recentEvents: initEvents.events,
       totalEvents: allRecentEvents.length,
+      totalPrompts: initEvents.totalPrompts,
+      slicePrompts: initEvents.slicePrompts,
       totalTranscriptBytes,
       startIdx: initEvents.startIdx,
       hasMore: initEvents.hasMore,
@@ -1129,14 +1357,25 @@ const server = http.createServer((req, res) => {
       res.end(JSON.stringify({ error: 'path required' }));
       return;
     }
-    const fileData = readFileContent(filePath);
-    if (fileData && fileData.content) {
-      res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-      res.end(JSON.stringify(fileData));
-    } else {
-      res.writeHead(404, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'file not found or binary' }));
+    if (!isPathAllowed(filePath, ALLOWED_ROOTS)) {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'forbidden: path outside allowed roots' }));
+      return;
     }
+    readFileContent(filePath).then(fileData => {
+      if (fileData && fileData.content) {
+        res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify(fileData));
+      } else {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'file not found or binary' }));
+      }
+    }).catch(() => {
+      if (!res.headersSent) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'internal' }));
+      }
+    });
     return;
   }
 
@@ -1144,7 +1383,7 @@ const server = http.createServer((req, res) => {
   // 5초 메모리 캐시로 연속 호출 대응 (IIFE로 state 캡슐화)
   if (url.pathname === '/api/usage') {
     handleUsageRequest(req, res).catch(err => {
-      console.warn('[usage] handler 오류:', err.message);
+      log.warn('usage handler error', { err: err.message });
       try {
         res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
         res.end(JSON.stringify({ error: 'usage aggregation failed', message: err.message }));
@@ -1181,7 +1420,7 @@ const server = http.createServer((req, res) => {
 
   // Dashboard static files
   const dashDir = path.join(__dirname, 'dashboard');
-  const mimeTypes = { '.html': 'text/html', '.css': 'text/css', '.js': 'application/javascript', '.svg': 'image/svg+xml' };
+  const mimeTypes = { '.html': 'text/html', '.css': 'text/css', '.js': 'application/javascript', '.svg': 'image/svg+xml', '.json': 'application/json' };
   // dev dashboard — 캐시 금지 (VS Code Simple Browser 등 공격적 캐시 방지)
   const NO_CACHE = 'no-store, no-cache, must-revalidate, max-age=0';
 
@@ -1235,6 +1474,21 @@ const server = http.createServer((req, res) => {
     }
   }
 
+  // Serve vendor assets (self-hosted Prism.js 등) — /vendor/prism/<filename>
+  // path traversal 방지: 파일명에 슬래시/점점 포함 금지 (정규식으로 엄격 매치)
+  const vendorMatch = url.pathname.match(/^\/vendor\/prism\/([A-Za-z0-9._-]+)$/);
+  if (vendorMatch) {
+    const vExt = path.extname(vendorMatch[1]);
+    if (mimeTypes[vExt]) {
+      const vendorPath = path.join(dashDir, 'vendor', 'prism', vendorMatch[1]);
+      if (fs.existsSync(vendorPath)) {
+        res.writeHead(200, { 'Content-Type': mimeTypes[vExt] + '; charset=utf-8', 'Cache-Control': NO_CACHE });
+        fs.createReadStream(vendorPath).pipe(res);
+        return;
+      }
+    }
+  }
+
   // Serve CSS/JS from dashboard/
   const ext = path.extname(url.pathname);
   if (mimeTypes[ext]) {
@@ -1281,6 +1535,12 @@ process.on('SIGINT', () => {
   for (const [, watcher] of dirWatchers) {
     try { watcher.close(); } catch { /* ignore */ }
   }
+
+  // 스크린샷 watcher/폴백 타이머 정리
+  if (screenshotWatcher) {
+    try { screenshotWatcher.close(); } catch { /* ignore */ }
+  }
+  if (screenshotFallbackTimer) clearInterval(screenshotFallbackTimer);
 
   clearInterval(offsetSaveTimer);
   console.log('  Dashboard stopped');

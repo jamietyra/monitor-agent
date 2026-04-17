@@ -54,24 +54,10 @@
     return true;
   }
 
-  function isoDate(d) {
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return y + '-' + m + '-' + day;
-  }
-
-  function formatTokens(n) {
-    if (!n || n <= 0) return '0';
-    if (n < 1000) return String(Math.round(n));
-    if (n < 1_000_000) return (n / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
-    if (n < 1_000_000_000) return (n / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';
-    return (n / 1_000_000_000).toFixed(1).replace(/\.0$/, '') + 'B';
-  }
-  function formatCost(usd) {
-    if (!usd || usd <= 0) return '$0.00';
-    return '$' + Number(usd).toFixed(2);
-  }
+  // format.js 공용 헬퍼 재사용
+  const isoDate = window.wilsonFormat.isoDate;
+  const formatTokens = window.wilsonFormat.formatTokens;
+  const formatCost = window.wilsonFormat.formatCost;
 
   /** period → [startDate, endDate] (Date 객체) — byDate 키는 'YYYY-MM-DD' */
   function rangeForPeriod(period) {

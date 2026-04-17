@@ -143,7 +143,7 @@
   var sessionStates = {};
   var toolItemMap = new Map(); // tool_id → DOM element cache
   var isBatchLoading = false;
-  var IDLE_CLOSE_MS = 10000; // 최종 메시지 후 10초 무활동 시 그룹 자동 접힘
+  var IDLE_CLOSE_MS = (window.wilsonConfig && window.wilsonConfig.IDLE_CLOSE_MS) || 10000; // 최종 메시지 후 10초 무활동 시 그룹 자동 접힘
 
   function openGroup(group) {
     if (!group) return;
@@ -165,13 +165,32 @@
       group._closeTimer = null;
     }
   }
-  function scheduleGroupClose(group, delayMs) {
-    cancelGroupCloseTimer(group);
-    if (!group) return;
+  function _armCloseTimer(group, delayMs) {
     group._closeTimer = setTimeout(function() {
       closeGroup(group);
       group._closeTimer = null;
     }, delayMs);
+  }
+  function scheduleGroupClose(group, delayMs) {
+    cancelGroupCloseTimer(group);
+    if (!group) return;
+    group._closeDelay = delayMs;
+    _armCloseTimer(group, delayMs);
+    // 호버/포커스 시 타이머 취소, 이탈 시 재시작 — 읽는 중 갑작스런 접힘 방지
+    if (!group._hoverBound) {
+      group._hoverBound = true;
+      group.addEventListener('mouseenter', function() { cancelGroupCloseTimer(group); });
+      group.addEventListener('mouseleave', function() {
+        cancelGroupCloseTimer(group);
+        if (group._closeDelay) _armCloseTimer(group, group._closeDelay);
+      });
+      group.addEventListener('focusin', function() { cancelGroupCloseTimer(group); });
+      group.addEventListener('focusout', function() {
+        if (group.matches(':hover')) return;  // 호버 유지 시 타이머 없음 유지
+        cancelGroupCloseTimer(group);
+        if (group._closeDelay) _armCloseTimer(group, group._closeDelay);
+      });
+    }
   }
 
   function getSessionKey(ev) {

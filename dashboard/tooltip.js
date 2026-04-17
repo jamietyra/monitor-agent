@@ -12,8 +12,9 @@
 (function () {
   'use strict';
 
-  var DEFAULT_DELAY_MS = 1500;
-  var HIDE_GRACE_MS = 120;
+  var _cfg = window.wilsonConfig || {};
+  var DEFAULT_DELAY_MS = _cfg.TOOLTIP_DEFAULT_DELAY_MS || 1500;
+  var HIDE_GRACE_MS = _cfg.TOOLTIP_HIDE_GRACE_MS || 120;
 
   var tooltipEl = null;
   var tooltipTimer = null;

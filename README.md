@@ -192,15 +192,32 @@ Enable access to the dashboard from other machines:
 MONITOR_REMOTE=true MONITOR_TOKEN=your-secret-token node server.mjs
 ```
 
-Access from any machine: `http://your-server-ip:3141/?token=your-secret-token`
+Authenticate requests via the `Authorization: Bearer` header:
 
-| Environment Variable | Default | Description |
-|---------------------|---------|-------------|
+```bash
+curl -H "Authorization: Bearer your-secret-token" http://your-server-ip:3141/api/usage
+```
+
+Query-string tokens (`?token=…`) are still accepted for backwards compatibility but respond with a deprecation header (`X-Auth-Deprecation`). Prefer Bearer headers.
+
+### Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
 | `MONITOR_PORT` | `3141` | Server port |
-| `MONITOR_REMOTE` | `false` | Enable remote access (`true` to listen on 0.0.0.0) |
-| `MONITOR_TOKEN` | (none) | Authentication token (required for remote access) |
+| `MONITOR_REMOTE` | `false` | Listen on `0.0.0.0` (true) vs `127.0.0.1` (false) |
+| `MONITOR_TOKEN` | (none) | Authentication token — required for remote access |
+| `MONITOR_ALLOWED_PATHS` | `$HOME` | `path.delimiter`-separated file roots. `/api/file` rejects paths outside these roots. |
+| `MONITOR_ALLOWED_ORIGINS` | `localhost,127.0.0.1` | Comma-separated hostnames allowed as CORS origin |
 
 Without `MONITOR_REMOTE=true`, the server only accepts connections from localhost.
+
+### Security Model
+
+- **Authentication** — Token via Bearer header (preferred) or query string (deprecated).
+- **Path traversal** — `/api/file` enforces absolute paths resolved via `realpath`, rejected if outside `MONITOR_ALLOWED_PATHS`.
+- **CORS** — Origins outside the whitelist receive no `Access-Control-Allow-Origin` header; browsers block cross-origin reads naturally.
+- **CSRF** — Not applicable: all HTTP endpoints are read-only. If future versions add state-changing endpoints, each must require an `X-CSRF-Token` header (double-submit cookie pattern).
 
 ---
 
@@ -209,6 +226,27 @@ Without `MONITOR_REMOTE=true`, the server only accepts connections from localhos
 - Node.js >= 18 (recommended: 22+)
 - An active Claude Code session
 - Zero dependencies (no `npm install` needed)
+
+---
+
+## 🧪 Testing
+
+Wilson ships with unit tests for its core pure functions, using Node's built-in `node:test` runner (no external dependencies).
+
+```bash
+npm test
+```
+
+**Covered modules** (31 test cases):
+
+| Module | Function | Cases |
+|--------|----------|-------|
+| `lib/usage-parser.mjs` | `parseUsageEvent`, `normalizeModel`, `getPricingSnapshot` | 12 |
+| `lib/time-metric.mjs` | `computeActiveMs` | 8 |
+| `lib/aggregator.mjs` | `summarizePrompt` | 7 |
+| `lib/aggregator.mjs` | `aggregateAll` (fixture-based smoke test) | 4 |
+
+Tests live in `test/` with fixtures in `test/fixtures/sample-projects/`. Internal functions in `server.mjs` (e.g. `processEntry`) are not yet covered — slated for a later phase that adds module exports.
 
 ---
 

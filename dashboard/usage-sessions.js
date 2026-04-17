@@ -17,12 +17,35 @@
   'use strict';
 
   // ── 상태 ────────────────────────────────────────────
+  // localStorage 키 — 세션간 사용자 UI 선호 보존
+  const LS_KEY = 'wilson.usage-sessions.v1';
+
+  function loadPersisted() {
+    try {
+      const raw = localStorage.getItem(LS_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      return parsed && typeof parsed === 'object' ? parsed : null;
+    } catch { return null; }
+  }
+
+  function savePersisted(s) {
+    try {
+      localStorage.setItem(LS_KEY, JSON.stringify({
+        currentPeriod: s.currentPeriod,
+        expandedProjects: s.expandedProjects,
+        expandedSessions: s.expandedSessions,
+      }));
+    } catch { /* quota/private 모드 — 무시 */ }
+  }
+
+  const _persisted = loadPersisted();
   const state = {
-    currentPeriod: 'month', // 'month' | 'week' | 'day'
-    expandedProjects: Object.create(null), // project → bool (기본 펼침)
-    expandedSessions: Object.create(null), // sessionId → bool (기본 접힘)
-    modalDate: null,        // 현재 열린 모달의 date ('YYYY-MM-DD' 또는 null)
-    escBound: false,        // ESC 리스너 바인딩 플래그
+    currentPeriod: (_persisted && _persisted.currentPeriod) || 'month',
+    expandedProjects: (_persisted && _persisted.expandedProjects) || Object.create(null),
+    expandedSessions: (_persisted && _persisted.expandedSessions) || Object.create(null),
+    modalDate: null,
+    escBound: false,
   };
 
   // ── 공통 헬퍼 (calendar.js와 중복되는 일부는 재정의) ──
@@ -50,31 +73,11 @@
     return '<span class="session-tag">' + safe + '</span>';
   }
 
-  function formatTokens(n) {
-    if (!n || n <= 0) return '0';
-    if (n < 1000) return String(Math.round(n));
-    if (n < 1_000_000) return (n / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
-    if (n < 1_000_000_000) return (n / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';
-    return (n / 1_000_000_000).toFixed(1).replace(/\.0$/, '') + 'B';
-  }
-  function formatCost(usd) {
-    if (!usd || usd <= 0) return '$0.00';
-    return '$' + Number(usd).toFixed(2);
-  }
-  function formatDuration(ms) {
-    if (!ms || ms <= 0) return '—';
-    const totalMin = Math.round(ms / 60000);
-    const h = Math.floor(totalMin / 60);
-    const m = totalMin % 60;
-    if (h <= 0) return m + 'm';
-    return h + 'h ' + m + 'm';
-  }
-  function isoDate(d) {
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return y + '-' + m + '-' + day;
-  }
+  // format.js 공용 헬퍼 재사용
+  const formatTokens = window.wilsonFormat.formatTokens;
+  const formatCost = window.wilsonFormat.formatCost;
+  const formatDuration = window.wilsonFormat.formatDuration;
+  const isoDate = window.wilsonFormat.isoDate;
   function sumTokenObj(t) {
     if (!t) return 0;
     // Claude Desktop /code 규칙과 일치: input + output 만 집계
@@ -228,6 +231,7 @@
       btn.textContent = p.charAt(0).toUpperCase() + p.slice(1);
       btn.addEventListener('click', () => {
         state.currentPeriod = p;
+        savePersisted(state);
         renderSummaryCards(usageData, p);
         // Phase 3+4 — 차트 3종도 동일 period로 재렌더
         if (window.usageCharts && typeof window.usageCharts.renderAll === 'function') {
@@ -508,6 +512,7 @@
       projRow.appendChild(stats);
       projRow.addEventListener('click', () => {
         state.expandedProjects[proj.project] = !projExpanded;
+        savePersisted(state);
         renderSessionsPanel(usageData);
       });
       listEl.appendChild(projRow);
@@ -530,6 +535,7 @@
         sCaret.addEventListener('click', (e) => {
           e.stopPropagation();
           state.expandedSessions[sess.sessionId] = !sessExpanded;
+          savePersisted(state);
           renderSessionsPanel(usageData);
         });
 
