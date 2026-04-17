@@ -35,8 +35,9 @@
     cacheRead:  '#60a5fa',
     cacheWrite: '#3b82f6',
     output:     '#2563eb',
-    // Model 도넛 — 사용자 요청: sonnet=녹색, haiku=노랑, opus=파랑
+    // Model 도넛 — opus 4.7=파랑, opus 4.6=와인, sonnet=녹색, haiku=노랑
     opus:       '#2563eb',
+    opusLegacy: '#8e1e3a',
     sonnet:     '#22c55e',
     haiku:      '#eab308',
     unknown:    '#9ca3af',
@@ -179,7 +180,11 @@
   // ── Phase 4: Model Breakdown donut ─────────────────────
   function modelColor(name) {
     const n = (name || '').toLowerCase();
-    if (n.includes('opus')) return COLORS.opus;
+    if (n.includes('opus')) {
+      // 4.7은 새 파랑, 4.6은 와인 (구분)
+      if (n.includes('4-6') || n.includes('4.6')) return COLORS.opusLegacy;
+      return COLORS.opus;
+    }
     if (n.includes('sonnet')) return COLORS.sonnet;
     if (n.includes('haiku')) return COLORS.haiku;
     return COLORS.unknown;

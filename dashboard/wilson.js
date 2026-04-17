@@ -9,14 +9,32 @@
   var MAX_RECENT_FILES = _cfg.MAX_RECENT_FILES || 100;
 
   // ─── SVGs (5 states) ────────────────────────────────
+  // 3D 구 조명: 좌상단에서 빛, 우하단으로 음영 — 공이 회전해도 조명은 그 자리(픽스드)
+  var BALL_LIGHT_DEFS =
+    '<defs>' +
+      '<radialGradient id="wilsonLight" cx="32%" cy="28%" r="75%">' +
+        '<stop offset="0%" stop-color="#ffffff" stop-opacity="0.55"/>' +
+        '<stop offset="45%" stop-color="#ffffff" stop-opacity="0"/>' +
+        '<stop offset="100%" stop-color="#000000" stop-opacity="0.35"/>' +
+      '</radialGradient>' +
+    '</defs>';
+  var BALL_LIGHT_OVERLAY =
+    '<circle cx="24" cy="24" r="22" fill="url(#wilsonLight)" pointer-events="none"/>';
   var SVG_START = '<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Wilson character">' +
     '<title>Wilson</title>' +
+    BALL_LIGHT_DEFS +
     '<circle cx="24" cy="24" r="22" fill="#f0ebe0" stroke="#d8d0c4" stroke-width="0.8"/>' +
     '<line x1="3" y1="16" x2="45" y2="16" stroke="#ccc4b8" stroke-width="0.5"/>' +
     '<line x1="3" y1="33" x2="45" y2="33" stroke="#ccc4b8" stroke-width="0.5"/>' +
     '<path d="M11 14 C9 9 13 5 17 7 C19 4 22 3 25 5 C27 3 31 4 33 7 C36 5 40 9 37 14 C41 18 43 24 41 31 C39 38 33 44 24 44 C15 44 9 38 7 31 C5 24 7 18 11 14 Z" fill="#8B1A1A"/>';
   var SVG_END = '<circle cx="24" cy="28" r="1" fill="white" opacity="0.25"/>' +
     '<path d="M18 35 Q24 39 30 35" fill="none" stroke="white" stroke-width="1" opacity="0.35" stroke-linecap="round"/>' +
+    BALL_LIGHT_OVERLAY +
+    '</svg>';
+  // Solving 전용 — 강한 외부 aura(drop-shadow)와 겹쳐도 구형 음영이 튀지 않도록 내부 조명을 약하게
+  var SVG_END_SOLVING = '<circle cx="24" cy="28" r="1" fill="white" opacity="0.25"/>' +
+    '<path d="M18 35 Q24 39 30 35" fill="none" stroke="white" stroke-width="1" opacity="0.35" stroke-linecap="round"/>' +
+    '<circle cx="24" cy="24" r="22" fill="url(#wilsonLight)" opacity="0.55" pointer-events="none"/>' +
     '</svg>';
 
   // Eyes: normal (centered pupils)
@@ -45,31 +63,24 @@
     '<path d="M28 21 Q31 23 35 21" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" opacity="0.7"/>';
 
   var SVGS = {
-    waiting:  SVG_START + EYES_NORMAL + SVG_END,
-    thinking: SVG_START + EYES_NORMAL + SVG_END,  // 동공 위치는 JS가 실시간 변경
-    working:  SVG_START + EYES_NORMAL + SVG_END,
-    solving:  SVG_START + EYES_SPARKLE + SVG_END,
-    sleeping: SVG_START + EYES_CLOSED + SVG_END
+    waiting:   SVG_START + EYES_NORMAL + SVG_END,
+    thinking:  SVG_START + EYES_NORMAL + SVG_END,  // 동공 위치는 JS가 실시간 변경
+    working:   SVG_START + EYES_NORMAL + SVG_END,  // 같은 3D 공, 애니메이션만 jitter
+    searching: SVG_START + EYES_NORMAL + SVG_END,  // 눈동자 좌우 scan + 공 기울임
+    solving:   SVG_START + EYES_SPARKLE + SVG_END_SOLVING,  // 내부 음영 약함 + 외부 aura 강함
+    sleeping:  SVG_START + EYES_CLOSED + SVG_END
   };
 
-  // 배구공 뒷면 (5줄 곡선 솔기 + 3D 음영 + Wilson 로고)
-  var SVG_BACK = '<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">' +
-    '<defs>' +
-      '<radialGradient id="ballShade" cx="35%" cy="30%" r="70%">' +
-        '<stop offset="0%" stop-color="#ffffff" stop-opacity="0.5"/>' +
-        '<stop offset="55%" stop-color="#ffffff" stop-opacity="0"/>' +
-        '<stop offset="100%" stop-color="#000000" stop-opacity="0.25"/>' +
-      '</radialGradient>' +
-    '</defs>' +
-    '<circle cx="24" cy="24" r="22" fill="#f0ebe0" stroke="#d8d0c4" stroke-width="0.8"/>' +
-    '<circle cx="24" cy="24" r="22" fill="url(#ballShade)"/>' +
-    // 5 curved seam lines
-    '<path d="M5 13 Q24 10 43 13" fill="none" stroke="#b8b0a4" stroke-width="0.6"/>' +
-    '<path d="M3 19 Q24 17 45 19" fill="none" stroke="#b8b0a4" stroke-width="0.6"/>' +
-    '<path d="M2 25 Q24 24 46 25" fill="none" stroke="#b8b0a4" stroke-width="0.6"/>' +
-    '<path d="M3 31 Q24 33 45 31" fill="none" stroke="#b8b0a4" stroke-width="0.6"/>' +
-    '<path d="M5 37 Q24 40 43 37" fill="none" stroke="#b8b0a4" stroke-width="0.6"/>' +
-    '</svg>';
+  // 도구 분류 — tool_start 시 상태 분기에 사용
+  var SEARCH_TOOLS = { 'Grep': 1, 'Glob': 1, 'WebSearch': 1, 'WebFetch': 1 };
+  function isSearchTool(name) {
+    if (!name) return false;
+    if (SEARCH_TOOLS[name]) return true;
+    if (name.indexOf('Playwright:') === 0) return true;
+    return false;
+  }
+  // Read는 "읽고 이해" 성격 → thinking
+  function isReadTool(name) { return name === 'Read'; }
 
   // ─── JS Animations (requestAnimationFrame) ───────────
   var animFrame = null;
@@ -108,17 +119,37 @@
           svgWrap.style.transform = 'rotate(' + r + 'deg)';
           svgWrap.style.opacity = '';
           break;
-        case 'working':   // Y축 자전 (3.0s/cycle — 뒷면 빈 공)
-          r = (t % 3000) / 3000 * 360;
-          var showBack = (r > 90 && r < 270);
-          var needed = showBack ? 'back' : 'front';
-          if (svgWrap._face !== needed) {
-            svgWrap.innerHTML = showBack ? SVG_BACK : SVGS.working;
-            svgWrap._face = needed;
-          }
-          svgWrap.style.transform = 'perspective(300px) rotateY(' + r + 'deg)';
+        case 'working': {
+          // 좌우로 튕기듯 불규칙 흔들림 — 비정수비 주파수 sine 3개 합성으로 자연스러운 jitter
+          var jx =
+            8 * Math.sin(t * 0.011) +
+            5 * Math.sin(t * 0.023) +
+            3.5 * Math.sin(t * 0.037);
+          var jy =
+            2.2 * Math.sin(t * 0.017) +
+            1.3 * Math.sin(t * 0.031);
+          var jr =
+            2.5 * Math.sin(t * 0.019) +
+            1.2 * Math.sin(t * 0.041);
+          svgWrap.style.transform = 'translate(' + jx.toFixed(2) + 'px, ' + jy.toFixed(2) + 'px) rotate(' + jr.toFixed(2) + 'deg)';
           svgWrap.style.opacity = '';
           break;
+        }
+        case 'searching': {
+          // 탐색 — 공이 좌우로 천천히 기울이며 눈동자가 넓게 scan (돋보기 탐색)
+          var swayR = 6 * Math.sin(t * Math.PI * 2 / 1500);   // ±6° at 1.5s
+          var eyeDx = 3.5 * Math.sin(t * Math.PI * 2 / 900);  // 눈동자 수평 scan
+          var eyeDy = 0.8 * Math.sin(t * Math.PI * 2 / 2200); // 미세 수직 드리프트
+          if (svgWrap._pupils && svgWrap._pupils.length >= 2) {
+            svgWrap._pupils[0].setAttribute('cx', 16 + eyeDx);
+            svgWrap._pupils[0].setAttribute('cy', 20 + eyeDy);
+            svgWrap._pupils[1].setAttribute('cx', 32 + eyeDx);
+            svgWrap._pupils[1].setAttribute('cy', 20 + eyeDy);
+          }
+          svgWrap.style.transform = 'rotate(' + swayR.toFixed(2) + 'deg)';
+          svgWrap.style.opacity = '';
+          break;
+        }
         case 'solving':   // 황금 오로라 발광 (1s)
           s = 1 + 0.05 * Math.sin(t * Math.PI * 2 / 1000);
           var glow = 0.5 + 0.5 * Math.sin(t * Math.PI * 2 / 1000);
@@ -179,11 +210,12 @@
 
   // ─── Init SVG + Status Text ──────────────────────────
   var STATE_TOOLTIPS = {
-    waiting:  '대기 중 — 어떤 작업도 진행되지 않음',
-    thinking: 'Claude가 prompt를 받았거나 도구를 시작함',
-    working:  '도구 실행 완료 또는 AI 응답 생성 중',
-    solving:  'tool_error 발생 — 문제 해결 중',
-    sleeping: '10분 이상 무활동 — 휴면'
+    waiting:   '대기 중 — 어떤 작업도 진행되지 않음',
+    thinking:  '판단 중 — Read로 코드 읽기, 새 prompt 접수 등',
+    working:   '도구 실행 중 — 파일 편집·명령 실행 등',
+    searching: '탐색 중 — Grep / Glob / Web / Playwright',
+    solving:   'tool_error 발생 — 문제 해결 중',
+    sleeping:  '10분 이상 무활동 — 휴면'
   };
   var statusEl = document.createElement('div');
   statusEl.className = 'wilson-status';
@@ -212,7 +244,6 @@
     // Swap SVG
     if (svgWrap && SVGS[newState]) {
       svgWrap.innerHTML = SVGS[newState];
-      svgWrap._face = 'front';
       // Cache pupil refs once per SVG swap (thinking 최적화)
       svgWrap._pupils = svgWrap.querySelectorAll('circle[fill="#1a1a2e"]');
     }
@@ -248,6 +279,10 @@
       case 'working':
         statusEl.style.color = 'var(--yellow)';
         statusEl.textContent = currentState;
+        break;
+      case 'searching':
+        statusEl.style.color = 'var(--cyan)';
+        statusEl.textContent = currentState + '.'.repeat(dotCount);
         break;
       case 'solving':
         // 단일 크림슨, 미묘한 opacity pulse (깜빡임 제거)
@@ -297,19 +332,26 @@
     resetTimers();
     var type = ev.type;
 
-    // State transitions
-    if (type === 'prompt' || type === 'tool_start') {
+    // State transitions — 행동 → 결과 → 판단 구조
+    if (type === 'prompt') {
       setState('thinking');
-      if (type === 'tool_start') showAction(ev.name, ev.target);
+      return;
+    }
+    if (type === 'tool_start') {
+      var nextState = isReadTool(ev.name) ? 'thinking'
+                    : isSearchTool(ev.name) ? 'searching'
+                    : 'working';
+      setState(nextState);
+      showAction(ev.name, ev.target);
+      return;
+    }
+    if (type === 'tool_done') {
+      // turn 유지 — assistant_text가 올 때까지 현재 상태 지속
       return;
     }
     if (type === 'tool_error') {
       setState('solving');
       showAction('Error: ' + (ev.name || ''), ev.target);
-      return;
-    }
-    if (type === 'tool_done') {
-      setState('working');
       return;
     }
     if (type === 'assistant_text') {

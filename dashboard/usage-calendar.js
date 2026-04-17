@@ -17,18 +17,28 @@
 // usage-calendar.js — monitor-usage 캘린더 (ES Module)
 
   // ── 색상 팔레트 ────────────────────────────────────
-  // 비용 기반 3단계: <$100 초록, $100~$500 노랑, $500+ 빨강.
+  // 비용 기반 5단계: <$200 초록, $200~$500 빨강, $500~$1K 오로라, $1K~$2K 실버, $2K+ 골드
   const COLOR_NONE = 'transparent';
-  const COLOR_LOW = '#22c55e';   // <$100
-  const COLOR_MID = '#eab308';   // $100 ~ $500
-  const COLOR_HIGH = '#ef4444';  // $500+
+  const COLOR_LOW = '#22c55e';   // <$200
+  const COLOR_HIGH = '#ef4444';  // $200 ~ $500
+  // 오로라 — 쿨 다색 그라데이션 (다른 단계와 색상 영역 겹침 없음: 초록·빨강·회색·노랑 배제)
+  const COLOR_AURORA =
+    'linear-gradient(90deg, #22d3ee 0%, #60a5fa 28%, #a78bfa 50%, #e879f9 75%, #f472b6 100%)';
+  // 크롬 실버 — 깊은 쿨 섀도우 → 반사 피크(#fff) → 트로프 → 보조 하이라이트 (폴리시드 크롬)
+  const COLOR_SILVER =
+    'linear-gradient(90deg, #7a838c 0%, #e8edf1 20%, #ffffff 38%, #c5ced6 55%, #8a939c 72%, #eef3f8 100%)';
+  // 폴리시드 골드 — 실버와 동일 구조, 따뜻한 팔레트 (브론즈 섀도우 → 크림 피크)
+  const COLOR_GOLD =
+    'linear-gradient(90deg, #8a5a0f 0%, #fcd34d 20%, #fef3c7 38%, #eab308 55%, #92630a 72%, #fde68a 100%)';
 
-  /** 일 비용(USD) 기반 3단계 색상. */
+  /** 일 비용(USD) 기반 5단계 색상 (CSS background 문자열). */
   function colorForCost(cost) {
     if (!cost || cost <= 0) return COLOR_NONE;
-    if (cost < 100) return COLOR_LOW;
-    if (cost < 500) return COLOR_MID;
-    return COLOR_HIGH;
+    if (cost < 200) return COLOR_LOW;
+    if (cost < 500) return COLOR_HIGH;
+    if (cost < 1000) return COLOR_AURORA;
+    if (cost < 2000) return COLOR_SILVER;
+    return COLOR_GOLD;
   }
 
   // ── 포맷 헬퍼 ───────────────────────────────────────
@@ -50,9 +60,9 @@
     return (t.input || 0) + (t.output || 0);
   }
 
-  /** 해당 날짜 셀의 서브에이전트 활동 존재 여부 */
-  function hasSubagent(dayEntry) {
-    return !!(dayEntry && dayEntry.bySubagent && Object.keys(dayEntry.bySubagent).length > 0);
+  /** Anthropic dislike 뱃지 조건 — 일일 비용 $2000 이상 (gold tier) */
+  function hasCostBadge(dayEntry) {
+    return !!(dayEntry && typeof dayEntry.costUSD === 'number' && dayEntry.costUSD >= 2000);
   }
 
   // ── 상태 ─────────────────────────────────────────────
@@ -186,11 +196,11 @@
       dateEl.textContent = String(day);
       topRow.appendChild(dateEl);
 
-      if (hasSubagent(entry)) {
+      if (hasCostBadge(entry)) {
         const badge = document.createElement('span');
-        badge.className = 'cell-subagent';
-        badge.textContent = 'S';
-        badge.title = 'Subagent 활동 있음';
+        badge.className = 'cell-cost-badge';
+        badge.textContent = 'A';
+        badge.title = 'Anthropic dislikes it';
         topRow.appendChild(badge);
       }
       cell.appendChild(topRow);
@@ -213,7 +223,7 @@
         // 하단 색상 막대 (비용 기반)
         const bar = document.createElement('div');
         bar.className = 'cell-bar';
-        bar.style.backgroundColor = colorForCost(entry.costUSD);
+        bar.style.background = colorForCost(entry.costUSD);
         cell.appendChild(bar);
 
         // 클릭 → 이벤트 emit
@@ -315,18 +325,21 @@
         bar.className = 'cell-bar';
         mgCell.appendChild(bar);
       }
-      bar.style.backgroundColor = color;
+      bar.style.background = color;
 
-      // 서브에이전트 뱃지
+      // Anthropic dislike 뱃지 ($2000+)
       const topRow = mgCell.querySelector('.cell-top');
       if (topRow) {
-        let badge = topRow.querySelector('.cell-subagent');
-        if (hasSubagent(dayData) && !badge) {
+        let badge = topRow.querySelector('.cell-cost-badge');
+        const shouldShow = hasCostBadge(dayData);
+        if (shouldShow && !badge) {
           badge = document.createElement('span');
-          badge.className = 'cell-subagent';
-          badge.textContent = 'S';
-          badge.title = 'Subagent 활동 있음';
+          badge.className = 'cell-cost-badge';
+          badge.textContent = 'A';
+          badge.title = 'Anthropic dislikes it';
           topRow.appendChild(badge);
+        } else if (!shouldShow && badge) {
+          badge.remove();
         }
       }
 

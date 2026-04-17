@@ -349,18 +349,20 @@ body[data-page="usage"] .refresh-btn:disabled .refresh-icon {
   font-variant-numeric: tabular-nums;
 }
 
-.cell-subagent {
+.cell-cost-badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  background: var(--accent);
-  color: #fff;
+  background: linear-gradient(135deg, #fcd34d 0%, #eab308 60%, #92630a 100%);
+  color: #3b2a0a;
   font-size: 9px;
   font-weight: 700;
   font-family: var(--font-mono);
+  box-shadow: 0 0 0 1px rgba(250, 204, 21, 0.5);
+  cursor: help;
 }
 
 .cell-tokens {

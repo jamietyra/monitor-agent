@@ -15,6 +15,12 @@
       .ui { font-family: system-ui,-apple-system,sans-serif; }
     </style>
     <filter id="ballShadow"><feDropShadow dx="0" dy="5" stdDeviation="3" flood-opacity="0.35"/></filter>
+    <!-- Wilson 3D 구 조명: 좌상단 하이라이트 → 우하단 섀도우 (공이 회전해도 고정) -->
+    <radialGradient id="wilsonLight" cx="32%" cy="28%" r="75%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.55"/>
+      <stop offset="45%" stop-color="#ffffff" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0.35"/>
+    </radialGradient>
   </defs>
 
   <!-- Canvas -->
@@ -72,6 +78,8 @@
     <circle cx="33" cy="18" r="2" fill="#1a1a2e"/>
     <circle cx="24" cy="28" r="1" fill="white" opacity="0.25"/>
     <path d="M18 35 Q24 39 30 35" fill="none" stroke="white" stroke-width="1" opacity="0.35" stroke-linecap="round"/>
+    <!-- 3D 구형 조명 오버레이 (고정) -->
+    <circle cx="24" cy="24" r="22" fill="url(#wilsonLight)"/>
   </g>
 
   <!-- Speech bubble (centered in 420) -->
@@ -348,5 +356,5 @@
   <line x1="0" y1="700" x2="1200" y2="700" stroke="#3a332e"/>
   <circle cx="14" cy="710" r="4" fill="#85a85c"/>
   <text x="26" y="714" class="dim" font-size="10">Connected</text>
-  <text x="1186" y="714" text-anchor="end" class="muted" font-size="10">Model: Opus 4.6</text>
+  <text x="1186" y="714" text-anchor="end" class="muted" font-size="10">Model: Opus 4.7 · 245 events · 1.23MB</text>
 </svg>

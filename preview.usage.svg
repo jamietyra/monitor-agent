@@ -19,10 +19,40 @@
     </style>
     <filter id="ballShadow"><feDropShadow dx="0" dy="5" stdDeviation="3" flood-opacity="0.22"/></filter>
     <radialGradient id="ballGlow" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#60a5fa" stop-opacity="0.5"/>
-      <stop offset="55%" stop-color="#3b82f6" stop-opacity="0.18"/>
-      <stop offset="100%" stop-color="#2563eb" stop-opacity="0"/>
+      <stop offset="0%" stop-color="#fde047" stop-opacity="0.55"/>
+      <stop offset="55%" stop-color="#f59e0b" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#d97706" stop-opacity="0"/>
     </radialGradient>
+    <!-- Wilson 3D 구 조명: solving은 외부 황금 aura가 강해서 내부 음영 약하게(opacity 0.55) -->
+    <radialGradient id="wilsonLight" cx="32%" cy="28%" r="75%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.55"/>
+      <stop offset="45%" stop-color="#ffffff" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0.35"/>
+    </radialGradient>
+    <!-- 비용 tier 그라데이션 (usage-calendar.js와 동일 stops) -->
+    <linearGradient id="gradAurora" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#22d3ee"/>
+      <stop offset="28%" stop-color="#60a5fa"/>
+      <stop offset="50%" stop-color="#a78bfa"/>
+      <stop offset="75%" stop-color="#e879f9"/>
+      <stop offset="100%" stop-color="#f472b6"/>
+    </linearGradient>
+    <linearGradient id="gradSilver" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#7a838c"/>
+      <stop offset="20%" stop-color="#e8edf1"/>
+      <stop offset="38%" stop-color="#ffffff"/>
+      <stop offset="55%" stop-color="#c5ced6"/>
+      <stop offset="72%" stop-color="#8a939c"/>
+      <stop offset="100%" stop-color="#eef3f8"/>
+    </linearGradient>
+    <linearGradient id="gradGold" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#8a5a0f"/>
+      <stop offset="20%" stop-color="#fcd34d"/>
+      <stop offset="38%" stop-color="#fef3c7"/>
+      <stop offset="55%" stop-color="#eab308"/>
+      <stop offset="72%" stop-color="#92630a"/>
+      <stop offset="100%" stop-color="#fde68a"/>
+    </linearGradient>
   </defs>
 
   <!-- Canvas -->
@@ -83,6 +113,8 @@
     <circle cx="33" cy="18" r="2" fill="#1a1a2e"/>
     <circle cx="24" cy="28" r="1" fill="white" opacity="0.25"/>
     <path d="M18 35 Q24 39 30 35" fill="none" stroke="white" stroke-width="1" opacity="0.35" stroke-linecap="round"/>
+    <!-- 3D 구형 조명 (solving은 opacity 0.55로 약하게 — 외부 aura와 공존) -->
+    <circle cx="24" cy="24" r="22" fill="url(#wilsonLight)" opacity="0.55"/>
   </g>
 
   <!-- Wilson speech bubble -->
@@ -382,33 +414,39 @@
   <text x="436" y="390" class="serif accent" font-size="13" font-weight="600">Model Breakdown</text>
   <text x="800" y="390" class="serif accent" font-size="13" font-weight="600">Top Projects</text>
 
-  <!-- Donut (center 540, 468; r_outer 54, r_inner 32) — 4 세그먼트 clockwise -->
-  <!-- 색상: 실제 앱(usage-charts.js)의 MODEL_COLORS와 정렬 -->
-  <!-- opus 40% (0° → 144°) — blue -->
-  <path d="M 540 414 A 54 54 0 0 1 571.74 511.69 L 558.81 493.89 A 32 32 0 0 0 540 436 Z" fill="#2563eb"/>
-  <!-- sonnet 30% (144° → 252°) — green -->
+  <!-- Donut (center 540, 468; r_outer 54, r_inner 32) — 5 세그먼트 clockwise -->
+  <!-- 색상: 실제 앱(usage-charts.js)의 MODEL_COLORS와 정렬 (Opus 4.7 blue / 4.6 wine) -->
+  <!-- Opus 4.7 25% (0° → 90°) — blue -->
+  <path d="M 540 414 A 54 54 0 0 1 594 468 L 572 468 A 32 32 0 0 0 540 436 Z" fill="#2563eb"/>
+  <!-- Opus 4.6 15% (90° → 144°) — wine (legacy) -->
+  <path d="M 594 468 A 54 54 0 0 1 571.74 511.69 L 558.81 493.89 A 32 32 0 0 0 572 468 Z" fill="#8e1e3a"/>
+  <!-- Sonnet 4.6 30% (144° → 252°) — green -->
   <path d="M 571.74 511.69 A 54 54 0 0 1 488.64 484.69 L 509.56 477.89 A 32 32 0 0 0 558.81 493.89 Z" fill="#22c55e"/>
-  <!-- haiku 25% (252° → 342°) — yellow -->
+  <!-- Haiku 4.5 25% (252° → 342°) — yellow -->
   <path d="M 488.64 484.69 A 54 54 0 0 1 523.31 416.64 L 530.11 437.56 A 32 32 0 0 0 509.56 477.89 Z" fill="#eab308"/>
-  <!-- unknown 5% (342° → 360°) — gray -->
+  <!-- Unknown 5% (342° → 360°) — gray -->
   <path d="M 523.31 416.64 A 54 54 0 0 1 540 414 L 540 436 A 32 32 0 0 0 530.11 437.56 Z" fill="#9ca3af"/>
 
   <!-- donut center text -->
   <text x="540" y="465" text-anchor="middle" class="serif deep" font-size="14" font-weight="700">1.2B</text>
   <text x="540" y="478" text-anchor="middle" class="muted" font-size="8">total</text>
 
-  <!-- Legend -->
-  <rect x="625" y="412" width="10" height="10" fill="#2563eb" rx="2"/>
-  <text x="640" y="421" class="ink" font-size="11">Opus 4.6</text>
-  <text x="770" y="421" text-anchor="end" class="mono dim" font-size="10">40%</text>
+  <!-- Legend (5 models, spacing 16px) -->
+  <rect x="625" y="400" width="10" height="10" fill="#2563eb" rx="2"/>
+  <text x="640" y="409" class="ink" font-size="11">Opus 4.7</text>
+  <text x="770" y="409" text-anchor="end" class="mono dim" font-size="10">25%</text>
 
-  <rect x="625" y="432" width="10" height="10" fill="#22c55e" rx="2"/>
-  <text x="640" y="441" class="ink" font-size="11">Sonnet 4.6</text>
-  <text x="770" y="441" text-anchor="end" class="mono dim" font-size="10">30%</text>
+  <rect x="625" y="418" width="10" height="10" fill="#8e1e3a" rx="2"/>
+  <text x="640" y="427" class="ink" font-size="11">Opus 4.6</text>
+  <text x="770" y="427" text-anchor="end" class="mono dim" font-size="10">15%</text>
 
-  <rect x="625" y="452" width="10" height="10" fill="#eab308" rx="2"/>
-  <text x="640" y="461" class="ink" font-size="11">Haiku 4.5</text>
-  <text x="770" y="461" text-anchor="end" class="mono dim" font-size="10">25%</text>
+  <rect x="625" y="436" width="10" height="10" fill="#22c55e" rx="2"/>
+  <text x="640" y="445" class="ink" font-size="11">Sonnet 4.6</text>
+  <text x="770" y="445" text-anchor="end" class="mono dim" font-size="10">30%</text>
+
+  <rect x="625" y="454" width="10" height="10" fill="#eab308" rx="2"/>
+  <text x="640" y="463" class="ink" font-size="11">Haiku 4.5</text>
+  <text x="770" y="463" text-anchor="end" class="mono dim" font-size="10">25%</text>
 
   <rect x="625" y="472" width="10" height="10" fill="#9ca3af" rx="2"/>
   <text x="640" y="481" class="ink" font-size="11">Unknown</text>
@@ -442,21 +480,25 @@
     <text x="1184" y="508" text-anchor="end" class="mono ink" font-size="10">140K · $0.40</text>
   </g>
 
-  <!-- ===== Month Grid ===== -->
+  <!-- ===== Month Grid (실제 앱 레이아웃: 셀 내부에 date + tokens + $cost + 바닥 그라데이션 바) ===== -->
   <line x1="420" y1="540" x2="1200" y2="540" stroke="#3a332e" opacity="0.35"/>
-  <text x="436" y="560" class="serif accent" font-size="13" font-weight="600">Month Grid — April 2026</text>
+  <text x="436" y="560" class="serif accent" font-size="13" font-weight="600">◀  2026-04  ▶</text>
 
-  <!-- Cost-tier legend (green/yellow/red) -->
-  <g font-size="9">
-    <rect x="820" y="552" width="8" height="8" fill="#22c55e" rx="1"/>
-    <text x="832" y="559" class="ink">&lt;$100</text>
-    <rect x="890" y="552" width="8" height="8" fill="#eab308" rx="1"/>
-    <text x="902" y="559" class="ink">$100–500</text>
-    <rect x="990" y="552" width="8" height="8" fill="#ef4444" rx="1"/>
-    <text x="1002" y="559" class="ink">$500+</text>
+  <!-- Cost-tier legend (5 단계: green/red/aurora/silver/gold) -->
+  <g font-size="8">
+    <rect x="598" y="553" width="12" height="6" fill="#22c55e" rx="1"/>
+    <text x="614" y="559" class="ink">&lt;$200</text>
+    <rect x="660" y="553" width="12" height="6" fill="#ef4444" rx="1"/>
+    <text x="676" y="559" class="ink">$200–500</text>
+    <rect x="738" y="553" width="18" height="6" fill="url(#gradAurora)" rx="1"/>
+    <text x="760" y="559" class="ink">$500–1K</text>
+    <rect x="820" y="553" width="18" height="6" fill="url(#gradSilver)" rx="1"/>
+    <text x="842" y="559" class="ink">$1K–2K</text>
+    <rect x="896" y="553" width="18" height="6" fill="url(#gradGold)" rx="1"/>
+    <text x="918" y="559" class="ink">$2K+</text>
   </g>
 
-  <!-- Day headers -->
+  <!-- Day headers (일-토) -->
   <g class="muted" font-size="9" text-anchor="middle">
     <text x="470" y="578">Sun</text>
     <text x="570" y="578">Mon</text>
@@ -467,86 +509,125 @@
     <text x="1070" y="578">Sat</text>
   </g>
 
-  <!-- Calendar cells — fill tier reflects colorForCost() in usage-calendar.js -->
-  <!-- Row 1 (starts Wed 1) -->
+  <!-- ── Row 1: 3월 말(빈 셀) + Apr 1-4 (Wed-Sat) ── -->
   <g>
-    <!-- empty 3 cells -->
-    <rect x="428" y="585" width="84" height="24" fill="none" stroke="#3a332e" opacity="0.15" rx="2"/>
-    <rect x="528" y="585" width="84" height="24" fill="none" stroke="#3a332e" opacity="0.15" rx="2"/>
-    <rect x="628" y="585" width="84" height="24" fill="none" stroke="#3a332e" opacity="0.15" rx="2"/>
+    <!-- is-empty: 이전 달 빈 셀 (투명) -->
+    <rect x="428" y="585" width="84" height="36" fill="none" rx="3"/>
+    <rect x="528" y="585" width="84" height="36" fill="none" rx="3"/>
+    <rect x="628" y="585" width="84" height="36" fill="none" rx="3"/>
 
-    <rect x="728" y="585" width="84" height="24" fill="#dcfce7" stroke="#22c55e" opacity="0.85" rx="2"/>
-    <text x="734" y="596" class="ink" font-size="9" font-weight="600">1</text>
-    <text x="808" y="604" text-anchor="end" fill="#15803d" font-size="8" font-weight="700">$24.50</text>
+    <!-- Apr 1 Wed $180 green -->
+    <rect x="728" y="585" width="84" height="36" fill="#1d1a18" stroke="#3a332e" rx="3"/>
+    <text x="734" y="597" font-size="10" fill="#e0d8cc" font-weight="600">1</text>
+    <text x="734" y="610" font-size="8" fill="#9a8d82">120K</text>
+    <text x="806" y="610" text-anchor="end" font-size="9" fill="#c0524b" font-weight="700">$180</text>
+    <rect x="731" y="614" width="78" height="4" fill="#22c55e" rx="2"/>
 
-    <rect x="828" y="585" width="84" height="24" fill="#dcfce7" stroke="#22c55e" opacity="0.85" rx="2"/>
-    <text x="834" y="596" class="ink" font-size="9" font-weight="600">2</text>
-    <text x="908" y="604" text-anchor="end" fill="#15803d" font-size="8" font-weight="700">$18.70</text>
+    <!-- Apr 2 Thu $62 green -->
+    <rect x="828" y="585" width="84" height="36" fill="#1d1a18" stroke="#3a332e" rx="3"/>
+    <text x="834" y="597" font-size="10" fill="#e0d8cc" font-weight="600">2</text>
+    <text x="834" y="610" font-size="8" fill="#9a8d82">40K</text>
+    <text x="906" y="610" text-anchor="end" font-size="9" fill="#c0524b" font-weight="700">$62</text>
+    <rect x="831" y="614" width="78" height="4" fill="#22c55e" rx="2"/>
 
-    <rect x="928" y="585" width="84" height="24" fill="#2d2926" stroke="#3a332e" opacity="0.6" rx="2"/>
-    <text x="934" y="596" class="muted" font-size="9" font-weight="600">3</text>
+    <!-- Apr 3 Fri is-blank (데이터 없음, 흐리게) -->
+    <rect x="928" y="585" width="84" height="36" fill="#1d1a18" stroke="#3a332e" rx="3" opacity="0.4"/>
+    <text x="934" y="597" font-size="10" fill="#e0d8cc" font-weight="600" opacity="0.4">3</text>
 
-    <rect x="1028" y="585" width="84" height="24" fill="#dcfce7" stroke="#22c55e" opacity="0.85" rx="2"/>
-    <text x="1034" y="596" class="ink" font-size="9" font-weight="600">4</text>
-    <text x="1108" y="604" text-anchor="end" fill="#15803d" font-size="8" font-weight="700">$8.20</text>
+    <!-- Apr 4 Sat $95 green -->
+    <rect x="1028" y="585" width="84" height="36" fill="#1d1a18" stroke="#3a332e" rx="3"/>
+    <text x="1034" y="597" font-size="10" fill="#e0d8cc" font-weight="600">4</text>
+    <text x="1034" y="610" font-size="8" fill="#9a8d82">65K</text>
+    <text x="1106" y="610" text-anchor="end" font-size="9" fill="#c0524b" font-weight="700">$95</text>
+    <rect x="1031" y="614" width="78" height="4" fill="#22c55e" rx="2"/>
   </g>
 
-  <!-- Row 2 -->
+  <!-- ── Row 2: Apr 5-11 (Sun-Sat) — 5 tier 전부 시연 ── -->
   <g>
-    <rect x="428" y="614" width="84" height="24" fill="#dcfce7" stroke="#22c55e" opacity="0.85" rx="2"/>
-    <text x="434" y="625" class="ink" font-size="9" font-weight="600">5</text>
-    <text x="508" y="633" text-anchor="end" fill="#15803d" font-size="8" font-weight="700">$45.30</text>
+    <!-- Apr 5 Sun $450 RED ($200-500) -->
+    <rect x="428" y="624" width="84" height="36" fill="#1d1a18" stroke="#3a332e" rx="3"/>
+    <text x="434" y="636" font-size="10" fill="#e0d8cc" font-weight="600">5</text>
+    <text x="434" y="649" font-size="8" fill="#9a8d82">280K</text>
+    <text x="506" y="649" text-anchor="end" font-size="9" fill="#c0524b" font-weight="700">$450</text>
+    <rect x="431" y="653" width="78" height="4" fill="#ef4444" rx="2"/>
 
-    <rect x="528" y="614" width="84" height="24" fill="#ef4444" stroke="#991b1b" opacity="0.95" rx="2"/>
-    <text x="534" y="625" fill="#fff" font-size="9" font-weight="600">6</text>
-    <text x="608" y="633" text-anchor="end" fill="#fff" font-size="8" font-weight="700">$620.50</text>
+    <!-- Apr 6 Mon $1580 SILVER ($1K-2K) -->
+    <rect x="528" y="624" width="84" height="36" fill="#1d1a18" stroke="#3a332e" rx="3"/>
+    <text x="534" y="636" font-size="10" fill="#e0d8cc" font-weight="600">6</text>
+    <text x="534" y="649" font-size="8" fill="#9a8d82">1.1M</text>
+    <text x="606" y="649" text-anchor="end" font-size="9" fill="#c0524b" font-weight="700">$1,580</text>
+    <rect x="531" y="653" width="78" height="4" fill="url(#gradSilver)" rx="2"/>
 
-    <rect x="628" y="614" width="84" height="24" fill="#dcfce7" stroke="#22c55e" opacity="0.85" rx="2"/>
-    <text x="634" y="625" class="ink" font-size="9" font-weight="600">7</text>
-    <text x="708" y="633" text-anchor="end" fill="#15803d" font-size="8" font-weight="700">$62.40</text>
+    <!-- Apr 7 Tue $230 RED -->
+    <rect x="628" y="624" width="84" height="36" fill="#1d1a18" stroke="#3a332e" rx="3"/>
+    <text x="634" y="636" font-size="10" fill="#e0d8cc" font-weight="600">7</text>
+    <text x="634" y="649" font-size="8" fill="#9a8d82">160K</text>
+    <text x="706" y="649" text-anchor="end" font-size="9" fill="#c0524b" font-weight="700">$230</text>
+    <rect x="631" y="653" width="78" height="4" fill="#ef4444" rx="2"/>
 
-    <rect x="728" y="614" width="84" height="24" fill="#dcfce7" stroke="#22c55e" opacity="0.85" rx="2"/>
-    <text x="734" y="625" class="ink" font-size="9" font-weight="600">8</text>
-    <text x="808" y="633" text-anchor="end" fill="#15803d" font-size="8" font-weight="700">$31.80</text>
+    <!-- Apr 8 Wed $105 green -->
+    <rect x="728" y="624" width="84" height="36" fill="#1d1a18" stroke="#3a332e" rx="3"/>
+    <text x="734" y="636" font-size="10" fill="#e0d8cc" font-weight="600">8</text>
+    <text x="734" y="649" font-size="8" fill="#9a8d82">70K</text>
+    <text x="806" y="649" text-anchor="end" font-size="9" fill="#c0524b" font-weight="700">$105</text>
+    <rect x="731" y="653" width="78" height="4" fill="#22c55e" rx="2"/>
 
-    <rect x="828" y="614" width="84" height="24" fill="#2d2926" stroke="#3a332e" opacity="0.6" rx="2"/>
-    <text x="834" y="625" class="muted" font-size="9" font-weight="600">9</text>
+    <!-- Apr 9 Thu $68 green -->
+    <rect x="828" y="624" width="84" height="36" fill="#1d1a18" stroke="#3a332e" rx="3"/>
+    <text x="834" y="636" font-size="10" fill="#e0d8cc" font-weight="600">9</text>
+    <text x="834" y="649" font-size="8" fill="#9a8d82">45K</text>
+    <text x="906" y="649" text-anchor="end" font-size="9" fill="#c0524b" font-weight="700">$68</text>
+    <rect x="831" y="653" width="78" height="4" fill="#22c55e" rx="2"/>
 
-    <rect x="928" y="614" width="84" height="24" fill="#fef3c7" stroke="#eab308" opacity="0.9" rx="2"/>
-    <text x="934" y="625" class="ink" font-size="9" font-weight="600">10</text>
-    <text x="1008" y="633" text-anchor="end" fill="#a16207" font-size="8" font-weight="700">$180.40</text>
+    <!-- Apr 10 Fri $720 AURORA ($500-1K) -->
+    <rect x="928" y="624" width="84" height="36" fill="#1d1a18" stroke="#3a332e" rx="3"/>
+    <text x="934" y="636" font-size="10" fill="#e0d8cc" font-weight="600">10</text>
+    <text x="934" y="649" font-size="8" fill="#9a8d82">520K</text>
+    <text x="1006" y="649" text-anchor="end" font-size="9" fill="#c0524b" font-weight="700">$720</text>
+    <rect x="931" y="653" width="78" height="4" fill="url(#gradAurora)" rx="2"/>
 
-    <rect x="1028" y="614" width="84" height="24" fill="#fef3c7" stroke="#eab308" opacity="0.9" rx="2"/>
-    <text x="1034" y="625" class="ink" font-size="9" font-weight="600">11</text>
-    <text x="1108" y="633" text-anchor="end" fill="#a16207" font-size="8" font-weight="700">$240.50</text>
+    <!-- Apr 11 Sat $2850 GOLD ($2K+) — A 뱃지 (Anthropic dislikes it, 마우스오버 툴팁) -->
+    <rect x="1028" y="624" width="84" height="36" fill="#1d1a18" stroke="#3a332e" rx="3"/>
+    <text x="1034" y="636" font-size="10" fill="#e0d8cc" font-weight="600">11</text>
+    <circle cx="1105" cy="633" r="5" fill="#eab308" stroke="#fcd34d" stroke-width="0.5"/>
+    <text x="1105" y="636" text-anchor="middle" fill="#3b2a0a" font-size="7" font-weight="700">A</text>
+    <text x="1034" y="649" font-size="8" fill="#9a8d82">1.9M</text>
+    <text x="1106" y="649" text-anchor="end" font-size="9" fill="#c0524b" font-weight="700">$2,850</text>
+    <rect x="1031" y="653" width="78" height="4" fill="url(#gradGold)" rx="2"/>
   </g>
 
-  <!-- Row 3 (today = 14, Tue) -->
+  <!-- ── Row 3: Apr 12-14 (TODAY) + 15-18 future ── -->
   <g>
-    <rect x="428" y="643" width="84" height="24" fill="#dcfce7" stroke="#22c55e" opacity="0.85" rx="2"/>
-    <text x="434" y="654" class="ink" font-size="9" font-weight="600">12</text>
-    <text x="508" y="662" text-anchor="end" fill="#15803d" font-size="8" font-weight="700">$52.10</text>
+    <!-- Apr 12 Sun $52 green -->
+    <rect x="428" y="663" width="84" height="36" fill="#1d1a18" stroke="#3a332e" rx="3"/>
+    <text x="434" y="675" font-size="10" fill="#e0d8cc" font-weight="600">12</text>
+    <text x="434" y="688" font-size="8" fill="#9a8d82">35K</text>
+    <text x="506" y="688" text-anchor="end" font-size="9" fill="#c0524b" font-weight="700">$52</text>
+    <rect x="431" y="692" width="78" height="4" fill="#22c55e" rx="2"/>
 
-    <rect x="528" y="643" width="84" height="24" fill="#dcfce7" stroke="#22c55e" opacity="0.85" rx="2"/>
-    <text x="534" y="654" class="ink" font-size="9" font-weight="600">13</text>
-    <text x="608" y="662" text-anchor="end" fill="#15803d" font-size="8" font-weight="700">$84.30</text>
+    <!-- Apr 13 Mon $134 green -->
+    <rect x="528" y="663" width="84" height="36" fill="#1d1a18" stroke="#3a332e" rx="3"/>
+    <text x="534" y="675" font-size="10" fill="#e0d8cc" font-weight="600">13</text>
+    <text x="534" y="688" font-size="8" fill="#9a8d82">85K</text>
+    <text x="606" y="688" text-anchor="end" font-size="9" fill="#c0524b" font-weight="700">$134</text>
+    <rect x="531" y="692" width="78" height="4" fill="#22c55e" rx="2"/>
 
-    <!-- today -->
-    <rect x="628" y="643" width="84" height="24" fill="#dcfce7" stroke="#2563eb" stroke-width="2" rx="2"/>
-    <text x="634" y="654" class="accent" font-size="9" font-weight="700">14</text>
-    <text x="708" y="662" text-anchor="end" fill="#15803d" font-size="8" font-weight="700">$45.00</text>
+    <!-- Apr 14 Tue TODAY — accent 2px border, date in accent -->
+    <rect x="628" y="663" width="84" height="36" fill="#1d1a18" stroke="#c0524b" stroke-width="2" rx="3"/>
+    <text x="634" y="675" font-size="10" fill="#c0524b" font-weight="700">14</text>
+    <text x="634" y="688" font-size="8" fill="#9a8d82">60K</text>
+    <text x="706" y="688" text-anchor="end" font-size="9" fill="#c0524b" font-weight="700">$99</text>
+    <rect x="631" y="692" width="78" height="4" fill="#22c55e" rx="2"/>
 
-    <rect x="728" y="643" width="84" height="24" fill="none" stroke="#3a332e" opacity="0.25" rx="2"/>
-    <text x="734" y="654" class="muted" font-size="9">15</text>
-
-    <rect x="828" y="643" width="84" height="24" fill="none" stroke="#3a332e" opacity="0.25" rx="2"/>
-    <text x="834" y="654" class="muted" font-size="9">16</text>
-
-    <rect x="928" y="643" width="84" height="24" fill="none" stroke="#3a332e" opacity="0.25" rx="2"/>
-    <text x="934" y="654" class="muted" font-size="9">17</text>
-
-    <rect x="1028" y="643" width="84" height="24" fill="none" stroke="#3a332e" opacity="0.25" rx="2"/>
-    <text x="1034" y="654" class="muted" font-size="9">18</text>
+    <!-- Apr 15-18: is-future (옅게, 빈 내용) -->
+    <rect x="728" y="663" width="84" height="36" fill="#1d1a18" stroke="#3a332e" rx="3" opacity="0.3"/>
+    <text x="734" y="675" font-size="10" fill="#9a8d82" font-weight="600" opacity="0.5">15</text>
+    <rect x="828" y="663" width="84" height="36" fill="#1d1a18" stroke="#3a332e" rx="3" opacity="0.3"/>
+    <text x="834" y="675" font-size="10" fill="#9a8d82" font-weight="600" opacity="0.5">16</text>
+    <rect x="928" y="663" width="84" height="36" fill="#1d1a18" stroke="#3a332e" rx="3" opacity="0.3"/>
+    <text x="934" y="675" font-size="10" fill="#9a8d82" font-weight="600" opacity="0.5">17</text>
+    <rect x="1028" y="663" width="84" height="36" fill="#1d1a18" stroke="#3a332e" rx="3" opacity="0.3"/>
+    <text x="1034" y="675" font-size="10" fill="#9a8d82" font-weight="600" opacity="0.5">18</text>
   </g>
 
   <!-- Footer -->
@@ -554,5 +635,5 @@
   <line x1="0" y1="700" x2="1200" y2="700" stroke="#3a332e"/>
   <circle cx="14" cy="710" r="4" fill="#4a7a35"/>
   <text x="26" y="714" class="dim" font-size="10">Connected</text>
-  <text x="1186" y="714" text-anchor="end" class="muted" font-size="10">Model: Opus 4.6</text>
+  <text x="1186" y="714" text-anchor="end" class="muted" font-size="10">Model: Opus 4.7 · 245 events · 1.23MB</text>
 </svg>

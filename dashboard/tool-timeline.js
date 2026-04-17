@@ -197,8 +197,8 @@
 
   // ── rAF 루프: 모든 아이콘 위치/opacity 매 프레임 갱신 ──
   function tick() {
+    if (!ready || icons.length === 0) { rafHandle = 0; return; }
     rafHandle = requestAnimationFrame(tick);
-    if (!ready || icons.length === 0) return;
     var now = Date.now();
     var alive = [];
     for (var i = 0; i < icons.length; i++) {
@@ -207,6 +207,7 @@
       // 최대 윈도우(10m) 초과 시에만 실제 제거 — 더 작은 윈도우로 좁혔다가 다시 넓혔을 때 복원 가능하도록
       if (elapsed >= MAX_WINDOW_MS) {
         if (it.el.parentNode) it.el.parentNode.removeChild(it.el);
+        if (it.id) idToIcon.delete(it.id);
         continue;
       }
       // 현재 선택 윈도우 밖 — DOM 은 유지한 채 숨김 (재선택 시 복귀)
@@ -258,6 +259,7 @@
       icons.push(record);
       if (ev.id) idToIcon.set(ev.id, record);
       updateCount();
+      if (!rafHandle) rafHandle = requestAnimationFrame(tick);
     } else if (type === 'tool_done' || type === 'tool_error') {
       var existing = ev.id ? idToIcon.get(ev.id) : null;
       if (existing) {

@@ -385,7 +385,7 @@ footer {
   max-height: 60vh;
   overflow: auto;
   background: var(--bg-deep, #1a1816);
-  color: var(--text, #e0d8cc);
+  color: #e0d8cc;
   border: 1px solid var(--border);
   border-radius: 6px;
   padding: 8px 12px;

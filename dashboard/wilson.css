@@ -307,14 +307,7 @@ body.wilson-state-thinking .activity-panel {
   75% { transform: rotate(-8deg); }
 }
 
-/* working — fast ball spin */
-.wilson-state-working .wilson-svg-wrap {
-  animation: wilson-spin 1s linear infinite;
-}
-@keyframes wilson-spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
+/* working — 3D 공 회전은 JS rAF가 #wilsonSurface 수평 이동만 담당 (실루엣/조명 고정) */
 
 /* solving — sparkle pulse */
 .wilson-state-solving .wilson-svg-wrap {

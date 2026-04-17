@@ -43,14 +43,15 @@ The main dashboard at `/` streams every Claude Code action — prompts, tool cal
 
 #### 🏐 Wilson — Your visualization agent
 
-A volleyball-faced character named Wilson communicates AI status through **5 expressions**.
+A volleyball-faced character named Wilson communicates AI status through **6 expressions**.
 
-| State | Expression | Meaning |
+| State | Expression | Trigger |
 |-------|------------|---------|
-| `waiting` | Slow breathing | Nothing happening |
-| `thinking` | Eye-rolling + gentle wobble | Prompt / tool started |
-| `working` | Ball spinning (Y-axis; back is blank) | Tool done, integrating result |
-| `solving` | Golden aura + crimson pulse | **Error — solving it** |
+| `waiting` | Slow breathing | Response done / idle |
+| `thinking` | Eye-rolling + gentle wobble | Prompt · Read |
+| `searching` | Sway + horizontal eye scan | Search tools (Grep · Glob · Web · Playwright) |
+| `working` | Irregular left-right jitter | Edit/exec tools (Write · Edit · Bash · Task, etc.) |
+| `solving` | Golden aura + crimson pulse | Error |
 | `sleeping` | Eyes closed, breathing | 10 minutes idle |
 
 #### ⏱️ Tool Timeline
@@ -173,12 +174,14 @@ wilson makes **no Anthropic API calls at all**. It only reads JSONL transcripts 
 
 | Resource | Usage |
 |----------|-------|
-| **Claude tokens / API cost** | **0** (no outbound calls, local file reads only) |
-| **Network** | localhost SSE only; zero internet traffic |
-| **CPU** | <0.1% at idle, brief JSONL parsing only on new events (avg 10–30ms) |
-| **Memory** | ~50–80MB (Node.js baseline + offset cache + usage-index.json) |
-| **Disk** | `cache/usage-index.json` a few MB (30-day cumulative) + tiny offsets.json |
-| **Dependencies** | Zero (no `npm install` — Node built-ins only) |
+| **Claude tokens / API cost** | **0** (no outbound calls) |
+| **Network** | localhost SSE only, **zero** internet traffic |
+| **CPU** | Effectively 0% at idle, 10–50ms parse per event |
+| **Server memory** | ~60–100MB RSS (bounded) |
+| **Browser DOM** | Feed capped at 500 groups, no unbounded growth on long sessions |
+| **Initial JS payload** | wilson.js **24KB** |
+| **Disk** | `cache/usage-index.json` a few hundred KB to a few MB + tiny offsets.json |
+| **Dependencies** | **Zero** — no `npm install`, Node built-ins only |
 
 Leave the dashboard running all day and it won't move the needle on your Claude usage stats or rack up any cloud cost.
 
