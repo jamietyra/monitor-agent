@@ -24,8 +24,6 @@
     '<title>Wilson</title>' +
     BALL_LIGHT_DEFS +
     '<circle cx="24" cy="24" r="22" fill="#f0ebe0" stroke="#d8d0c4" stroke-width="0.8"/>' +
-    '<line x1="3" y1="16" x2="45" y2="16" stroke="#ccc4b8" stroke-width="0.5"/>' +
-    '<line x1="3" y1="33" x2="45" y2="33" stroke="#ccc4b8" stroke-width="0.5"/>' +
     '<path d="M11 14 C9 9 13 5 17 7 C19 4 22 3 25 5 C27 3 31 4 33 7 C36 5 40 9 37 14 C41 18 43 24 41 31 C39 38 33 44 24 44 C15 44 9 38 7 31 C5 24 7 18 11 14 Z" fill="#8B1A1A"/>';
   var SVG_END = '<circle cx="24" cy="28" r="1" fill="white" opacity="0.25"/>' +
     '<path d="M18 35 Q24 39 30 35" fill="none" stroke="white" stroke-width="1" opacity="0.35" stroke-linecap="round"/>' +
