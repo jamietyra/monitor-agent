@@ -229,27 +229,6 @@ Without `MONITOR_REMOTE=true`, the server only accepts connections from localhos
 
 ---
 
-## 🧪 Testing
-
-Wilson ships with unit tests for its core pure functions, using Node's built-in `node:test` runner (no external dependencies).
-
-```bash
-npm test
-```
-
-**Covered modules** (31 test cases):
-
-| Module | Function | Cases |
-|--------|----------|-------|
-| `lib/usage-parser.mjs` | `parseUsageEvent`, `normalizeModel`, `getPricingSnapshot` | 12 |
-| `lib/time-metric.mjs` | `computeActiveMs` | 8 |
-| `lib/aggregator.mjs` | `summarizePrompt` | 7 |
-| `lib/aggregator.mjs` | `aggregateAll` (fixture-based smoke test) | 4 |
-
-Tests live in `test/` with fixtures in `test/fixtures/sample-projects/`. Internal functions in `server.mjs` (e.g. `processEntry`) are not yet covered — slated for a later phase that adds module exports.
-
----
-
 ## 📝 License
 
 MIT
