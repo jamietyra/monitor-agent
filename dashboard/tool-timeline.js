@@ -32,19 +32,27 @@
 
   // ── SVG 아이콘 세트 (24×24 stroke) ────────────────────
   var ICONS = {
-    Read:     '<path d="M6 3h9l5 5v13H6z"/><path d="M14 3v6h6"/>',
-    Write:    '<path d="M3 21v-4l11-11 4 4-11 11z"/><path d="M14 6l4 4"/>',
-    Edit:     '<path d="M11 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/><path d="M18 2l4 4-10 10H8v-4z"/>',
-    Bash:     '<path d="M4 17l6-6-6-6"/><path d="M12 19h8"/>',
-    Task:     '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/>',
-    Glob:     '<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>',
-    Web:      '<circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>',
-    _default: '<circle cx="12" cy="12" r="5"/>'
+    Read:       '<path d="M6 3h9l5 5v13H6z"/><path d="M14 3v6h6"/>',
+    Write:      '<path d="M3 21v-4l11-11 4 4-11 11z"/><path d="M14 6l4 4"/>',
+    Edit:       '<path d="M11 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/><path d="M18 2l4 4-10 10H8v-4z"/>',
+    Bash:       '<path d="M4 17l6-6-6-6"/><path d="M12 19h8"/>',
+    Task:       '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/>',
+    Glob:       '<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>',
+    Web:        '<circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>',
+    Todo:       '<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 12l3 3 5-6"/>',
+    Skill:      '<path d="M12 3l2.7 5.5 6 .9-4.4 4.2 1 6-5.3-2.8-5.3 2.8 1-6L3.3 9.4l6-.9z"/>',
+    Playwright: '<rect x="3" y="5" width="18" height="14" rx="1"/><path d="M3 10h18M6 7.5h1.5M9 7.5h1.5M12 7.5h1.5"/>',
+    // 기본 — 육각형 (기타 도구) — 다른 아이콘과 구분되는 명확한 형태
+    _default:   '<path d="M12 3l7.8 4.5v9L12 21l-7.8-4.5v-9z"/>'
   };
 
   function normalizeName(name) {
     if (!name) return '_default';
     var lower = String(name).toLowerCase();
+    // TodoWrite는 "write"보다 먼저 매칭 (우선순위 중요)
+    if (lower.indexOf('todo') >= 0) return 'Todo';
+    if (lower.indexOf('playwright') >= 0 || lower.indexOf('browser') >= 0) return 'Playwright';
+    if (lower === 'skill') return 'Skill';
     if (lower.indexOf('read') >= 0) return 'Read';
     if (lower.indexOf('write') >= 0) return 'Write';
     if (lower.indexOf('edit') >= 0) return 'Edit';
@@ -111,22 +119,11 @@
     updateCount();
   }
 
-  // ── 세션/레인 분배 ─────────────────────────────────────
+  // ── 레인 분배 — 전 세션 공용 (2026-04-17) ─────────────────
+  // 이전: 세션별 파티셔닝 (3 세션 → 각 2레인) → 세션 적을 때 빈 레인 발생
+  // 현재: 모든 레인을 '_shared'로 두어 어떤 세션이든 전체 6레인 사용
   function allocateLanes() {
-    var sessions = [];
-    activeSessions.forEach(function (_, sid) { sessions.push(sid); });
-    var n = sessions.length;
-    var lanes = new Array(LANES).fill(null);
-    if (n === 0) { laneAssignment = lanes; return; }
-    if (n >= 7)  { laneAssignment = lanes.fill('_shared'); return; }
-    var per = Math.floor(LANES / n);
-    var extra = LANES - per * n;
-    var idx = 0;
-    for (var s = 0; s < n; s++) {
-      for (var k = 0; k < per; k++) lanes[idx++] = sessions[s];
-    }
-    for (var k2 = 0; k2 < extra; k2++) lanes[idx++] = '_shared';
-    laneAssignment = lanes;
+    laneAssignment = new Array(LANES).fill('_shared');
   }
 
   function updateActiveSessions(sid, nowMs) {

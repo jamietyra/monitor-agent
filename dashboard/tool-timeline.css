@@ -155,7 +155,10 @@
 .timeline-icon[data-tool="Task"]     { color: #ec4899; background: rgba(236,  72, 153, 0.22); }
 .timeline-icon[data-tool="Glob"]     { color: #06b6d4; background: rgba(  6, 182, 212, 0.22); }
 .timeline-icon[data-tool="Web"]      { color: #6366f1; background: rgba( 99, 102, 241, 0.22); }
-.timeline-icon[data-tool="_default"] { color: #94a3b8; background: rgba(148, 163, 184, 0.22); }
+.timeline-icon[data-tool="Todo"]     { color: #eab308; background: rgba(234, 179,   8, 0.22); }
+.timeline-icon[data-tool="Skill"]    { color: #f97316; background: rgba(249, 115,  22, 0.22); }
+.timeline-icon[data-tool="Playwright"] { color: #14b8a6; background: rgba( 20, 184, 166, 0.22); }
+.timeline-icon[data-tool="_default"] { color: #64748b; background: rgba(100, 116, 139, 0.28); }
 
 /* running = pulse halo (::before 가상 요소) */
 .timeline-icon[data-status="running"]::before {
